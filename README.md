@@ -123,6 +123,8 @@ Cmd+Shift+P → "Install from VSIX..."
 
 ## Development
 
+This project uses **pnpm** only. Do not run `npm install` — it will report many "missing" peer/optional dependency warnings and can leave the workspace in an inconsistent state.
+
 ```bash
 pnpm install
 pnpm run compile   # builds TypeScript + bundle (dist/extension.js)
