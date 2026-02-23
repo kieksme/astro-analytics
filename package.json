@@ -20,7 +20,9 @@
     "onLanguage:markdown",
     "onLanguage:astro",
     "onCommand:astro-analytics.showDashboard",
-    "onCommand:astro-analytics.testConnection"
+    "onCommand:astro-analytics.testConnection",
+    "onCommand:astro-analytics.refresh",
+    "onCommand:astro-analytics.configure"
   ],
   "main": "./dist/extension.js",
   "contributes": {
