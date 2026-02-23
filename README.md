@@ -1,5 +1,7 @@
 # Astro Analytics — VS Code Extension [![Version](https://img.shields.io/visual-studio-marketplace/v/kieksme.astro-analytics)](https://marketplace.visualstudio.com/items?itemName=kieksme.astro-analytics)
 
+**Languages:** [English](README.md) | [Deutsch](README.de.md)
+
 > 🧑‍🚀 Not sure what Astro is? See the Astro website at [astro.build](https://astro.build)!
 
 **Publisher:** kieks.me GbR

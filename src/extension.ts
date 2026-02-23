@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import * as vscode from 'vscode';
-import { GoogleAuth } from 'google-auth-library';
-import fetch from 'node-fetch';
+import { BetaAnalyticsDataClient } from '@google-analytics/data';
 import { filePathToSlug, slugToFilePaths, normalizePagePath } from './lib/slug';
 import { getAggregatedMetricsForDynamicRoute } from './lib/aggregate';
 import { bounceColor, bounceStatusBarCodicon, fmtPct, fmtDuration } from './lib/format';
@@ -84,61 +83,44 @@ async function fetchAnalyticsData(
   credentialsPath: string,
   lookbackDays: number
 ): Promise<PageMetrics[]> {
-  // Resolve credentials
-  const env: NodeJS.ProcessEnv = { ...process.env };
+  const prevCreds = process.env.GOOGLE_APPLICATION_CREDENTIALS;
   if (credentialsPath) {
-    env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath;
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath;
   }
+  try {
+    const analyticsDataClient = new BetaAnalyticsDataClient();
+    const [response] = await analyticsDataClient.runReport({
+      property: `properties/${propertyId}`,
+      dateRanges: [{ startDate: `${lookbackDays}daysAgo`, endDate: 'today' }],
+      dimensions: [{ name: 'pagePath' }],
+      metrics: [
+        { name: 'screenPageViews' },
+        { name: 'activeUsers' },
+        { name: 'bounceRate' },
+        { name: 'averageSessionDuration' },
+      ],
+      limit: 1000,
+      orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }],
+    });
 
-  const auth = new GoogleAuth({
-    keyFilename: credentialsPath || undefined,
-    scopes: ['https://www.googleapis.com/auth/analytics.readonly'],
-  });
+    const rows: PageMetrics[] = (response.rows ?? []).map((row: { dimensionValues?: Array<{ value?: string }>; metricValues?: Array<{ value?: string }> }) => ({
+      pagePath: row.dimensionValues?.[0]?.value ?? '',
+      views: parseInt(row.metricValues?.[0]?.value ?? '0', 10),
+      users: parseInt(row.metricValues?.[1]?.value ?? '0', 10),
+      bounceRate: parseFloat(row.metricValues?.[2]?.value ?? '0'),
+      avgSessionDuration: parseFloat(row.metricValues?.[3]?.value ?? '0'),
+    }));
 
-  const client = await auth.getClient();
-  const token = await client.getAccessToken();
-  if (!token.token) {
-    throw new Error('Could not obtain access token. Check your credentials.');
+    return rows;
+  } finally {
+    if (credentialsPath) {
+      if (prevCreds !== undefined) {
+        process.env.GOOGLE_APPLICATION_CREDENTIALS = prevCreds;
+      } else {
+        delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+      }
+    }
   }
-
-  const url = `https://analyticsdata.googleapis.com/v1beta/properties/${propertyId}:runReport`;
-  const body = {
-    dateRanges: [{ startDate: `${lookbackDays}daysAgo`, endDate: 'today' }],
-    dimensions: [{ name: 'pagePath' }],
-    metrics: [
-      { name: 'screenPageViews' },
-      { name: 'activeUsers' },
-      { name: 'bounceRate' },
-      { name: 'averageSessionDuration' },
-    ],
-    limit: 1000,
-    orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }],
-  };
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token.token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`GA4 API error ${response.status}: ${text}`);
-  }
-
-  const json = (await response.json()) as any;
-  const rows: PageMetrics[] = (json.rows ?? []).map((row: any) => ({
-    pagePath: row.dimensionValues[0].value as string,
-    views: parseInt(row.metricValues[0].value, 10),
-    users: parseInt(row.metricValues[1].value, 10),
-    bounceRate: parseFloat(row.metricValues[2].value),
-    avgSessionDuration: parseFloat(row.metricValues[3].value),
-  }));
-
-  return rows;
 }
 
 /** Bounce rate (0–1) to ThemeColor for Explorer badge. Returns undefined for good (default style). */
