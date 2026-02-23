@@ -111,6 +111,7 @@ let lastFetch = 0;
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 let statusBarItem;
 let outputChannel;
+let dashboardPanel;
 // ---------------------------------------------------------------------------
 // CodeLens provider
 // ---------------------------------------------------------------------------
@@ -230,6 +231,87 @@ function updateStatusBar(document) {
 function getErrorMessage(err) {
     return err instanceof Error ? err.message : String(err);
 }
+/** Serializable summary for the dashboard webview. */
+function getDashboardData() {
+    const config = vscode.workspace.getConfiguration('astroAnalytics');
+    const propertyId = config.get('propertyId', '');
+    const lookbackDays = config.get('lookbackDays', 30);
+    const entries = Array.from(metricsCache.entries());
+    const topPages = entries
+        .sort((a, b) => b[1].views - a[1].views)
+        .slice(0, 20)
+        .map(([path, m]) => ({
+        pagePath: path,
+        views: m.views,
+        users: m.users,
+        bounceRate: m.bounceRate,
+        avgSessionDuration: m.avgSessionDuration,
+    }));
+    return {
+        configured: !!propertyId,
+        propertyId,
+        cacheSize: metricsCache.size,
+        lastFetch,
+        lookbackDays,
+        topPages,
+    };
+}
+function getDashboardHtml(webview, data) {
+    const nonce = Buffer.from([Date.now(), Math.random()].join('-')).toString('base64').replace(/[^a-zA-Z0-9]/g, '');
+    const dataJson = JSON.stringify(data);
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}'; style-src 'unsafe-inline' ${webview.cspSource};">
+  <title>Astro Analytics Dashboard</title>
+  <style>
+    body { font-family: var(--vscode-font-family); padding: 1rem; color: var(--vscode-foreground); }
+    h1 { font-size: 1.2rem; margin-top: 0; }
+    .meta { margin-bottom: 1rem; }
+    .meta span { margin-right: 1rem; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--vscode-widget-border); }
+    th { font-weight: 600; }
+    button { margin-top: 0.5rem; padding: 0.4rem 0.8rem; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>📊 Astro Analytics Dashboard</h1>
+  <div class="meta">
+    <span><strong>Property ID:</strong> <span id="propertyId">-</span></span>
+    <span><strong>Pages in cache:</strong> <span id="cacheSize">0</span></span>
+    <span><strong>Last fetch:</strong> <span id="lastFetch">-</span></span>
+    <span><strong>Lookback:</strong> <span id="lookbackDays">-</span> days</span>
+  </div>
+  <button id="refreshBtn">🔄 Refresh data</button>
+  <table>
+    <thead><tr><th>Page</th><th>Views</th><th>Users</th><th>Bounce</th><th>Avg duration</th></tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  <script nonce="${nonce}">
+    const vscode = acquireVsCodeApi();
+    const data = ${dataJson.replace(/</g, '\\u003c')};
+
+    function render(d) {
+      document.getElementById('propertyId').textContent = d.configured ? d.propertyId : '(not set)';
+      document.getElementById('cacheSize').textContent = String(d.cacheSize);
+      document.getElementById('lastFetch').textContent = d.lastFetch
+        ? new Date(d.lastFetch).toLocaleString()
+        : '-';
+      document.getElementById('lookbackDays').textContent = String(d.lookbackDays);
+      const tbody = document.getElementById('tbody');
+      tbody.innerHTML = d.topPages.map(p => '<tr><td>' + escapeHtml(p.pagePath) + '</td><td>' + p.views.toLocaleString() + '</td><td>' + p.users.toLocaleString() + '</td><td>' + (p.bounceRate * 100).toFixed(1) + '%</td><td>' + (p.avgSessionDuration >= 60 ? Math.floor(p.avgSessionDuration/60) + 'm ' : '') + Math.floor(p.avgSessionDuration % 60) + 's</td></tr>').join('');
+    }
+    function escapeHtml(s) { const div = document.createElement('div'); div.textContent = s; return div.innerHTML; }
+    render(data);
+
+    window.addEventListener('message', e => { if (e.data && e.data.type === 'data') render(e.data.data); });
+    document.getElementById('refreshBtn').onclick = () => vscode.postMessage({ type: 'refresh' });
+  </script>
+</body>
+</html>`;
+}
 // ---------------------------------------------------------------------------
 // Test API connection (for debugging)
 // ---------------------------------------------------------------------------
@@ -291,9 +373,36 @@ async function testConnection() {
     outputChannel.appendLine('--- End of test ---');
 }
 // ---------------------------------------------------------------------------
+// Dashboard webview
+// ---------------------------------------------------------------------------
+function showDashboard(context, codeLensProvider) {
+    const viewType = 'astroAnalytics.dashboard';
+    const title = 'Astro Analytics Dashboard';
+    if (dashboardPanel) {
+        dashboardPanel.reveal();
+        dashboardPanel.webview.html = getDashboardHtml(dashboardPanel.webview, getDashboardData());
+        return;
+    }
+    dashboardPanel = vscode.window.createWebviewPanel(viewType, title, vscode.ViewColumn.Beside, { enableScripts: true });
+    dashboardPanel.webview.html = getDashboardHtml(dashboardPanel.webview, getDashboardData());
+    dashboardPanel.webview.onDidReceiveMessage((msg) => {
+        if (msg.type === 'refresh') {
+            refreshData(codeLensProvider, () => {
+                if (dashboardPanel) {
+                    dashboardPanel.webview.postMessage({ type: 'data', data: getDashboardData() });
+                }
+            });
+        }
+    });
+    dashboardPanel.onDidDispose(() => {
+        dashboardPanel = undefined;
+    });
+    context.subscriptions.push(dashboardPanel);
+}
+// ---------------------------------------------------------------------------
 // Data refresh
 // ---------------------------------------------------------------------------
-async function refreshData(codeLensProvider) {
+async function refreshData(codeLensProvider, onDone) {
     const config = vscode.workspace.getConfiguration('astroAnalytics');
     const propertyId = config.get('propertyId', '');
     const credentialsPath = config.get('credentialsPath', '');
@@ -328,6 +437,7 @@ async function refreshData(codeLensProvider) {
             codeLensProvider.refresh();
             updateStatusBar(vscode.window.activeTextEditor?.document);
             vscode.window.setStatusBarMessage(`$(check) Analytics: ${data.length} Seiten geladen`, 3000);
+            onDone?.();
         }
         catch (err) {
             const msg = getErrorMessage(err);
@@ -359,6 +469,8 @@ function activate(context) {
             testConnection();
         }), vscode.commands.registerCommand('astro-analytics.configure', () => {
             vscode.commands.executeCommand('workbench.action.openSettings', 'astroAnalytics');
+        }), vscode.commands.registerCommand('astro-analytics.showDashboard', () => {
+            showDashboard(context, codeLensProvider);
         }));
         // Auto-update status bar on editor change
         context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {

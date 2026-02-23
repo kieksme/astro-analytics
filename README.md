@@ -6,6 +6,8 @@
 
 Shows Google Analytics GA4 metrics directly in VS Code when you open Astro Markdown or `.astro` files.
 
+> 🧑‍🚀 Not sure what Astro is? See our website at [astro.build](https://astro.build)!
+
 ## Features
 
 - **CodeLens** at the top of each `.md`/`.mdx`/`.astro` file with Bounce Rate, Views, Users, and Session Duration
