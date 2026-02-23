@@ -257,7 +257,7 @@ function getDashboardData() {
     };
 }
 function getDashboardHtml(webview, data) {
-    const nonce = Buffer.from([Date.now(), Math.random()].join('-')).toString('base64').replace(/[^a-zA-Z0-9]/g, '');
+    const nonce = Date.now().toString(36) + Math.random().toString(36).slice(2);
     const dataJson = JSON.stringify(data);
     return `<!DOCTYPE html>
 <html lang="en">
@@ -376,28 +376,34 @@ async function testConnection() {
 // Dashboard webview
 // ---------------------------------------------------------------------------
 function showDashboard(context, codeLensProvider) {
-    const viewType = 'astroAnalytics.dashboard';
-    const title = 'Astro Analytics Dashboard';
-    if (dashboardPanel) {
-        dashboardPanel.reveal();
-        dashboardPanel.webview.html = getDashboardHtml(dashboardPanel.webview, getDashboardData());
-        return;
-    }
-    dashboardPanel = vscode.window.createWebviewPanel(viewType, title, vscode.ViewColumn.Beside, { enableScripts: true });
-    dashboardPanel.webview.html = getDashboardHtml(dashboardPanel.webview, getDashboardData());
-    dashboardPanel.webview.onDidReceiveMessage((msg) => {
-        if (msg.type === 'refresh') {
-            refreshData(codeLensProvider, () => {
-                if (dashboardPanel) {
-                    dashboardPanel.webview.postMessage({ type: 'data', data: getDashboardData() });
-                }
-            });
+    try {
+        const viewType = 'astroAnalytics.dashboard';
+        const title = 'Astro Analytics Dashboard';
+        if (dashboardPanel) {
+            dashboardPanel.reveal();
+            dashboardPanel.webview.html = getDashboardHtml(dashboardPanel.webview, getDashboardData());
+            return;
         }
-    });
-    dashboardPanel.onDidDispose(() => {
-        dashboardPanel = undefined;
-    });
-    context.subscriptions.push(dashboardPanel);
+        dashboardPanel = vscode.window.createWebviewPanel(viewType, title, vscode.ViewColumn.Beside, { enableScripts: true });
+        dashboardPanel.webview.html = getDashboardHtml(dashboardPanel.webview, getDashboardData());
+        dashboardPanel.webview.onDidReceiveMessage((msg) => {
+            if (msg.type === 'refresh') {
+                refreshData(codeLensProvider, () => {
+                    if (dashboardPanel) {
+                        dashboardPanel.webview.postMessage({ type: 'data', data: getDashboardData() });
+                    }
+                });
+            }
+        });
+        dashboardPanel.onDidDispose(() => {
+            dashboardPanel = undefined;
+        });
+        context.subscriptions.push(dashboardPanel);
+    }
+    catch (err) {
+        outputChannel.appendLine(`[ERROR] showDashboard: ${getErrorMessage(err)}`);
+        throw err;
+    }
 }
 // ---------------------------------------------------------------------------
 // Data refresh
@@ -470,7 +476,15 @@ function activate(context) {
         }), vscode.commands.registerCommand('astro-analytics.configure', () => {
             vscode.commands.executeCommand('workbench.action.openSettings', 'astroAnalytics');
         }), vscode.commands.registerCommand('astro-analytics.showDashboard', () => {
-            showDashboard(context, codeLensProvider);
+            try {
+                showDashboard(context, codeLensProvider);
+            }
+            catch (err) {
+                const msg = getErrorMessage(err);
+                outputChannel.appendLine(`[ERROR] showDashboard: ${msg}`);
+                outputChannel.show(true);
+                vscode.window.showErrorMessage('Astro Analytics: Open Dashboard failed. Check the Output channel (Astro Analytics) for details.');
+            }
         }));
         // Auto-update status bar on editor change
         context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
