@@ -3,12 +3,32 @@ import * as vscode from 'vscode';
 import { GoogleAuth } from 'google-auth-library';
 import fetch from 'node-fetch';
 import { filePathToSlug, slugToFilePaths, normalizePagePath } from './lib/slug';
-import { bounceColor, fmtPct, fmtDuration } from './lib/format';
+import { bounceColor, bounceStatusBarCodicon, fmtPct, fmtDuration } from './lib/format';
 
-/** Localization: use vscode.l10n when available (VS Code 1.74+), else return message key. */
+/** Default (en) strings when l10n returns the key or l10n is unavailable. */
+const l10nDefaults: Record<string, string> = {
+  'status.text': 'Bounce · {0} Views',
+  'status.tooltip': 'Bounce: {0} | Views: {1} | Users: {2} | Ø {3}',
+  'status.a11y': 'Analytics: Bounce {0}, {1} views, {2} users. Click to refresh.',
+  'status.noDataTooltip': 'No data for {0}',
+  'status.analyticsNone': 'Analytics: —',
+  'status.noDataA11y': 'Analytics: no data for {0}',
+};
+
+/** Localization: use vscode.l10n when available (VS Code 1.74+), else use defaults or key with {0} replaced. */
 function l10nT(message: string, ...args: (string | number | boolean)[]): string {
   const l10n = (vscode as { l10n?: { t: (m: string, ...a: (string | number | boolean)[]) => string } }).l10n;
-  return l10n ? l10n.t(message, ...args) : (args.length ? message.replace(/\{(\d+)\}/g, (_, i) => String(args[Number(i)] ?? '')) : message);
+  let out: string;
+  if (l10n) {
+    out = l10n.t(message, ...args);
+    if (out === message && l10nDefaults[message]) out = l10nDefaults[message];
+  } else {
+    out = l10nDefaults[message] ?? message;
+  }
+  if (args.length && out.includes('{')) {
+    out = out.replace(/\{(\d+)\}/g, (_, i) => String(args[Number(i)] ?? ''));
+  }
+  return out;
 }
 
 /** Current UI language (e.g. 'de', 'en'). */
@@ -266,8 +286,8 @@ function updateStatusBar(document: vscode.TextDocument | undefined) {
     return;
   }
 
-  const bounceIcon = bounceColor(metrics.bounceRate);
-  statusBarItem.text = `$(graph) $(${bounceIcon}) ${fmtPct(metrics.bounceRate)} ${l10nT('status.text', metrics.views.toLocaleString(locale))}`;
+  const statusBarCodicon = bounceStatusBarCodicon(metrics.bounceRate);
+  statusBarItem.text = `$(graph) $(${statusBarCodicon}) ${fmtPct(metrics.bounceRate)} ${l10nT('status.text', metrics.views.toLocaleString(locale))}`;
   statusBarItem.tooltip = l10nT('status.tooltip', fmtPct(metrics.bounceRate), String(metrics.views), String(metrics.users), fmtDuration(metrics.avgSessionDuration));
   statusBarItem.accessibilityInformation = {
     label: l10nT('status.a11y', fmtPct(metrics.bounceRate), String(metrics.views), String(metrics.users)),
