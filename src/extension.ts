@@ -494,26 +494,11 @@ export function activate(context: vscode.ExtensionContext): void {
     outputChannel = vscode.window.createOutputChannel('Astro Analytics');
     context.subscriptions.push(outputChannel);
 
-    // Status bar
-    statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-    context.subscriptions.push(statusBarItem);
+    // Declare providers so command handlers can close over them (assigned below)
+    let codeLensProvider: AnalyticsCodeLensProvider;
+    let hoverProvider: AnalyticsHoverProvider;
 
-    // Providers
-    const codeLensProvider = new AnalyticsCodeLensProvider();
-    const hoverProvider = new AnalyticsHoverProvider();
-
-    context.subscriptions.push(
-      vscode.languages.registerCodeLensProvider(
-        [{ language: 'markdown' }, { language: 'mdx' }, { language: 'astro' }],
-        codeLensProvider
-      ),
-      vscode.languages.registerHoverProvider(
-        [{ language: 'markdown' }, { language: 'mdx' }, { language: 'astro' }],
-        hoverProvider
-      )
-    );
-
-    // Commands
+    // Commands (registered first so they exist even if later activation steps throw)
     context.subscriptions.push(
       vscode.commands.registerCommand('astro-analytics.refresh', () => {
         refreshData(codeLensProvider);
@@ -539,6 +524,25 @@ export function activate(context: vscode.ExtensionContext): void {
           );
         }
       })
+    );
+
+    // Status bar
+    statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+    context.subscriptions.push(statusBarItem);
+
+    // Providers
+    codeLensProvider = new AnalyticsCodeLensProvider();
+    hoverProvider = new AnalyticsHoverProvider();
+
+    context.subscriptions.push(
+      vscode.languages.registerCodeLensProvider(
+        [{ language: 'markdown' }, { language: 'mdx' }, { language: 'astro' }],
+        codeLensProvider
+      ),
+      vscode.languages.registerHoverProvider(
+        [{ language: 'markdown' }, { language: 'mdx' }, { language: 'astro' }],
+        hoverProvider
+      )
     );
 
     // Auto-update status bar on editor change

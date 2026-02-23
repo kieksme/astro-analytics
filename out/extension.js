@@ -461,14 +461,10 @@ function activate(context) {
     try {
         outputChannel = vscode.window.createOutputChannel('Astro Analytics');
         context.subscriptions.push(outputChannel);
-        // Status bar
-        statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-        context.subscriptions.push(statusBarItem);
-        // Providers
-        const codeLensProvider = new AnalyticsCodeLensProvider();
-        const hoverProvider = new AnalyticsHoverProvider();
-        context.subscriptions.push(vscode.languages.registerCodeLensProvider([{ language: 'markdown' }, { language: 'mdx' }, { language: 'astro' }], codeLensProvider), vscode.languages.registerHoverProvider([{ language: 'markdown' }, { language: 'mdx' }, { language: 'astro' }], hoverProvider));
-        // Commands
+        // Declare providers so command handlers can close over them (assigned below)
+        let codeLensProvider;
+        let hoverProvider;
+        // Commands (registered first so they exist even if later activation steps throw)
         context.subscriptions.push(vscode.commands.registerCommand('astro-analytics.refresh', () => {
             refreshData(codeLensProvider);
         }), vscode.commands.registerCommand('astro-analytics.testConnection', () => {
@@ -486,6 +482,13 @@ function activate(context) {
                 vscode.window.showErrorMessage('Astro Analytics: Open Dashboard failed. Check the Output channel (Astro Analytics) for details.');
             }
         }));
+        // Status bar
+        statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+        context.subscriptions.push(statusBarItem);
+        // Providers
+        codeLensProvider = new AnalyticsCodeLensProvider();
+        hoverProvider = new AnalyticsHoverProvider();
+        context.subscriptions.push(vscode.languages.registerCodeLensProvider([{ language: 'markdown' }, { language: 'mdx' }, { language: 'astro' }], codeLensProvider), vscode.languages.registerHoverProvider([{ language: 'markdown' }, { language: 'mdx' }, { language: 'astro' }], hoverProvider));
         // Auto-update status bar on editor change
         context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
             updateStatusBar(editor?.document);
