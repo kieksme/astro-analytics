@@ -95,17 +95,26 @@ Cmd+Shift+P → "Install from VSIX..."
 
 ```bash
 pnpm install
-pnpm run watch
+pnpm run compile   # baut TypeScript + Bundle (dist/extension.js)
 # F5 in VSCode → öffnet Extension Development Host
 ```
 
+Für inkrementellen TypeScript-Build: `pnpm run watch` (danach ggf. `pnpm run bundle` zum Aktualisieren der Extension).
+
 ## Tests
 
-Unit tests (Vitest) in `test/` – Struktur spiegelt `src/` wider (z. B. `test/lib/slug.test.ts` → `src/lib/slug.ts`):
+**Unit-Tests (Vitest)** in `tests/` – z. B. `tests/lib/slug.test.ts`:
 
 ```bash
-pnpm install
 pnpm test
 ```
 
 Watch-Modus: `pnpm run test:watch`
+
+**Integrationstests** (Extension in VS Code starten und Befehle prüfen):
+
+```bash
+pnpm run test:integration
+```
+
+(Hinweis: Kein anderes VS Code-Fenster sollte laufen, wenn du die Tests von der Kommandozeile startest.)

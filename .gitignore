@@ -1,7 +1,8 @@
 node_modules
+dist
+.vscode-test
 .agents
 .cursor
 .env
 *.vsix
 .pnpm-store
-.vscode

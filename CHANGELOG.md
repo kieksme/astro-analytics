@@ -1,5 +1,10 @@
 # Release Notes
 
+## Unreleased
+
+- Integration tests with `@vscode/test-electron` (run with `pnpm run test:integration`).
+- Production build now uses esbuild to bundle the extension into a single `dist/extension.js` for smaller package size and faster load.
+
 ## 0.2.7
 
 - Best practices improvements:

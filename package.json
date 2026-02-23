@@ -21,7 +21,7 @@
     "onCommand:astro-analytics.refresh",
     "onCommand:astro-analytics.configure"
   ],
-  "main": "./out/extension.js",
+  "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
@@ -83,11 +83,15 @@
   },
   "scripts": {
     "build": "pnpm test && pnpm compile && pnpm package",
-    "compile": "tsc -p ./",
+    "compile": "tsc -p ./ && pnpm run bundle",
+    "compile:all": "pnpm run compile && pnpm run compile:tests",
+    "compile:tests": "tsc -p tsconfig.test.json",
     "watch": "tsc -watch -p ./",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:integration": "pnpm run compile && pnpm run compile:tests && vscode-test",
     "vscode:prepublish": "pnpm run compile",
+    "bundle": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --external:google-auth-library --external:node-fetch --format=cjs --platform=node",
     "package": "pnpx vsce package --no-dependencies --allow-missing-repository"
   },
   "dependencies": {
@@ -97,7 +101,13 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/node-fetch": "^2.6.11",
+    "@types/mocha": "^10.0.0",
     "@types/vscode": "^1.85.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.3.9",
+    "esbuild": "^0.24.0",
+    "glob": "^11.0.0",
+    "mocha": "^10.8.0",
     "typescript": "^5.3.0",
     "vitest": "^2.0.0",
     "@vscode/vsce": "^2.24.0"

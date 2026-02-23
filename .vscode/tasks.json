@@ -1,0 +1,21 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "pnpm: compile",
+      "type": "npm",
+      "script": "compile",
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "panel": "shared" },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "pnpm: watch",
+      "type": "npm",
+      "script": "watch",
+      "isBackground": true,
+      "presentation": { "panel": "shared" },
+      "problemMatcher": ["$tsc-watch"]
+    }
+  ]
+}

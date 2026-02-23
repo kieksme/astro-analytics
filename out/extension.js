@@ -166,7 +166,7 @@ class AnalyticsHoverProvider {
             return null;
         const icon = (0, format_1.bounceColor)(metrics.bounceRate);
         const md = new vscode.MarkdownString(undefined, true);
-        md.isTrusted = true;
+        md.isTrusted = false;
         md.appendMarkdown(`### 📊 Analytics — \`${slug}\`\n\n`);
         md.appendMarkdown(`| Metrik | Wert |\n|---|---|\n`);
         md.appendMarkdown(`| ${icon} Bounce Rate | **${(0, format_1.fmtPct)(metrics.bounceRate)}** |\n`);
@@ -206,48 +206,75 @@ function updateStatusBar(document) {
     if (!metrics) {
         statusBarItem.text = '$(graph) Analytics: —';
         statusBarItem.tooltip = `No data for ${slug}`;
+        statusBarItem.accessibilityInformation = { label: `Analytics: no data for ${slug}`, role: 'status' };
         statusBarItem.show();
         return;
     }
     const icon = (0, format_1.bounceColor)(metrics.bounceRate);
     statusBarItem.text = `$(graph) ${icon} ${(0, format_1.fmtPct)(metrics.bounceRate)} Bounce · ${metrics.views.toLocaleString('de')} Views`;
     statusBarItem.tooltip = `Bounce: ${(0, format_1.fmtPct)(metrics.bounceRate)} | Views: ${metrics.views} | Users: ${metrics.users} | Ø ${(0, format_1.fmtDuration)(metrics.avgSessionDuration)}`;
+    statusBarItem.accessibilityInformation = {
+        label: `Analytics: Bounce ${(0, format_1.fmtPct)(metrics.bounceRate)}, ${metrics.views} views, ${metrics.users} users. Click to refresh.`,
+        role: 'status',
+    };
     statusBarItem.command = 'astro-analytics.refresh';
     statusBarItem.show();
+}
+function getErrorMessage(err) {
+    return err instanceof Error ? err.message : String(err);
 }
 // ---------------------------------------------------------------------------
 // Data refresh
 // ---------------------------------------------------------------------------
 async function refreshData(codeLensProvider) {
     const config = vscode.workspace.getConfiguration('astroAnalytics');
-    const propertyId = config.get('propertyId', '364493652');
+    const propertyId = config.get('propertyId', '');
     const credentialsPath = config.get('credentialsPath', '');
     const lookbackDays = config.get('lookbackDays', 30);
+    if (!propertyId) {
+        vscode.window.showErrorMessage('Astro Analytics: Set astroAnalytics.propertyId in settings.', 'Open Settings').then(choice => {
+            if (choice === 'Open Settings') {
+                vscode.commands.executeCommand('workbench.action.openSettings', 'astroAnalytics.propertyId');
+            }
+        });
+        return;
+    }
     // Expand ~ in credentials path
     const resolvedCreds = credentialsPath.replace(/^~/, process.env.HOME ?? '');
-    statusBarItem.text = '$(sync~spin) Analytics: Loading…';
-    statusBarItem.show();
-    try {
-        const data = await fetchAnalyticsData(propertyId, resolvedCreds, lookbackDays);
-        metricsCache = new Map(data.map(m => [m.pagePath, m]));
-        lastFetch = Date.now();
-        outputChannel.appendLine(`[${new Date().toISOString()}] Loaded ${data.length} pages from GA4.`);
-        codeLensProvider.refresh();
-        updateStatusBar(vscode.window.activeTextEditor?.document);
-        vscode.window.setStatusBarMessage(`$(check) Analytics: ${data.length} Seiten geladen`, 3000);
-    }
-    catch (err) {
-        outputChannel.appendLine(`[ERROR] ${err.message}`);
-        outputChannel.show(true);
-        vscode.window.showErrorMessage(`Analytics Fehler: ${err.message}`);
-        statusBarItem.text = '$(graph) Analytics: Fehler';
-    }
+    await vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: 'Astro Analytics',
+        cancellable: true,
+    }, async (progress, token) => {
+        progress.report({ message: 'Loading GA4 data…' });
+        statusBarItem.text = '$(sync~spin) Analytics: Loading…';
+        statusBarItem.show();
+        try {
+            const data = await fetchAnalyticsData(propertyId, resolvedCreds, lookbackDays);
+            if (token.isCancellationRequested)
+                return;
+            metricsCache = new Map(data.map(m => [m.pagePath, m]));
+            lastFetch = Date.now();
+            outputChannel.appendLine(`[${new Date().toISOString()}] Loaded ${data.length} pages from GA4.`);
+            codeLensProvider.refresh();
+            updateStatusBar(vscode.window.activeTextEditor?.document);
+            vscode.window.setStatusBarMessage(`$(check) Analytics: ${data.length} Seiten geladen`, 3000);
+        }
+        catch (err) {
+            const msg = getErrorMessage(err);
+            outputChannel.appendLine(`[ERROR] ${msg}`);
+            outputChannel.show(true);
+            vscode.window.showErrorMessage(`Analytics Fehler: ${msg}`);
+            statusBarItem.text = '$(graph) Analytics: Fehler';
+        }
+    });
 }
 // ---------------------------------------------------------------------------
 // Activate
 // ---------------------------------------------------------------------------
 function activate(context) {
     outputChannel = vscode.window.createOutputChannel('Astro Analytics');
+    context.subscriptions.push(outputChannel);
     // Status bar
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     context.subscriptions.push(statusBarItem);
@@ -276,6 +303,6 @@ function activate(context) {
     outputChannel.appendLine('Astro Analytics extension activated.');
 }
 function deactivate() {
-    statusBarItem?.dispose();
+    // Resources are disposed via context.subscriptions
 }
 //# sourceMappingURL=extension.js.map
