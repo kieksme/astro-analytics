@@ -1,0 +1,22 @@
+{
+  "displayName": "Astro Analytics",
+  "description": "Exibe métricas do Google Analytics GA4 (taxa de rejeição, visualizações, utilizadores) para páginas Astro Markdown e ficheiros .astro diretamente no VSCode.",
+  "command.refresh.title": "Atualizar dados",
+  "command.testConnection.title": "Testar ligação à API",
+  "command.configure.title": "Configurar",
+  "command.showDashboard.title": "Abrir painel",
+  "command.category": "Astro Analytics",
+  "config.title": "Astro Analytics",
+  "config.propertyId": "ID da propriedade Google Analytics GA4 (numérico). Defina nas definições para ativar.",
+  "config.credentialsPath": "Caminho para o ficheiro JSON de credenciais predefinidas do Google Application",
+  "config.lookbackDays": "Número de dias a considerar para os dados de análise",
+  "config.contentRoot": "Pasta raiz do conteúdo Astro (.md/.mdx) relativa à área de trabalho",
+  "config.pagesRoot": "Pasta raiz das páginas Astro (.astro) relativa à área de trabalho",
+  "viewContainer.title": "Astro Analytics",
+  "view.dashboard.name": "Painel",
+  "icon.analytics.description": "Painel Astro Analytics",
+  "icon.bounceGood.description": "Taxa de rejeição boa",
+  "icon.bounceWarning.description": "Taxa de rejeição aviso",
+  "icon.bounceHigh.description": "Taxa de rejeição alta",
+  "icon.bounceCritical.description": "Taxa de rejeição crítica"
+}

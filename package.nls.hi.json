@@ -1,0 +1,22 @@
+{
+  "displayName": "Astro Analytics",
+  "description": "Astro Markdown पेज और .astro फ़ाइलों के लिए Google Analytics GA4 मेट्रिक्स (बाउंस रेट, व्यूज़, यूज़र्स) VSCode में इनलाइन दिखाता है।",
+  "command.refresh.title": "डेटा रिफ़्रेश करें",
+  "command.testConnection.title": "API कनेक्शन टेस्ट करें",
+  "command.configure.title": "कॉन्फ़िगर करें",
+  "command.showDashboard.title": "डैशबोर्ड खोलें",
+  "command.category": "Astro Analytics",
+  "config.title": "Astro Analytics",
+  "config.propertyId": "Google Analytics GA4 प्रॉपर्टी ID (संख्यात्मक)। सक्षम करने के लिए सेटिंग्स में सेट करें।",
+  "config.credentialsPath": "Google Application Default Credentials JSON फ़ाइल का पथ",
+  "config.lookbackDays": "एनालिटिक्स डेटा के लिए पीछे देखने के दिनों की संख्या",
+  "config.contentRoot": "वर्कस्पेस के सापेक्ष Astro कंटेंट का रूट फ़ोल्डर (.md/.mdx)",
+  "config.pagesRoot": "वर्कस्पेस के सापेक्ष Astro पेजों का रूट फ़ोल्डर (.astro)",
+  "viewContainer.title": "Astro Analytics",
+  "view.dashboard.name": "डैशबोर्ड",
+  "icon.analytics.description": "Astro Analytics डैशबोर्ड",
+  "icon.bounceGood.description": "बाउंस रेट अच्छा",
+  "icon.bounceWarning.description": "बाउंस रेट चेतावनी",
+  "icon.bounceHigh.description": "बाउंस रेट उच्च",
+  "icon.bounceCritical.description": "बाउंस रेट गंभीर"
+}

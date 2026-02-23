@@ -1,0 +1,22 @@
+{
+  "displayName": "Astro Analytics",
+  "description": "Показывает метрики Google Analytics GA4 (показатель отказов, просмотры, пользователи) для страниц Astro Markdown и файлов .astro прямо в VSCode.",
+  "command.refresh.title": "Обновить данные",
+  "command.testConnection.title": "Проверить подключение API",
+  "command.configure.title": "Настроить",
+  "command.showDashboard.title": "Открыть панель",
+  "command.category": "Astro Analytics",
+  "config.title": "Astro Analytics",
+  "config.propertyId": "Идентификатор ресурса Google Analytics GA4 (числовой). Укажите в настройках для включения.",
+  "config.credentialsPath": "Путь к JSON-файлу учётных данных Google Application по умолчанию",
+  "config.lookbackDays": "Количество дней для анализа данных",
+  "config.contentRoot": "Корневая папка контента Astro (.md/.mdx) относительно рабочей области",
+  "config.pagesRoot": "Корневая папка страниц Astro (.astro) относительно рабочей области",
+  "viewContainer.title": "Astro Analytics",
+  "view.dashboard.name": "Панель",
+  "icon.analytics.description": "Панель Astro Analytics",
+  "icon.bounceGood.description": "Показатель отказов хороший",
+  "icon.bounceWarning.description": "Показатель отказов предупреждение",
+  "icon.bounceHigh.description": "Показатель отказов высокий",
+  "icon.bounceCritical.description": "Показатель отказов критический"
+}

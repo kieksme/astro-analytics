@@ -1,0 +1,22 @@
+{
+  "displayName": "Astro Analytics",
+  "description": "แสดงเมตริก Google Analytics GA4 (อัตราการตีกลับ การดู ผู้ใช้) สำหรับหน้า Astro Markdown และไฟล์ .astro แบบอินไลน์ใน VSCode",
+  "command.refresh.title": "รีเฟรชข้อมูล",
+  "command.testConnection.title": "ทดสอบการเชื่อมต่อ API",
+  "command.configure.title": "กำหนดค่า",
+  "command.showDashboard.title": "เปิดแดชบอร์ด",
+  "command.category": "Astro Analytics",
+  "config.title": "Astro Analytics",
+  "config.propertyId": "รหัสทรัพย์สิน Google Analytics GA4 (ตัวเลข) ตั้งค่าในการตั้งค่าเพื่อเปิดใช้งาน",
+  "config.credentialsPath": "เส้นทางไปยังไฟล์ JSON ข้อมูลประจำตัวเริ่มต้นของ Google Application",
+  "config.lookbackDays": "จำนวนวันในการดึงข้อมูลวิเคราะห์",
+  "config.contentRoot": "โฟลเดอร์รูทของเนื้อหา Astro (.md/.mdx) สัมพันธ์กับพื้นที่ทำงาน",
+  "config.pagesRoot": "โฟลเดอร์รูทของหน้า Astro (.astro) สัมพันธ์กับพื้นที่ทำงาน",
+  "viewContainer.title": "Astro Analytics",
+  "view.dashboard.name": "แดชบอร์ด",
+  "icon.analytics.description": "แดชบอร์ด Astro Analytics",
+  "icon.bounceGood.description": "อัตราการตีกลับดี",
+  "icon.bounceWarning.description": "อัตราการตีกลับเตือน",
+  "icon.bounceHigh.description": "อัตราการตีกลับสูง",
+  "icon.bounceCritical.description": "อัตราการตีกลับร้ายแรง"
+}

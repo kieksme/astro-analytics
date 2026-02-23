@@ -1,0 +1,22 @@
+{
+  "displayName": "Astro Analytics",
+  "description": "Toont Google Analytics GA4-metrics (bouncepercentage, weergaven, gebruikers) voor Astro Markdown-pagina's en .astro-bestanden direct in VSCode.",
+  "command.refresh.title": "Gegevens vernieuwen",
+  "command.testConnection.title": "API-verbinding testen",
+  "command.configure.title": "Configureren",
+  "command.showDashboard.title": "Dashboard openen",
+  "command.category": "Astro Analytics",
+  "config.title": "Astro Analytics",
+  "config.propertyId": "Google Analytics GA4-eigenschaps-ID (numeriek). Stel in via instellingen om in te schakelen.",
+  "config.credentialsPath": "Pad naar het JSON-bestand met standaardreferenties van Google Application",
+  "config.lookbackDays": "Aantal dagen om terug te kijken voor analysedata",
+  "config.contentRoot": "Basis map van Astro-inhoud (.md/.mdx) relatief aan de werkruimte",
+  "config.pagesRoot": "Basis map voor Astro-pagina's (.astro) relatief aan de werkruimte",
+  "viewContainer.title": "Astro Analytics",
+  "view.dashboard.name": "Dashboard",
+  "icon.analytics.description": "Astro Analytics-dashboard",
+  "icon.bounceGood.description": "Bouncepercentage goed",
+  "icon.bounceWarning.description": "Bouncepercentage waarschuwing",
+  "icon.bounceHigh.description": "Bouncepercentage hoog",
+  "icon.bounceCritical.description": "Bouncepercentage kritiek"
+}

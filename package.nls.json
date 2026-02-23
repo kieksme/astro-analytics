@@ -1,0 +1,22 @@
+{
+  "displayName": "Astro Analytics",
+  "description": "Shows Google Analytics GA4 metrics (Bounce Rate, Views, Users) for Astro Markdown pages and .astro files inline in VSCode",
+  "command.refresh.title": "Refresh Data",
+  "command.testConnection.title": "Test API Connection",
+  "command.configure.title": "Configure",
+  "command.showDashboard.title": "Open Dashboard",
+  "command.category": "Astro Analytics",
+  "config.title": "Astro Analytics",
+  "config.propertyId": "Google Analytics GA4 Property ID (numeric). Set in settings to enable.",
+  "config.credentialsPath": "Path to Google Application Default Credentials JSON file",
+  "config.lookbackDays": "Number of days to look back for analytics data",
+  "config.contentRoot": "Root folder of Astro content (.md/.mdx files) relative to workspace",
+  "config.pagesRoot": "Root folder for Astro pages (.astro files) relative to workspace",
+  "viewContainer.title": "Astro Analytics",
+  "view.dashboard.name": "Dashboard",
+  "icon.analytics.description": "Astro Analytics dashboard",
+  "icon.bounceGood.description": "Bounce rate good",
+  "icon.bounceWarning.description": "Bounce rate warning",
+  "icon.bounceHigh.description": "Bounce rate high",
+  "icon.bounceCritical.description": "Bounce rate critical"
+}

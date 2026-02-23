@@ -1,0 +1,22 @@
+{
+  "displayName": "Astro Analytics",
+  "description": "Pokazuje metryki Google Analytics GA4 (wskaźnik odrzuceń, wyświetlenia, użytkownicy) dla stron Astro Markdown i plików .astro bezpośrednio w VSCode.",
+  "command.refresh.title": "Odśwież dane",
+  "command.testConnection.title": "Testuj połączenie API",
+  "command.configure.title": "Konfiguruj",
+  "command.showDashboard.title": "Otwórz panel",
+  "command.category": "Astro Analytics",
+  "config.title": "Astro Analytics",
+  "config.propertyId": "ID właściwości Google Analytics GA4 (numeryczne). Ustaw w ustawieniach, aby włączyć.",
+  "config.credentialsPath": "Ścieżka do pliku JSON z domyślnymi poświadczeniami Google Application",
+  "config.lookbackDays": "Liczba dni wstecz dla danych analitycznych",
+  "config.contentRoot": "Folder główny treści Astro (.md/.mdx) względem obszaru roboczego",
+  "config.pagesRoot": "Folder główny stron Astro (.astro) względem obszaru roboczego",
+  "viewContainer.title": "Astro Analytics",
+  "view.dashboard.name": "Panel",
+  "icon.analytics.description": "Panel Astro Analytics",
+  "icon.bounceGood.description": "Wskaźnik odrzuceń dobry",
+  "icon.bounceWarning.description": "Wskaźnik odrzuceń ostrzeżenie",
+  "icon.bounceHigh.description": "Wskaźnik odrzuceń wysoki",
+  "icon.bounceCritical.description": "Wskaźnik odrzuceń krytyczny"
+}

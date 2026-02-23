@@ -1,0 +1,22 @@
+{
+  "displayName": "Astro Analytics",
+  "description": "Astro Markdown 페이지 및 .astro 파일의 Google Analytics GA4 지표(이탈률, 조회수, 사용자)를 VSCode에서 인라인으로 표시합니다.",
+  "command.refresh.title": "데이터 새로 고침",
+  "command.testConnection.title": "API 연결 테스트",
+  "command.configure.title": "구성",
+  "command.showDashboard.title": "대시보드 열기",
+  "command.category": "Astro Analytics",
+  "config.title": "Astro Analytics",
+  "config.propertyId": "Google Analytics GA4 속성 ID(숫자). 설정에서 사용하도록 설정합니다.",
+  "config.credentialsPath": "Google 애플리케이션 기본 인증 정보 JSON 파일 경로",
+  "config.lookbackDays": "분석 데이터를 조회할 일수",
+  "config.contentRoot": "작업 영역에 대한 Astro 콘텐츠 루트 폴더(.md/.mdx)",
+  "config.pagesRoot": "작업 영역에 대한 Astro 페이지 루트 폴더(.astro)",
+  "viewContainer.title": "Astro Analytics",
+  "view.dashboard.name": "대시보드",
+  "icon.analytics.description": "Astro Analytics 대시보드",
+  "icon.bounceGood.description": "이탈률 양호",
+  "icon.bounceWarning.description": "이탈률 경고",
+  "icon.bounceHigh.description": "이탈률 높음",
+  "icon.bounceCritical.description": "이탈률 심각"
+}

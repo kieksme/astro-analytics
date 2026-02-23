@@ -1,0 +1,22 @@
+{
+  "displayName": "Astro Analytics",
+  "description": "在 VSCode 中内联显示 Astro Markdown 页面和 .astro 文件的 Google Analytics GA4 指标（跳出率、浏览量、用户数）。",
+  "command.refresh.title": "刷新数据",
+  "command.testConnection.title": "测试 API 连接",
+  "command.configure.title": "配置",
+  "command.showDashboard.title": "打开仪表板",
+  "command.category": "Astro Analytics",
+  "config.title": "Astro Analytics",
+  "config.propertyId": "Google Analytics GA4 媒体资源 ID（数字）。在设置中配置以启用。",
+  "config.credentialsPath": "Google 应用程序默认凭据 JSON 文件路径",
+  "config.lookbackDays": "分析数据回溯天数",
+  "config.contentRoot": "Astro 内容根目录（.md/.mdx）相对于工作区",
+  "config.pagesRoot": "Astro 页面根目录（.astro）相对于工作区",
+  "viewContainer.title": "Astro Analytics",
+  "view.dashboard.name": "仪表板",
+  "icon.analytics.description": "Astro Analytics 仪表板",
+  "icon.bounceGood.description": "跳出率良好",
+  "icon.bounceWarning.description": "跳出率警告",
+  "icon.bounceHigh.description": "跳出率较高",
+  "icon.bounceCritical.description": "跳出率严重"
+}

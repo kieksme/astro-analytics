@@ -1,0 +1,22 @@
+{
+  "displayName": "Astro Analytics",
+  "description": "Mostra le metriche Google Analytics GA4 (tasso di rimbalzo, visualizzazioni, utenti) per le pagine Astro Markdown e i file .astro direttamente in VSCode.",
+  "command.refresh.title": "Aggiorna dati",
+  "command.testConnection.title": "Test connessione API",
+  "command.configure.title": "Configura",
+  "command.showDashboard.title": "Apri dashboard",
+  "command.category": "Astro Analytics",
+  "config.title": "Astro Analytics",
+  "config.propertyId": "ID proprietà Google Analytics GA4 (numerico). Imposta nelle impostazioni per abilitare.",
+  "config.credentialsPath": "Percorso al file JSON delle credenziali predefinite Google Application",
+  "config.lookbackDays": "Numero di giorni da considerare per i dati di analisi",
+  "config.contentRoot": "Cartella radice dei contenuti Astro (.md/.mdx) relativa all'area di lavoro",
+  "config.pagesRoot": "Cartella radice delle pagine Astro (.astro) relativa all'area di lavoro",
+  "viewContainer.title": "Astro Analytics",
+  "view.dashboard.name": "Dashboard",
+  "icon.analytics.description": "Dashboard Astro Analytics",
+  "icon.bounceGood.description": "Tasso di rimbalzo buono",
+  "icon.bounceWarning.description": "Tasso di rimbalzo attenzione",
+  "icon.bounceHigh.description": "Tasso di rimbalzo alto",
+  "icon.bounceCritical.description": "Tasso di rimbalzo critico"
+}

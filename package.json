@@ -1,7 +1,7 @@
 {
   "name": "astro-analytics",
-  "displayName": "Astro Analytics",
-  "description": "Shows Google Analytics GA4 metrics (Bounce Rate, Views, Users) for Astro Markdown pages and .astro files inline in VSCode",
+  "displayName": "%displayName%",
+  "description": "%description%",
   "version": "0.3.2",
   "publisher": "kieksme",
   "repository": {
@@ -27,11 +27,12 @@
     "onView:astroAnalytics.dashboard"
   ],
   "main": "./dist/extension.js",
+  "l10n": "./l10n",
   "contributes": {
     "icons": [
       {
         "id": "astro-analytics.analytics",
-        "description": "Astro Analytics dashboard",
+        "description": "%icon.analytics.description%",
         "default": {
           "light": "resources/icons/analytics.svg",
           "dark": "resources/icons/analytics.svg"
@@ -39,7 +40,7 @@
       },
       {
         "id": "astro-analytics.bounce-good",
-        "description": "Bounce rate good",
+        "description": "%icon.bounceGood.description%",
         "default": {
           "light": "resources/icons/bounce-good.svg",
           "dark": "resources/icons/bounce-good.svg"
@@ -47,7 +48,7 @@
       },
       {
         "id": "astro-analytics.bounce-warning",
-        "description": "Bounce rate warning",
+        "description": "%icon.bounceWarning.description%",
         "default": {
           "light": "resources/icons/bounce-warning.svg",
           "dark": "resources/icons/bounce-warning.svg"
@@ -55,7 +56,7 @@
       },
       {
         "id": "astro-analytics.bounce-high",
-        "description": "Bounce rate high",
+        "description": "%icon.bounceHigh.description%",
         "default": {
           "light": "resources/icons/bounce-high.svg",
           "dark": "resources/icons/bounce-high.svg"
@@ -63,7 +64,7 @@
       },
       {
         "id": "astro-analytics.bounce-critical",
-        "description": "Bounce rate critical",
+        "description": "%icon.bounceCritical.description%",
         "default": {
           "light": "resources/icons/bounce-critical.svg",
           "dark": "resources/icons/bounce-critical.svg"
@@ -73,55 +74,55 @@
     "commands": [
       {
         "command": "astro-analytics.refresh",
-        "title": "Refresh Data",
+        "title": "%command.refresh.title%",
         "icon": "$(sync)",
-        "category": "Astro Analytics"
+        "category": "%command.category%"
       },
       {
         "command": "astro-analytics.testConnection",
-        "title": "Test API Connection",
+        "title": "%command.testConnection.title%",
         "icon": "$(debug-start)",
-        "category": "Astro Analytics"
+        "category": "%command.category%"
       },
       {
         "command": "astro-analytics.configure",
-        "title": "Configure",
-        "category": "Astro Analytics"
+        "title": "%command.configure.title%",
+        "category": "%command.category%"
       },
       {
         "command": "astro-analytics.showDashboard",
-        "title": "Open Dashboard",
+        "title": "%command.showDashboard.title%",
         "icon": "$(astro-analytics.analytics)",
-        "category": "Astro Analytics"
+        "category": "%command.category%"
       }
     ],
     "configuration": {
-      "title": "Astro Analytics",
+      "title": "%config.title%",
       "properties": {
         "astroAnalytics.propertyId": {
           "type": "string",
           "default": "",
-          "description": "Google Analytics GA4 Property ID (numeric). Set in settings to enable."
+          "description": "%config.propertyId%"
         },
         "astroAnalytics.credentialsPath": {
           "type": "string",
           "default": "",
-          "description": "Path to Google Application Default Credentials JSON file"
+          "description": "%config.credentialsPath%"
         },
         "astroAnalytics.lookbackDays": {
           "type": "number",
           "default": 30,
-          "description": "Number of days to look back for analytics data"
+          "description": "%config.lookbackDays%"
         },
         "astroAnalytics.contentRoot": {
           "type": "string",
           "default": "src/content",
-          "description": "Root folder of Astro content (.md/.mdx files) relative to workspace"
+          "description": "%config.contentRoot%"
         },
         "astroAnalytics.pagesRoot": {
           "type": "string",
           "default": "src/pages",
-          "description": "Root folder for Astro pages (.astro files) relative to workspace"
+          "description": "%config.pagesRoot%"
         }
       }
     },
@@ -143,7 +144,7 @@
       "activitybar": [
         {
           "id": "astroAnalytics",
-          "title": "Astro Analytics",
+          "title": "%viewContainer.title%",
           "icon": "resources/icons/analytics.svg"
         }
       ]
@@ -152,7 +153,7 @@
       "astroAnalytics": [
         {
           "id": "astroAnalytics.dashboard",
-          "name": "Dashboard"
+          "name": "%view.dashboard.name%"
         }
       ]
     }

@@ -1,0 +1,22 @@
+{
+  "displayName": "Astro Analytics",
+  "description": "Hiển thị số liệu Google Analytics GA4 (tỷ lệ thoát, lượt xem, người dùng) cho trang Astro Markdown và file .astro ngay trong VSCode.",
+  "command.refresh.title": "Làm mới dữ liệu",
+  "command.testConnection.title": "Kiểm tra kết nối API",
+  "command.configure.title": "Cấu hình",
+  "command.showDashboard.title": "Mở bảng điều khiển",
+  "command.category": "Astro Analytics",
+  "config.title": "Astro Analytics",
+  "config.propertyId": "ID thuộc tính Google Analytics GA4 (số). Đặt trong cài đặt để bật.",
+  "config.credentialsPath": "Đường dẫn tới file JSON thông tin xác thực mặc định của Google Application",
+  "config.lookbackDays": "Số ngày truy vấn dữ liệu phân tích",
+  "config.contentRoot": "Thư mục gốc nội dung Astro (.md/.mdx) so với không gian làm việc",
+  "config.pagesRoot": "Thư mục gốc trang Astro (.astro) so với không gian làm việc",
+  "viewContainer.title": "Astro Analytics",
+  "view.dashboard.name": "Bảng điều khiển",
+  "icon.analytics.description": "Bảng điều khiển Astro Analytics",
+  "icon.bounceGood.description": "Tỷ lệ thoát tốt",
+  "icon.bounceWarning.description": "Tỷ lệ thoát cảnh báo",
+  "icon.bounceHigh.description": "Tỷ lệ thoát cao",
+  "icon.bounceCritical.description": "Tỷ lệ thoát nghiêm trọng"
+}

@@ -1,0 +1,22 @@
+{
+  "displayName": "Astro Analytics",
+  "description": "Menampilkan metrik Google Analytics GA4 (tingkat pentalan, tampilan, pengguna) untuk halaman Astro Markdown dan file .astro secara inline di VSCode.",
+  "command.refresh.title": "Segarkan data",
+  "command.testConnection.title": "Uji koneksi API",
+  "command.configure.title": "Konfigurasi",
+  "command.showDashboard.title": "Buka dasbor",
+  "command.category": "Astro Analytics",
+  "config.title": "Astro Analytics",
+  "config.propertyId": "ID properti Google Analytics GA4 (numerik). Atur di pengaturan untuk mengaktifkan.",
+  "config.credentialsPath": "Path ke file JSON kredensial default Google Application",
+  "config.lookbackDays": "Jumlah hari untuk data analitik",
+  "config.contentRoot": "Folder root konten Astro (.md/.mdx) relatif ke ruang kerja",
+  "config.pagesRoot": "Folder root halaman Astro (.astro) relatif ke ruang kerja",
+  "viewContainer.title": "Astro Analytics",
+  "view.dashboard.name": "Dasbor",
+  "icon.analytics.description": "Dasbor Astro Analytics",
+  "icon.bounceGood.description": "Tingkat pentalan baik",
+  "icon.bounceWarning.description": "Tingkat pentalan peringatan",
+  "icon.bounceHigh.description": "Tingkat pentalan tinggi",
+  "icon.bounceCritical.description": "Tingkat pentalan kritis"
+}

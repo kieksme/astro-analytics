@@ -104,6 +104,32 @@ If you don’t see any metrics (CodeLens shows “no data” or status bar stays
 **If the command "Astro Analytics: Test API Connection" is not found:**  
 Rebuild the extension and reload the window. See [CONTRIBUTING.md](CONTRIBUTING.md) for build and reload steps.
 
+## Localization
+
+The extension is localized for the following languages. The UI (commands, settings, dashboard, messages) follows the VS Code display language when a translation is available:
+
+| Language   | Locale  |
+|-----------|---------|
+| English   | `en`    |
+| German    | `de`    |
+| French    | `fr`    |
+| Spanish   | `es`    |
+| Italian   | `it`    |
+| Portuguese| `pt`    |
+| Dutch     | `nl`    |
+| Polish    | `pl`    |
+| Russian   | `ru`    |
+| Mandarin (Simplified Chinese) | `zh-cn` |
+| Japanese  | `ja`    |
+| Hindi     | `hi`    |
+| Korean    | `ko`    |
+| Indonesian| `id`    |
+| Vietnamese| `vi`    |
+| Thai      | `th`    |
+| Bengali   | `bn`    |
+
+Translations are provided via `package.nls.*.json` (contributed UI) and `l10n/bundle.l10n.*.json` (extension messages and dashboard).
+
 ## Installation
 
 Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=kieksme.astro-analytics) or from a `.vsix` file (`Cmd+Shift+P` → **"Install from VSIX..."**). To build from source, see [CONTRIBUTING.md](CONTRIBUTING.md).

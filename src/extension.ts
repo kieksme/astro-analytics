@@ -5,6 +5,17 @@ import fetch from 'node-fetch';
 import { filePathToSlug, slugToFilePaths } from './lib/slug';
 import { bounceColor, fmtPct, fmtDuration } from './lib/format';
 
+/** Localization: use vscode.l10n when available (VS Code 1.74+), else return message key. */
+function l10nT(message: string, ...args: (string | number | boolean)[]): string {
+  const l10n = (vscode as { l10n?: { t: (m: string, ...a: (string | number | boolean)[]) => string } }).l10n;
+  return l10n ? l10n.t(message, ...args) : (args.length ? message.replace(/\{(\d+)\}/g, (_, i) => String(args[Number(i)] ?? '')) : message);
+}
+
+/** Current UI language (e.g. 'de', 'en'). */
+function uiLanguage(): string {
+  return (vscode as { env?: { language?: string } }).env?.language ?? 'en';
+}
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -134,18 +145,19 @@ class AnalyticsCodeLensProvider implements vscode.CodeLensProvider {
     if (!metrics) {
       return [
         new vscode.CodeLens(range, {
-          title: '$(graph) Analytics: no data ($(sync) refresh)',
+          title: `$(graph) ${l10nT('codelens.noData')}`,
           command: 'astro-analytics.refresh',
         }),
       ];
     }
 
     const bounceIcon = bounceColor(metrics.bounceRate);
+    const locale = uiLanguage();
     const lenses: vscode.CodeLens[] = [
       new vscode.CodeLens(range, {
-        title: `$(${bounceIcon}) Bounce ${fmtPct(metrics.bounceRate)}   $(eye) ${metrics.views.toLocaleString('de')} Views   $(person) ${metrics.users.toLocaleString('de')} Nutzer   $(watch) ${fmtDuration(metrics.avgSessionDuration)}`,
+        title: `$(${bounceIcon}) ${l10nT('codelens.title', fmtPct(metrics.bounceRate), metrics.views.toLocaleString(locale), metrics.users.toLocaleString(locale), fmtDuration(metrics.avgSessionDuration))}`,
         command: 'astro-analytics.refresh',
-        tooltip: 'Click to refresh analytics data',
+        tooltip: l10nT('codelens.tooltip'),
       }),
     ];
 
@@ -178,15 +190,16 @@ class AnalyticsHoverProvider implements vscode.HoverProvider {
     if (!metrics) return null;
 
     const bounceIcon = bounceColor(metrics.bounceRate);
+    const locale = uiLanguage();
     const md = new vscode.MarkdownString(undefined, true);
     md.isTrusted = false;
-    md.appendMarkdown(`### $(graph) Analytics — \`${slug}\`\n\n`);
-    md.appendMarkdown(`| Metrik | Wert |\n|---|---|\n`);
-    md.appendMarkdown(`| $(${bounceIcon}) Bounce Rate | **${fmtPct(metrics.bounceRate)}** |\n`);
-    md.appendMarkdown(`| $(eye) Seitenaufrufe | **${metrics.views.toLocaleString('de')}** |\n`);
-    md.appendMarkdown(`| $(person) Aktive Nutzer | **${metrics.users.toLocaleString('de')}** |\n`);
-    md.appendMarkdown(`| $(watch) Ø Session-Dauer | **${fmtDuration(metrics.avgSessionDuration)}** |\n`);
-    const footer = `*Letzten ${config.get<number>('lookbackDays', 30)} Tage · GA4 Property ${config.get<string>('propertyId')}*`;
+    md.appendMarkdown(`### $(graph) ${l10nT('hover.analyticsTitle')}\`${slug}\`\n\n`);
+    md.appendMarkdown(`| ${l10nT('hover.metric')} | ${l10nT('hover.value')} |\n|---|---|\n`);
+    md.appendMarkdown(`| $(${bounceIcon}) ${l10nT('hover.bounceRate')} | **${fmtPct(metrics.bounceRate)}** |\n`);
+    md.appendMarkdown(`| $(eye) ${l10nT('hover.pageViews')} | **${metrics.views.toLocaleString(locale)}** |\n`);
+    md.appendMarkdown(`| $(person) ${l10nT('hover.activeUsers')} | **${metrics.users.toLocaleString(locale)}** |\n`);
+    md.appendMarkdown(`| $(watch) ${l10nT('hover.avgSessionDuration')} | **${fmtDuration(metrics.avgSessionDuration)}** |\n`);
+    const footer = `*${l10nT('hover.footer', String(config.get<number>('lookbackDays', 30)), config.get<string>('propertyId') ?? '')}*`;
     md.appendMarkdown(`\n\n${footer}`);
 
     return new vscode.Hover(md);
@@ -223,8 +236,9 @@ class AnalyticsFileDecorationProvider implements vscode.FileDecorationProvider {
     const metrics = metricsCache.get(slug) ?? metricsCache.get(normalizePagePath(slug));
     if (!metrics) return undefined;
 
+    const locale = uiLanguage();
     const badge = (metrics.bounceRate * 100).toFixed(0) + '%';
-    const tooltip = `Bounce ${fmtPct(metrics.bounceRate)} | ${metrics.views.toLocaleString('de')} Views | ${metrics.users.toLocaleString('de')} Users | Ø ${fmtDuration(metrics.avgSessionDuration)}`;
+    const tooltip = l10nT('decoration.tooltip', fmtPct(metrics.bounceRate), metrics.views.toLocaleString(locale), metrics.users.toLocaleString(locale), fmtDuration(metrics.avgSessionDuration));
     const color = bounceThemeColor(metrics.bounceRate);
     return new vscode.FileDecoration(badge, tooltip, color);
   }
@@ -250,19 +264,20 @@ function updateStatusBar(document: vscode.TextDocument | undefined) {
   if (!slug) { statusBarItem.hide(); return; }
 
   const metrics = metricsCache.get(slug) ?? metricsCache.get(normalizePagePath(slug));
+  const locale = uiLanguage();
   if (!metrics) {
-    statusBarItem.text = '$(graph) Analytics: —';
-    statusBarItem.tooltip = `No data for ${slug}`;
-    statusBarItem.accessibilityInformation = { label: `Analytics: no data for ${slug}`, role: 'status' };
+    statusBarItem.text = `$(graph) ${l10nT('status.analyticsNone')}`;
+    statusBarItem.tooltip = l10nT('status.noDataTooltip', slug);
+    statusBarItem.accessibilityInformation = { label: l10nT('status.noDataA11y', slug), role: 'status' };
     statusBarItem.show();
     return;
   }
 
   const bounceIcon = bounceColor(metrics.bounceRate);
-  statusBarItem.text = `$(graph) $(${bounceIcon}) ${fmtPct(metrics.bounceRate)} Bounce · ${metrics.views.toLocaleString('de')} Views`;
-  statusBarItem.tooltip = `Bounce: ${fmtPct(metrics.bounceRate)} | Views: ${metrics.views} | Users: ${metrics.users} | Ø ${fmtDuration(metrics.avgSessionDuration)}`;
+  statusBarItem.text = `$(graph) $(${bounceIcon}) ${fmtPct(metrics.bounceRate)} ${l10nT('status.text', metrics.views.toLocaleString(locale))}`;
+  statusBarItem.tooltip = l10nT('status.tooltip', fmtPct(metrics.bounceRate), String(metrics.views), String(metrics.users), fmtDuration(metrics.avgSessionDuration));
   statusBarItem.accessibilityInformation = {
-    label: `Analytics: Bounce ${fmtPct(metrics.bounceRate)}, ${metrics.views} views, ${metrics.users} users. Click to refresh.`,
+    label: l10nT('status.a11y', fmtPct(metrics.bounceRate), String(metrics.views), String(metrics.users)),
     role: 'status',
   };
   statusBarItem.command = 'astro-analytics.refresh';
@@ -289,12 +304,12 @@ function resolvePagePathToFile(pagePath: string): string | null {
 function openPageInEditor(pagePath: string): void {
   const wsFolder = vscode.workspace.workspaceFolders?.[0];
   if (!wsFolder) {
-    vscode.window.showWarningMessage('Astro Analytics: No workspace folder open.');
+    vscode.window.showWarningMessage(l10nT('msg.noWorkspace'));
     return;
   }
   const found = resolvePagePathToFile(pagePath);
   if (!found) {
-    vscode.window.showWarningMessage(`Astro Analytics: No file found for path ${pagePath}`);
+    vscode.window.showWarningMessage(l10nT('msg.noFileForPath', pagePath));
     return;
   }
   vscode.window.showTextDocument(vscode.Uri.file(found));
@@ -337,13 +352,34 @@ function getDashboardData(): {
 function getDashboardHtml(webview: vscode.Webview, data: ReturnType<typeof getDashboardData>): string {
   const nonce = Date.now().toString(36) + Math.random().toString(36).slice(2);
   const dataJson = JSON.stringify(data);
+  const l10n = {
+    title: l10nT('dashboard.title'),
+    propertyId: l10nT('dashboard.propertyId'),
+    pagesInCache: l10nT('dashboard.pagesInCache'),
+    lastFetch: l10nT('dashboard.lastFetch'),
+    lookback: l10nT('dashboard.lookback'),
+    days: l10nT('dashboard.days'),
+    refreshData: l10nT('dashboard.refreshData'),
+    page: l10nT('dashboard.page'),
+    views: l10nT('dashboard.views'),
+    users: l10nT('dashboard.users'),
+    bounce: l10nT('dashboard.bounce'),
+    avgDuration: l10nT('dashboard.avgDuration'),
+    emptyState: l10nT('dashboard.emptyState'),
+    notSet: l10nT('dashboard.notSet'),
+    legendGood: l10nT('dashboard.legendGood'),
+    legendWarning: l10nT('dashboard.legendWarning'),
+    legendHigh: l10nT('dashboard.legendHigh'),
+    legendCritical: l10nT('dashboard.legendCritical'),
+  };
+  const l10nJson = JSON.stringify(l10n).replace(/</g, '\\u003c');
   const sortSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="12" height="12"><path fill="currentColor" d="M4 6h8l-4-4-4 4zm0 4l4 4 4-4H4z"/></svg>';
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${uiLanguage()}">
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}'; style-src 'unsafe-inline' ${webview.cspSource};">
-  <title>Astro Analytics Dashboard</title>
+  <title>${l10n.title}</title>
   <style>
     body { font-family: var(--vscode-font-family); padding: 1rem; color: var(--vscode-foreground); margin: 0; }
     .dashboard-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
@@ -377,31 +413,32 @@ function getDashboardHtml(webview: vscode.Webview, data: ReturnType<typeof getDa
 <body>
   <div class="dashboard-header">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="24" height="24"><path fill="currentColor" d="M4 20v-4h4v4H4zm6 0v-8h4v8h-4zm6 0V8h4v12h-4zm6 0V4h4v16h-4z"/></svg>
-    <h1>Astro Analytics Dashboard</h1>
+    <h1>${l10n.title}</h1>
   </div>
   <div class="meta">
-    <span><strong>Property ID:</strong> <span id="propertyId">-</span></span>
-    <span><strong>Pages in cache:</strong> <span id="cacheSize">0</span></span>
-    <span><strong>Last fetch:</strong> <span id="lastFetch">-</span></span>
-    <span><strong>Lookback:</strong> <span id="lookbackDays">-</span> days</span>
+    <span><strong>${l10n.propertyId}</strong> <span id="propertyId">-</span></span>
+    <span><strong>${l10n.pagesInCache}</strong> <span id="cacheSize">0</span></span>
+    <span><strong>${l10n.lastFetch}</strong> <span id="lastFetch">-</span></span>
+    <span><strong>${l10n.lookback}</strong> <span id="lookbackDays">-</span> ${l10n.days}</span>
   </div>
-  <button type="button" class="btn-refresh" id="refreshBtn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill="currentColor" d="M8 2a6 6 0 1 1-4.5 2.02L6 5h3V2l2.5 2.5L9 7V4H7.17A4 4 0 1 0 8 14a4 4 0 0 0 3.5-2.08l1.2.92A6 6 0 1 1 8 2z"/></svg> Refresh data</button>
+  <button type="button" class="btn-refresh" id="refreshBtn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill="currentColor" d="M8 2a6 6 0 1 1-4.5 2.02L6 5h3V2l2.5 2.5L9 7V4H7.17A4 4 0 1 0 8 14a4 4 0 0 0 3.5-2.08l1.2.92A6 6 0 1 1 8 2z"/></svg> ${l10n.refreshData}</button>
   <div id="tableWrap">
     <table>
       <thead><tr>
-        <th data-sort="pagePath">Page <span class="sort-icon">${sortSvg}</span></th>
-        <th data-sort="views">Views <span class="sort-icon">${sortSvg}</span></th>
-        <th data-sort="users">Users <span class="sort-icon">${sortSvg}</span></th>
-        <th data-sort="bounceRate">Bounce <span class="sort-icon">${sortSvg}</span></th>
-        <th data-sort="avgSessionDuration">Avg duration <span class="sort-icon">${sortSvg}</span></th>
+        <th data-sort="pagePath">${l10n.page} <span class="sort-icon">${sortSvg}</span></th>
+        <th data-sort="views">${l10n.views} <span class="sort-icon">${sortSvg}</span></th>
+        <th data-sort="users">${l10n.users} <span class="sort-icon">${sortSvg}</span></th>
+        <th data-sort="bounceRate">${l10n.bounce} <span class="sort-icon">${sortSvg}</span></th>
+        <th data-sort="avgSessionDuration">${l10n.avgDuration} <span class="sort-icon">${sortSvg}</span></th>
       </tr></thead>
       <tbody id="tbody"></tbody>
     </table>
   </div>
-  <div id="emptyState" class="empty-state" style="display:none;">No cached pages. Configure GA4 and run Refresh Data.</div>
-  <div class="legend" id="legend"><span class="bounce-good"><span class="bounce-dot"></span> &lt;25%</span><span class="bounce-warning"><span class="bounce-dot"></span> 25–45%</span><span class="bounce-high"><span class="bounce-dot"></span> 45–65%</span><span class="bounce-critical"><span class="bounce-dot"></span> ≥65%</span></div>
+  <div id="emptyState" class="empty-state" style="display:none;">${l10n.emptyState}</div>
+  <div class="legend" id="legend"><span class="bounce-good"><span class="bounce-dot"></span> ${l10n.legendGood}</span><span class="bounce-warning"><span class="bounce-dot"></span> ${l10n.legendWarning}</span><span class="bounce-high"><span class="bounce-dot"></span> ${l10n.legendHigh}</span><span class="bounce-critical"><span class="bounce-dot"></span> ${l10n.legendCritical}</span></div>
   <script nonce="${nonce}">
     const vscode = acquireVsCodeApi();
+    const l10n = ${l10nJson};
     const data = ${dataJson.replace(/</g, '\\u003c')};
 
     function bounceClass(rate) {
@@ -429,7 +466,7 @@ function getDashboardHtml(webview: vscode.Webview, data: ReturnType<typeof getDa
     }
 
     function render(d) {
-      document.getElementById('propertyId').textContent = d.configured ? d.propertyId : '(not set)';
+      document.getElementById('propertyId').textContent = d.configured ? d.propertyId : l10n.notSet;
       document.getElementById('cacheSize').textContent = String(d.cacheSize);
       document.getElementById('lastFetch').textContent = d.lastFetch ? new Date(d.lastFetch).toLocaleString() : '-';
       document.getElementById('lookbackDays').textContent = String(d.lookbackDays);
@@ -583,7 +620,7 @@ class DashboardViewProvider implements vscode.WebviewViewProvider {
 function showDashboard(context: vscode.ExtensionContext, codeLensProvider: AnalyticsCodeLensProvider) {
   try {
     const viewType = 'astroAnalytics.dashboard';
-    const title = 'Astro Analytics Dashboard';
+    const title = l10nT('dashboard.title');
     if (dashboardPanel) {
       dashboardPanel.reveal();
       dashboardPanel.webview.html = getDashboardHtml(dashboardPanel.webview, getDashboardData());
@@ -631,10 +668,10 @@ async function refreshData(
 
   if (!propertyId) {
     vscode.window.showErrorMessage(
-      'Astro Analytics: Set astroAnalytics.propertyId in settings.',
-      'Open Settings'
+      l10nT('msg.setPropertyId'),
+      l10nT('msg.openSettings')
     ).then(choice => {
-      if (choice === 'Open Settings') {
+      if (choice === l10nT('msg.openSettings')) {
         vscode.commands.executeCommand('workbench.action.openSettings', 'astroAnalytics.propertyId');
       }
     });
@@ -647,12 +684,12 @@ async function refreshData(
   await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: 'Astro Analytics',
+      title: l10nT('dashboard.title'),
       cancellable: true,
     },
     async (progress, token) => {
-      progress.report({ message: 'Loading GA4 data…' });
-      statusBarItem.text = '$(sync~spin) Analytics: Loading…';
+      progress.report({ message: l10nT('msg.loadingGa4') });
+      statusBarItem.text = `$(sync~spin) ${l10nT('msg.analyticsLoading')}`;
       statusBarItem.show();
 
       try {
@@ -669,14 +706,14 @@ async function refreshData(
         fileDecorationProvider.refresh();
         updateStatusBar(vscode.window.activeTextEditor?.document);
 
-        vscode.window.setStatusBarMessage(`$(check) Analytics: ${data.length} Seiten geladen`, 3000);
+        vscode.window.setStatusBarMessage(`$(check) ${l10nT('msg.pagesLoaded', String(data.length))}`, 3000);
         onDone?.();
       } catch (err: unknown) {
         const msg = getErrorMessage(err);
         outputChannel.appendLine(`[ERROR] ${msg}`);
         outputChannel.show(true);
-        vscode.window.showErrorMessage(`Analytics Fehler: ${msg}`);
-        statusBarItem.text = '$(graph) Analytics: Fehler';
+        vscode.window.showErrorMessage(l10nT('msg.analyticsError', msg));
+        statusBarItem.text = `$(graph) ${l10nT('msg.analyticsErrorStatus')}`;
       }
     }
   );
@@ -714,9 +751,7 @@ export function activate(context: vscode.ExtensionContext): void {
           const msg = getErrorMessage(err);
           outputChannel.appendLine(`[ERROR] showDashboard: ${msg}`);
           outputChannel.show(true);
-          vscode.window.showErrorMessage(
-            'Astro Analytics: Open Dashboard failed. Check the Output channel (Astro Analytics) for details.'
-          );
+          vscode.window.showErrorMessage(l10nT('msg.dashboardFailed'));
         }
       })
     );
@@ -761,7 +796,7 @@ export function activate(context: vscode.ExtensionContext): void {
       refreshData(codeLensProvider);
     }
 
-    outputChannel.appendLine('Astro Analytics extension activated.');
+    outputChannel.appendLine(l10nT('msg.extensionActivated'));
   } catch (err) {
     const msg = getErrorMessage(err);
     console.error('[Astro Analytics] Activation failed:', msg);

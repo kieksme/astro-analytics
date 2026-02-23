@@ -1,0 +1,22 @@
+{
+  "displayName": "Astro Analytics",
+  "description": "Astro Markdown ページと .astro ファイルの Google Analytics GA4 メトリクス（直帰率、閲覧数、ユーザー数）を VSCode にインライン表示します。",
+  "command.refresh.title": "データを更新",
+  "command.testConnection.title": "API 接続をテスト",
+  "command.configure.title": "設定",
+  "command.showDashboard.title": "ダッシュボードを開く",
+  "command.category": "Astro Analytics",
+  "config.title": "Astro Analytics",
+  "config.propertyId": "Google Analytics GA4 プロパティ ID（数値）。設定で有効にします。",
+  "config.credentialsPath": "Google アプリケーションのデフォルト認証情報 JSON ファイルのパス",
+  "config.lookbackDays": "分析データの遡及日数",
+  "config.contentRoot": "ワークスペースに対する Astro コンテンツのルートフォルダ（.md/.mdx）",
+  "config.pagesRoot": "ワークスペースに対する Astro ページのルートフォルダ（.astro）",
+  "viewContainer.title": "Astro Analytics",
+  "view.dashboard.name": "ダッシュボード",
+  "icon.analytics.description": "Astro Analytics ダッシュボード",
+  "icon.bounceGood.description": "直帰率良好",
+  "icon.bounceWarning.description": "直帰率警告",
+  "icon.bounceHigh.description": "直帰率高い",
+  "icon.bounceCritical.description": "直帰率深刻"
+}

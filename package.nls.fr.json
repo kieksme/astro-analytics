@@ -1,0 +1,22 @@
+{
+  "displayName": "Astro Analytics",
+  "description": "Affiche les métriques Google Analytics GA4 (taux de rebond, vues, utilisateurs) pour les pages Astro Markdown et les fichiers .astro directement dans VSCode.",
+  "command.refresh.title": "Actualiser les données",
+  "command.testConnection.title": "Tester la connexion API",
+  "command.configure.title": "Configurer",
+  "command.showDashboard.title": "Ouvrir le tableau de bord",
+  "command.category": "Astro Analytics",
+  "config.title": "Astro Analytics",
+  "config.propertyId": "ID de propriété Google Analytics GA4 (numérique). Définir dans les paramètres pour activer.",
+  "config.credentialsPath": "Chemin vers le fichier JSON des identifiants par défaut Google Application",
+  "config.lookbackDays": "Nombre de jours à prendre en compte pour les données d'analyse",
+  "config.contentRoot": "Dossier racine du contenu Astro (.md/.mdx) par rapport à l'espace de travail",
+  "config.pagesRoot": "Dossier racine des pages Astro (.astro) par rapport à l'espace de travail",
+  "viewContainer.title": "Astro Analytics",
+  "view.dashboard.name": "Tableau de bord",
+  "icon.analytics.description": "Tableau de bord Astro Analytics",
+  "icon.bounceGood.description": "Taux de rebond bon",
+  "icon.bounceWarning.description": "Taux de rebond avertissement",
+  "icon.bounceHigh.description": "Taux de rebond élevé",
+  "icon.bounceCritical.description": "Taux de rebond critique"
+}
