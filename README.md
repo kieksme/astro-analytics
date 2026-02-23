@@ -17,11 +17,11 @@ Shows Google Analytics GA4 metrics directly in VS Code when you open Astro Markd
 
 ## Bounce Rate Color Coding
 
-| Symbol | Bounce Rate              |
-|--------|--------------------------|
-| 🟢     | < 25% — Very good        |
-| 🟡     | 25–44% — Good            |
-| 🟠     | 45–64% — Average         |
+| Symbol | Bounce Rate               |
+|--------|---------------------------|
+| 🟢     | < 25% — Very good         |
+| 🟡     | 25–44% — Good             |
+| 🟠     | 45–64% — Average          |
 | 🔴     | ≥ 65% — Needs improvement |
 
 ## Setup
@@ -48,14 +48,14 @@ Credentials saved to file: [~/.config/gcloud/application_default_credentials.jso
 
 In VS Code: `Cmd+,` → search for **Astro Analytics**
 
-| Setting                       | Description                    | Default       |
-|-------------------------------|--------------------------------|---------------|
-| `astroAnalytics.propertyId`   | GA4 Property ID (numeric)      | `364493652`   |
-| `astroAnalytics.measurementId`| GA4 Measurement ID (e.g. G-XXXXXXXXXX) | (empty) |
-| `astroAnalytics.credentialsPath` | Path to credentials JSON  | (ADC default) |
-| `astroAnalytics.lookbackDays` | Time range in days             | `30`          |
-| `astroAnalytics.contentRoot`  | Astro content folder           | `src/content` |
-| `astroAnalytics.pagesRoot`    | Astro pages folder             | `src/pages`   |
+| Setting                          | Description                            | Default       |
+|----------------------------------|----------------------------------------|---------------|
+| `astroAnalytics.propertyId`      | GA4 Property ID (numeric)              | `364493652`   |
+| `astroAnalytics.measurementId`   | GA4 Measurement ID (e.g. G-XXXXXXXXXX) | (empty)       |
+| `astroAnalytics.credentialsPath` | Path to credentials JSON               | (ADC default) |
+| `astroAnalytics.lookbackDays`    | Time range in days                     | `30`          |
+| `astroAnalytics.contentRoot`     | Astro content folder                   | `src/content` |
+| `astroAnalytics.pagesRoot`       | Astro pages folder                     | `src/pages`   |
 
 Example `settings.json`:
 
