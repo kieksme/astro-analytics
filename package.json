@@ -2,7 +2,7 @@
   "name": "astro-analytics",
   "displayName": "Astro Analytics",
   "description": "Shows Google Analytics GA4 metrics (Bounce Rate, Views, Users) for Astro Markdown pages and .astro files inline in VSCode",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "publisher": "kieksme",
   "repository": {
     "type": "git",
@@ -12,13 +12,14 @@
     "vscode": "^1.85.0"
   },
   "categories": ["Other"],
+  "keywords": ["astro", "analytics", "ga4", "google-analytics", "markdown", "codelens"],
+  "license": "GPL-3.0",
   "icon": "icon.png",
   "activationEvents": [
     "onLanguage:markdown",
     "onLanguage:astro",
-    "workspaceContains:**/*.md",
-    "workspaceContains:**/*.mdx",
-    "workspaceContains:**/*.astro"
+    "onCommand:astro-analytics.refresh",
+    "onCommand:astro-analytics.configure"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -26,11 +27,13 @@
       {
         "command": "astro-analytics.refresh",
         "title": "Analytics: Refresh Data",
-        "icon": "$(sync)"
+        "icon": "$(sync)",
+        "category": "Astro Analytics"
       },
       {
         "command": "astro-analytics.configure",
-        "title": "Analytics: Configure"
+        "title": "Analytics: Configure",
+        "category": "Astro Analytics"
       }
     ],
     "configuration": {
@@ -38,8 +41,8 @@
       "properties": {
         "astroAnalytics.propertyId": {
           "type": "string",
-          "default": "364493652",
-          "description": "Google Analytics GA4 Property ID (numeric)"
+          "default": "",
+          "description": "Google Analytics GA4 Property ID (numeric). Set in settings to enable."
         },
         "astroAnalytics.measurementId": {
           "type": "string",
@@ -79,7 +82,7 @@
     }
   },
   "scripts": {
-    "build": "pnpm run compile && pnpm run package",
+    "build": "pnpm test && pnpm compile && pnpm package",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "test": "vitest run",

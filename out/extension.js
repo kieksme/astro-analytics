@@ -39,9 +39,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.activate = activate;
 exports.deactivate = deactivate;
 const vscode = __importStar(require("vscode"));
-const path = __importStar(require("path"));
 const google_auth_library_1 = require("google-auth-library");
 const node_fetch_1 = __importDefault(require("node-fetch"));
+const slug_1 = require("./lib/slug");
+const format_1 = require("./lib/format");
 // ---------------------------------------------------------------------------
 // GA4 Data API helper
 // ---------------------------------------------------------------------------
@@ -96,60 +97,6 @@ async function fetchAnalyticsData(propertyId, credentialsPath, lookbackDays) {
     return rows;
 }
 // ---------------------------------------------------------------------------
-// Slug → pagePath derivation
-// .md/.mdx: src/content/blog/my-post.md → /blog/my-post/
-// .astro:   src/pages/blog/my-post.astro → /blog/my-post/
-// ---------------------------------------------------------------------------
-function filePathToSlug(filePath, workspaceRoot, contentRoot, pagesRoot) {
-    const isAstro = filePath.endsWith('.astro');
-    const isContent = /\.(md|mdx)$/.test(filePath);
-    let absRoot;
-    let rel;
-    if (isAstro) {
-        absRoot = path.join(workspaceRoot, pagesRoot);
-        if (!filePath.startsWith(absRoot))
-            return null;
-        rel = filePath.slice(absRoot.length).replace(/\.astro$/, '');
-    }
-    else if (isContent) {
-        absRoot = path.join(workspaceRoot, contentRoot);
-        if (!filePath.startsWith(absRoot))
-            return null;
-        rel = filePath.slice(absRoot.length).replace(/\.(md|mdx)$/, '');
-    }
-    else {
-        return null;
-    }
-    // Remove index
-    rel = rel.replace(/\/index$/, '/');
-    // Ensure leading slash and trailing slash
-    if (!rel.startsWith('/'))
-        rel = '/' + rel;
-    if (!rel.endsWith('/'))
-        rel = rel + '/';
-    return rel;
-}
-// ---------------------------------------------------------------------------
-// Bounce rate → colour
-// ---------------------------------------------------------------------------
-function bounceColor(rate) {
-    if (rate < 0.25)
-        return '🟢';
-    if (rate < 0.45)
-        return '🟡';
-    if (rate < 0.65)
-        return '🟠';
-    return '🔴';
-}
-function fmtPct(rate) {
-    return (rate * 100).toFixed(1) + '%';
-}
-function fmtDuration(sec) {
-    const m = Math.floor(sec / 60);
-    const s = Math.floor(sec % 60);
-    return m > 0 ? `${m}m ${s}s` : `${s}s`;
-}
-// ---------------------------------------------------------------------------
 // Extension state
 // ---------------------------------------------------------------------------
 let metricsCache = new Map(); // keyed by pagePath
@@ -173,7 +120,7 @@ class AnalyticsCodeLensProvider {
         const config = vscode.workspace.getConfiguration('astroAnalytics');
         const contentRoot = config.get('contentRoot', 'src/content');
         const pagesRoot = config.get('pagesRoot', 'src/pages');
-        const slug = filePathToSlug(document.uri.fsPath, wsFolder.uri.fsPath, contentRoot, pagesRoot);
+        const slug = (0, slug_1.filePathToSlug)(document.uri.fsPath, wsFolder.uri.fsPath, contentRoot, pagesRoot);
         if (!slug)
             return [];
         const metrics = metricsCache.get(slug);
@@ -186,10 +133,10 @@ class AnalyticsCodeLensProvider {
                 }),
             ];
         }
-        const icon = bounceColor(metrics.bounceRate);
+        const icon = (0, format_1.bounceColor)(metrics.bounceRate);
         const lenses = [
             new vscode.CodeLens(range, {
-                title: `${icon} Bounce ${fmtPct(metrics.bounceRate)}   👁 ${metrics.views.toLocaleString('de')} Views   👤 ${metrics.users.toLocaleString('de')} Nutzer   ⏱ ${fmtDuration(metrics.avgSessionDuration)}`,
+                title: `${icon} Bounce ${(0, format_1.fmtPct)(metrics.bounceRate)}   👁 ${metrics.views.toLocaleString('de')} Views   👤 ${metrics.users.toLocaleString('de')} Nutzer   ⏱ ${(0, format_1.fmtDuration)(metrics.avgSessionDuration)}`,
                 command: 'astro-analytics.refresh',
                 tooltip: 'Click to refresh analytics data',
             }),
@@ -211,22 +158,26 @@ class AnalyticsHoverProvider {
         const config = vscode.workspace.getConfiguration('astroAnalytics');
         const contentRoot = config.get('contentRoot', 'src/content');
         const pagesRoot = config.get('pagesRoot', 'src/pages');
-        const slug = filePathToSlug(document.uri.fsPath, wsFolder.uri.fsPath, contentRoot, pagesRoot);
+        const slug = (0, slug_1.filePathToSlug)(document.uri.fsPath, wsFolder.uri.fsPath, contentRoot, pagesRoot);
         if (!slug)
             return null;
         const metrics = metricsCache.get(slug);
         if (!metrics)
             return null;
-        const icon = bounceColor(metrics.bounceRate);
+        const icon = (0, format_1.bounceColor)(metrics.bounceRate);
         const md = new vscode.MarkdownString(undefined, true);
         md.isTrusted = true;
         md.appendMarkdown(`### 📊 Analytics — \`${slug}\`\n\n`);
         md.appendMarkdown(`| Metrik | Wert |\n|---|---|\n`);
-        md.appendMarkdown(`| ${icon} Bounce Rate | **${fmtPct(metrics.bounceRate)}** |\n`);
+        md.appendMarkdown(`| ${icon} Bounce Rate | **${(0, format_1.fmtPct)(metrics.bounceRate)}** |\n`);
         md.appendMarkdown(`| 👁 Seitenaufrufe | **${metrics.views.toLocaleString('de')}** |\n`);
         md.appendMarkdown(`| 👤 Aktive Nutzer | **${metrics.users.toLocaleString('de')}** |\n`);
-        md.appendMarkdown(`| ⏱ Ø Session-Dauer | **${fmtDuration(metrics.avgSessionDuration)}** |\n`);
-        md.appendMarkdown(`\n\n*Letzten ${config.get('lookbackDays', 30)} Tage · GA4 Property ${config.get('propertyId')}*`);
+        md.appendMarkdown(`| ⏱ Ø Session-Dauer | **${(0, format_1.fmtDuration)(metrics.avgSessionDuration)}** |\n`);
+        const measurementId = config.get('measurementId', '');
+        const footer = measurementId
+            ? `*Letzten ${config.get('lookbackDays', 30)} Tage · Property ${config.get('propertyId')} · ${measurementId}*`
+            : `*Letzten ${config.get('lookbackDays', 30)} Tage · GA4 Property ${config.get('propertyId')}*`;
+        md.appendMarkdown(`\n\n${footer}`);
         return new vscode.Hover(md);
     }
 }
@@ -246,7 +197,7 @@ function updateStatusBar(document) {
     const config = vscode.workspace.getConfiguration('astroAnalytics');
     const contentRoot = config.get('contentRoot', 'src/content');
     const pagesRoot = config.get('pagesRoot', 'src/pages');
-    const slug = filePathToSlug(document.uri.fsPath, wsFolder.uri.fsPath, contentRoot, pagesRoot);
+    const slug = (0, slug_1.filePathToSlug)(document.uri.fsPath, wsFolder.uri.fsPath, contentRoot, pagesRoot);
     if (!slug) {
         statusBarItem.hide();
         return;
@@ -258,9 +209,9 @@ function updateStatusBar(document) {
         statusBarItem.show();
         return;
     }
-    const icon = bounceColor(metrics.bounceRate);
-    statusBarItem.text = `$(graph) ${icon} ${fmtPct(metrics.bounceRate)} Bounce · ${metrics.views.toLocaleString('de')} Views`;
-    statusBarItem.tooltip = `Bounce: ${fmtPct(metrics.bounceRate)} | Views: ${metrics.views} | Users: ${metrics.users} | Ø ${fmtDuration(metrics.avgSessionDuration)}`;
+    const icon = (0, format_1.bounceColor)(metrics.bounceRate);
+    statusBarItem.text = `$(graph) ${icon} ${(0, format_1.fmtPct)(metrics.bounceRate)} Bounce · ${metrics.views.toLocaleString('de')} Views`;
+    statusBarItem.tooltip = `Bounce: ${(0, format_1.fmtPct)(metrics.bounceRate)} | Views: ${metrics.views} | Users: ${metrics.users} | Ø ${(0, format_1.fmtDuration)(metrics.avgSessionDuration)}`;
     statusBarItem.command = 'astro-analytics.refresh';
     statusBarItem.show();
 }

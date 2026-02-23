@@ -161,7 +161,7 @@ class AnalyticsHoverProvider implements vscode.HoverProvider {
 
     const icon = bounceColor(metrics.bounceRate);
     const md = new vscode.MarkdownString(undefined, true);
-    md.isTrusted = true;
+    md.isTrusted = false;
     md.appendMarkdown(`### 📊 Analytics — \`${slug}\`\n\n`);
     md.appendMarkdown(`| Metrik | Wert |\n|---|---|\n`);
     md.appendMarkdown(`| ${icon} Bounce Rate | **${fmtPct(metrics.bounceRate)}** |\n`);
@@ -201,6 +201,7 @@ function updateStatusBar(document: vscode.TextDocument | undefined) {
   if (!metrics) {
     statusBarItem.text = '$(graph) Analytics: —';
     statusBarItem.tooltip = `No data for ${slug}`;
+    statusBarItem.accessibilityInformation = { label: `Analytics: no data for ${slug}`, role: 'status' };
     statusBarItem.show();
     return;
   }
@@ -208,8 +209,16 @@ function updateStatusBar(document: vscode.TextDocument | undefined) {
   const icon = bounceColor(metrics.bounceRate);
   statusBarItem.text = `$(graph) ${icon} ${fmtPct(metrics.bounceRate)} Bounce · ${metrics.views.toLocaleString('de')} Views`;
   statusBarItem.tooltip = `Bounce: ${fmtPct(metrics.bounceRate)} | Views: ${metrics.views} | Users: ${metrics.users} | Ø ${fmtDuration(metrics.avgSessionDuration)}`;
+  statusBarItem.accessibilityInformation = {
+    label: `Analytics: Bounce ${fmtPct(metrics.bounceRate)}, ${metrics.views} views, ${metrics.users} users. Click to refresh.`,
+    role: 'status',
+  };
   statusBarItem.command = 'astro-analytics.refresh';
   statusBarItem.show();
+}
+
+function getErrorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
 }
 
 // ---------------------------------------------------------------------------
@@ -217,32 +226,57 @@ function updateStatusBar(document: vscode.TextDocument | undefined) {
 // ---------------------------------------------------------------------------
 async function refreshData(codeLensProvider: AnalyticsCodeLensProvider) {
   const config = vscode.workspace.getConfiguration('astroAnalytics');
-  const propertyId = config.get<string>('propertyId', '364493652');
+  const propertyId = config.get<string>('propertyId', '');
   const credentialsPath = config.get<string>('credentialsPath', '');
   const lookbackDays = config.get<number>('lookbackDays', 30);
+
+  if (!propertyId) {
+    vscode.window.showErrorMessage(
+      'Astro Analytics: Set astroAnalytics.propertyId in settings.',
+      'Open Settings'
+    ).then(choice => {
+      if (choice === 'Open Settings') {
+        vscode.commands.executeCommand('workbench.action.openSettings', 'astroAnalytics.propertyId');
+      }
+    });
+    return;
+  }
 
   // Expand ~ in credentials path
   const resolvedCreds = credentialsPath.replace(/^~/, process.env.HOME ?? '');
 
-  statusBarItem.text = '$(sync~spin) Analytics: Loading…';
-  statusBarItem.show();
+  await vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: 'Astro Analytics',
+      cancellable: true,
+    },
+    async (progress, token) => {
+      progress.report({ message: 'Loading GA4 data…' });
+      statusBarItem.text = '$(sync~spin) Analytics: Loading…';
+      statusBarItem.show();
 
-  try {
-    const data = await fetchAnalyticsData(propertyId, resolvedCreds, lookbackDays);
-    metricsCache = new Map(data.map(m => [m.pagePath, m]));
-    lastFetch = Date.now();
-    outputChannel.appendLine(`[${new Date().toISOString()}] Loaded ${data.length} pages from GA4.`);
+      try {
+        const data = await fetchAnalyticsData(propertyId, resolvedCreds, lookbackDays);
+        if (token.isCancellationRequested) return;
 
-    codeLensProvider.refresh();
-    updateStatusBar(vscode.window.activeTextEditor?.document);
+        metricsCache = new Map(data.map(m => [m.pagePath, m]));
+        lastFetch = Date.now();
+        outputChannel.appendLine(`[${new Date().toISOString()}] Loaded ${data.length} pages from GA4.`);
 
-    vscode.window.setStatusBarMessage(`$(check) Analytics: ${data.length} Seiten geladen`, 3000);
-  } catch (err: any) {
-    outputChannel.appendLine(`[ERROR] ${err.message}`);
-    outputChannel.show(true);
-    vscode.window.showErrorMessage(`Analytics Fehler: ${err.message}`);
-    statusBarItem.text = '$(graph) Analytics: Fehler';
-  }
+        codeLensProvider.refresh();
+        updateStatusBar(vscode.window.activeTextEditor?.document);
+
+        vscode.window.setStatusBarMessage(`$(check) Analytics: ${data.length} Seiten geladen`, 3000);
+      } catch (err: unknown) {
+        const msg = getErrorMessage(err);
+        outputChannel.appendLine(`[ERROR] ${msg}`);
+        outputChannel.show(true);
+        vscode.window.showErrorMessage(`Analytics Fehler: ${msg}`);
+        statusBarItem.text = '$(graph) Analytics: Fehler';
+      }
+    }
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -250,6 +284,7 @@ async function refreshData(codeLensProvider: AnalyticsCodeLensProvider) {
 // ---------------------------------------------------------------------------
 export function activate(context: vscode.ExtensionContext) {
   outputChannel = vscode.window.createOutputChannel('Astro Analytics');
+  context.subscriptions.push(outputChannel);
 
   // Status bar
   statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
@@ -303,5 +338,5 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
-  statusBarItem?.dispose();
+  // Resources are disposed via context.subscriptions
 }
