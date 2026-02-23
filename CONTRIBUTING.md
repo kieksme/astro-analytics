@@ -103,6 +103,12 @@ Before publishing:
 **One-time login** (if not using `VSCE_PAT`):
 
 ```bash
+pnpx vsce login <publisher-id>
+```
+
+Use the **exact** `publisher` value from `package.json` as `<publisher-id>`. For this repo it is `kieksme`, so:
+
+```bash
 pnpx vsce login kieksme
 ```
 
