@@ -1,8 +1,8 @@
 {
-  "name": "thinkport-analytics",
-  "displayName": "Thinkport Analytics",
-  "description": "Shows Google Analytics metrics (Bounce Rate, Views, Users) for Astro Markdown pages inline in VSCode",
-  "version": "0.1.0",
+  "name": "astro-analytics",
+  "displayName": "Astro Analytics",
+  "description": "Shows Google Analytics GA4 metrics (Bounce Rate, Views, Users) for Astro Markdown pages and .astro files inline in VSCode",
+  "version": "0.2.0",
   "publisher": "thinkport",
   "engines": {
     "vscode": "^1.85.0"
@@ -12,61 +12,70 @@
   ],
   "activationEvents": [
     "onLanguage:markdown",
-    "workspaceContains:**/*.md"
+    "onLanguage:astro",
+    "workspaceContains:**/*.md",
+    "workspaceContains:**/*.mdx",
+    "workspaceContains:**/*.astro"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "thinkport-analytics.refresh",
+        "command": "astro-analytics.refresh",
         "title": "Analytics: Refresh Data",
         "icon": "$(sync)"
       },
       {
-        "command": "thinkport-analytics.configure",
+        "command": "astro-analytics.configure",
         "title": "Analytics: Configure"
       }
     ],
     "configuration": {
-      "title": "Thinkport Analytics",
+      "title": "Astro Analytics",
       "properties": {
-        "thinkportAnalytics.propertyId": {
+        "astroAnalytics.propertyId": {
           "type": "string",
           "default": "364493652",
           "description": "Google Analytics GA4 Property ID"
         },
-        "thinkportAnalytics.credentialsPath": {
+        "astroAnalytics.credentialsPath": {
           "type": "string",
           "default": "",
           "description": "Path to Google Application Default Credentials JSON file"
         },
-        "thinkportAnalytics.lookbackDays": {
+        "astroAnalytics.lookbackDays": {
           "type": "number",
           "default": 30,
           "description": "Number of days to look back for analytics data"
         },
-        "thinkportAnalytics.contentRoot": {
+        "astroAnalytics.contentRoot": {
           "type": "string",
           "default": "src/content",
-          "description": "Root folder of Astro content/pages relative to workspace"
+          "description": "Root folder of Astro content (.md/.mdx files) relative to workspace"
+        },
+        "astroAnalytics.pagesRoot": {
+          "type": "string",
+          "default": "src/pages",
+          "description": "Root folder for Astro pages (.astro files) relative to workspace"
         }
       }
     },
     "menus": {
       "editor/title": [
         {
-          "command": "thinkport-analytics.refresh",
-          "when": "resourceExtname == .md",
+          "command": "astro-analytics.refresh",
+          "when": "resourceExtname == .md || resourceExtname == .mdx || resourceExtname == .astro",
           "group": "navigation"
         }
       ]
     }
   },
   "scripts": {
+    "build": "pnpm run compile && pnpm run package",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "vscode:prepublish": "npm run compile",
-    "package": "vsce package"
+    "vscode:prepublish": "pnpm run compile",
+    "package": "pnpx vsce package --no-dependencies --allow-missing-repository"
   },
   "dependencies": {
     "google-auth-library": "^9.6.3",

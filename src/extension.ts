@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import * as fs from 'fs';
 import { GoogleAuth } from 'google-auth-library';
 import fetch from 'node-fetch';
 
@@ -82,19 +81,33 @@ async function fetchAnalyticsData(
 
 // ---------------------------------------------------------------------------
 // Slug → pagePath derivation
-// Astro: file at src/content/blog/my-post.md → /blog/my-post/
+// .md/.mdx: src/content/blog/my-post.md → /blog/my-post/
+// .astro:   src/pages/blog/my-post.astro → /blog/my-post/
 // ---------------------------------------------------------------------------
 function filePathToSlug(
   filePath: string,
   workspaceRoot: string,
-  contentRoot: string
+  contentRoot: string,
+  pagesRoot: string
 ): string | null {
-  const absContentRoot = path.join(workspaceRoot, contentRoot);
-  if (!filePath.startsWith(absContentRoot)) return null;
+  const isAstro = filePath.endsWith('.astro');
+  const isContent = /\.(md|mdx)$/.test(filePath);
 
-  let rel = filePath.slice(absContentRoot.length);
-  // Remove extension
-  rel = rel.replace(/\.(md|mdx)$/, '');
+  let absRoot: string;
+  let rel: string;
+
+  if (isAstro) {
+    absRoot = path.join(workspaceRoot, pagesRoot);
+    if (!filePath.startsWith(absRoot)) return null;
+    rel = filePath.slice(absRoot.length).replace(/\.astro$/, '');
+  } else if (isContent) {
+    absRoot = path.join(workspaceRoot, contentRoot);
+    if (!filePath.startsWith(absRoot)) return null;
+    rel = filePath.slice(absRoot.length).replace(/\.(md|mdx)$/, '');
+  } else {
+    return null;
+  }
+
   // Remove index
   rel = rel.replace(/\/index$/, '/');
   // Ensure leading slash and trailing slash
@@ -147,10 +160,11 @@ class AnalyticsCodeLensProvider implements vscode.CodeLensProvider {
     const wsFolder = vscode.workspace.getWorkspaceFolder(document.uri);
     if (!wsFolder) return [];
 
-    const config = vscode.workspace.getConfiguration('thinkportAnalytics');
+    const config = vscode.workspace.getConfiguration('astroAnalytics');
     const contentRoot = config.get<string>('contentRoot', 'src/content');
+    const pagesRoot = config.get<string>('pagesRoot', 'src/pages');
 
-    const slug = filePathToSlug(document.uri.fsPath, wsFolder.uri.fsPath, contentRoot);
+    const slug = filePathToSlug(document.uri.fsPath, wsFolder.uri.fsPath, contentRoot, pagesRoot);
     if (!slug) return [];
 
     const metrics = metricsCache.get(slug);
@@ -160,7 +174,7 @@ class AnalyticsCodeLensProvider implements vscode.CodeLensProvider {
       return [
         new vscode.CodeLens(range, {
           title: '📊 Analytics: no data ($(sync) refresh)',
-          command: 'thinkport-analytics.refresh',
+          command: 'astro-analytics.refresh',
         }),
       ];
     }
@@ -169,7 +183,7 @@ class AnalyticsCodeLensProvider implements vscode.CodeLensProvider {
     const lenses: vscode.CodeLens[] = [
       new vscode.CodeLens(range, {
         title: `${icon} Bounce ${fmtPct(metrics.bounceRate)}   👁 ${metrics.views.toLocaleString('de')} Views   👤 ${metrics.users.toLocaleString('de')} Nutzer   ⏱ ${fmtDuration(metrics.avgSessionDuration)}`,
-        command: 'thinkport-analytics.refresh',
+        command: 'astro-analytics.refresh',
         tooltip: 'Click to refresh analytics data',
       }),
     ];
@@ -192,10 +206,11 @@ class AnalyticsHoverProvider implements vscode.HoverProvider {
     const wsFolder = vscode.workspace.getWorkspaceFolder(document.uri);
     if (!wsFolder) return null;
 
-    const config = vscode.workspace.getConfiguration('thinkportAnalytics');
+    const config = vscode.workspace.getConfiguration('astroAnalytics');
     const contentRoot = config.get<string>('contentRoot', 'src/content');
+    const pagesRoot = config.get<string>('pagesRoot', 'src/pages');
 
-    const slug = filePathToSlug(document.uri.fsPath, wsFolder.uri.fsPath, contentRoot);
+    const slug = filePathToSlug(document.uri.fsPath, wsFolder.uri.fsPath, contentRoot, pagesRoot);
     if (!slug) return null;
 
     const metrics = metricsCache.get(slug);
@@ -220,7 +235,7 @@ class AnalyticsHoverProvider implements vscode.HoverProvider {
 // Status bar update
 // ---------------------------------------------------------------------------
 function updateStatusBar(document: vscode.TextDocument | undefined) {
-  if (!document || !document.fileName.match(/\.(md|mdx)$/)) {
+  if (!document || !document.fileName.match(/\.(md|mdx|astro)$/)) {
     statusBarItem.hide();
     return;
   }
@@ -228,10 +243,11 @@ function updateStatusBar(document: vscode.TextDocument | undefined) {
   const wsFolder = vscode.workspace.getWorkspaceFolder(document.uri);
   if (!wsFolder) { statusBarItem.hide(); return; }
 
-  const config = vscode.workspace.getConfiguration('thinkportAnalytics');
+  const config = vscode.workspace.getConfiguration('astroAnalytics');
   const contentRoot = config.get<string>('contentRoot', 'src/content');
+  const pagesRoot = config.get<string>('pagesRoot', 'src/pages');
 
-  const slug = filePathToSlug(document.uri.fsPath, wsFolder.uri.fsPath, contentRoot);
+  const slug = filePathToSlug(document.uri.fsPath, wsFolder.uri.fsPath, contentRoot, pagesRoot);
   if (!slug) { statusBarItem.hide(); return; }
 
   const metrics = metricsCache.get(slug);
@@ -245,7 +261,7 @@ function updateStatusBar(document: vscode.TextDocument | undefined) {
   const icon = bounceColor(metrics.bounceRate);
   statusBarItem.text = `$(graph) ${icon} ${fmtPct(metrics.bounceRate)} Bounce · ${metrics.views.toLocaleString('de')} Views`;
   statusBarItem.tooltip = `Bounce: ${fmtPct(metrics.bounceRate)} | Views: ${metrics.views} | Users: ${metrics.users} | Ø ${fmtDuration(metrics.avgSessionDuration)}`;
-  statusBarItem.command = 'thinkport-analytics.refresh';
+  statusBarItem.command = 'astro-analytics.refresh';
   statusBarItem.show();
 }
 
@@ -253,7 +269,7 @@ function updateStatusBar(document: vscode.TextDocument | undefined) {
 // Data refresh
 // ---------------------------------------------------------------------------
 async function refreshData(codeLensProvider: AnalyticsCodeLensProvider) {
-  const config = vscode.workspace.getConfiguration('thinkportAnalytics');
+  const config = vscode.workspace.getConfiguration('astroAnalytics');
   const propertyId = config.get<string>('propertyId', '364493652');
   const credentialsPath = config.get<string>('credentialsPath', '');
   const lookbackDays = config.get<number>('lookbackDays', 30);
@@ -286,7 +302,7 @@ async function refreshData(codeLensProvider: AnalyticsCodeLensProvider) {
 // Activate
 // ---------------------------------------------------------------------------
 export function activate(context: vscode.ExtensionContext) {
-  outputChannel = vscode.window.createOutputChannel('Thinkport Analytics');
+  outputChannel = vscode.window.createOutputChannel('Astro Analytics');
 
   // Status bar
   statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
@@ -298,24 +314,24 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     vscode.languages.registerCodeLensProvider(
-      [{ language: 'markdown' }, { language: 'mdx' }],
+      [{ language: 'markdown' }, { language: 'mdx' }, { language: 'astro' }],
       codeLensProvider
     ),
     vscode.languages.registerHoverProvider(
-      [{ language: 'markdown' }, { language: 'mdx' }],
+      [{ language: 'markdown' }, { language: 'mdx' }, { language: 'astro' }],
       hoverProvider
     )
   );
 
   // Commands
   context.subscriptions.push(
-    vscode.commands.registerCommand('thinkport-analytics.refresh', () => {
+    vscode.commands.registerCommand('astro-analytics.refresh', () => {
       refreshData(codeLensProvider);
     }),
-    vscode.commands.registerCommand('thinkport-analytics.configure', () => {
+    vscode.commands.registerCommand('astro-analytics.configure', () => {
       vscode.commands.executeCommand(
         'workbench.action.openSettings',
-        'thinkportAnalytics'
+        'astroAnalytics'
       );
     })
   );
@@ -325,18 +341,18 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.onDidChangeActiveTextEditor(editor => {
       updateStatusBar(editor?.document);
       // Auto-refresh if cache is stale and a markdown file is opened
-      if (editor?.document.fileName.match(/\.(md|mdx)$/) && Date.now() - lastFetch > CACHE_TTL_MS) {
+      if (editor?.document.fileName.match(/\.(md|mdx|astro)$/) && Date.now() - lastFetch > CACHE_TTL_MS) {
         refreshData(codeLensProvider);
       }
     })
   );
 
   // Initial load if a markdown file is already open
-  if (vscode.window.activeTextEditor?.document.fileName.match(/\.(md|mdx)$/)) {
+  if (vscode.window.activeTextEditor?.document.fileName.match(/\.(md|mdx|astro)$/)) {
     refreshData(codeLensProvider);
   }
 
-  outputChannel.appendLine('Thinkport Analytics extension activated.');
+  outputChannel.appendLine('Astro Analytics extension activated.');
 }
 
 export function deactivate() {

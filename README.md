@@ -1,10 +1,10 @@
-# Thinkport Analytics — VSCode Extension
+# Astro Analytics — VSCode Extension
 
-Zeigt Google Analytics GA4 Metriken direkt in VSCode an, wenn du Astro Markdown-Dateien öffnest.
+Zeigt Google Analytics GA4 Metriken direkt in VSCode an, wenn du Astro Markdown- oder .astro-Dateien öffnest.
 
 ## Features
 
-- **CodeLens** oben in jeder `.md`/`.mdx` Datei mit Bounce Rate, Views, Nutzern und Session-Dauer
+- **CodeLens** oben in jeder `.md`/`.mdx`/`.astro` Datei mit Bounce Rate, Views, Nutzern und Session-Dauer
 - **Hover-Tooltip** mit vollständiger Metriktabelle (Hover über die ersten Zeilen der Datei)
 - **Status Bar** unten rechts mit der Bounce Rate der aktuell geöffneten Seite
 - Automatisches Caching (5 Minuten TTL), manuelle Aktualisierung per Klick
@@ -40,23 +40,25 @@ Credentials saved to file: [~/.config/gcloud/application_default_credentials.jso
 
 ### 2. Extension konfigurieren
 
-In VSCode: `Cmd+,` → Suche nach **Thinkport Analytics**
+In VSCode: `Cmd+,` → Suche nach **Astro Analytics**
 
-| Einstellung                          | Beschreibung              | Default       |
-|--------------------------------------|---------------------------|---------------|
-| `thinkportAnalytics.propertyId`      | GA4 Property ID           | `364493652`   |
-| `thinkportAnalytics.credentialsPath` | Pfad zur Credentials JSON | (ADC default) |
-| `thinkportAnalytics.lookbackDays`    | Zeitraum in Tagen         | `30`          |
-| `thinkportAnalytics.contentRoot`     | Astro Content-Ordner      | `src/content` |
+| Einstellung                      | Beschreibung              | Default       |
+|----------------------------------|---------------------------|---------------|
+| `astroAnalytics.propertyId`      | GA4 Property ID           | `364493652`   |
+| `astroAnalytics.credentialsPath` | Pfad zur Credentials JSON | (ADC default) |
+| `astroAnalytics.lookbackDays`    | Zeitraum in Tagen         | `30`          |
+| `astroAnalytics.contentRoot`     | Astro Content-Ordner      | `src/content` |
+| `astroAnalytics.pagesRoot`       | Astro Pages-Ordner        | `src/pages`   |
 
 Beispiel `settings.json`:
 
 ```json
 {
-  "thinkportAnalytics.propertyId": "364493652",
-  "thinkportAnalytics.credentialsPath": "~/.config/gcloud/application_default_credentials.json",
-  "thinkportAnalytics.lookbackDays": 90,
-  "thinkportAnalytics.contentRoot": "src/content"
+  "astroAnalytics.propertyId": "364493652",
+  "astroAnalytics.credentialsPath": "~/.config/gcloud/application_default_credentials.json",
+  "astroAnalytics.lookbackDays": 90,
+  "astroAnalytics.contentRoot": "src/content",
+  "astroAnalytics.pagesRoot": "src/pages"
 }
 ```
 
@@ -67,6 +69,8 @@ Die Extension leitet den GA4-`pagePath` automatisch aus dem Dateipfad ab:
 ```text
 src/content/blog/datenstrategie-ki.md  →  /blog/datenstrategie-ki/
 src/content/karriere/index.md          →  /karriere/
+src/pages/blog/my-post.astro           →  /blog/my-post/
+src/pages/index.astro                  →  /
 ```
 
 ## Installation
@@ -74,7 +78,7 @@ src/content/karriere/index.md          →  /karriere/
 ```bash
 pnpm install
 pnpm run compile
-vsce package
+pnpx vsce package --no-dependencies --allow-missing-repository
 ```
 
 Dann die erzeugte `.vsix` Datei in VSCode installieren:
