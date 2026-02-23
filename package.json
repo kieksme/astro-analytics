@@ -126,8 +126,13 @@
         },
         "astroAnalytics.dashboardMaxPages": {
           "type": "number",
-          "default": 20,
+          "default": 500,
           "description": "%config.dashboardMaxPages%"
+        },
+        "astroAnalytics.dashboardPageSize": {
+          "type": "number",
+          "default": 20,
+          "description": "%config.dashboardPageSize%"
         }
       }
     },

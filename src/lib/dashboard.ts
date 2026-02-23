@@ -6,8 +6,10 @@
 export interface DashboardConfig {
   propertyId: string;
   lookbackDays: number;
-  /** Maximum number of top pages to show (default 20). */
+  /** Maximum number of top pages to include in dashboard data (default 500). */
   maxPages: number;
+  /** Number of entries per page in the dashboard UI (default 20). */
+  pageSize: number;
 }
 
 export interface PageMetrics {
@@ -28,6 +30,8 @@ export interface DashboardData {
   cacheSize: number;
   lastFetch: number;
   lookbackDays: number;
+  /** Number of entries per page (for pagination). */
+  pageSize: number;
   topPages: DashboardTopPage[];
 }
 
@@ -52,6 +56,9 @@ export interface DashboardL10n {
   legendWarning: string;
   legendHigh: string;
   legendCritical: string;
+  pageOf: string;
+  previous: string;
+  next: string;
 }
 
 export interface BuildDashboardHtmlOptions {
@@ -75,7 +82,8 @@ export function getDashboardDataFromState(
 ): DashboardData {
   const propertyId = config.propertyId ?? '';
   const lookbackDays = config.lookbackDays ?? 30;
-  const maxPages = Math.max(1, config.maxPages ?? 20);
+  const maxPages = Math.max(1, config.maxPages ?? 500);
+  const pageSize = Math.max(1, config.pageSize ?? 20);
   const entries = Array.from(metricsCache.entries());
   const topPages: DashboardTopPage[] = entries
     .sort((a, b) => b[1].bounceRate - a[1].bounceRate)
@@ -94,6 +102,7 @@ export function getDashboardDataFromState(
     cacheSize: metricsCache.size,
     lastFetch,
     lookbackDays,
+    pageSize,
     topPages,
   };
 }
@@ -154,6 +163,11 @@ export function buildDashboardHtml(
     .message-box a:hover { text-decoration: underline; }
     .legend { margin-top: 0.75rem; font-size: 0.8em; color: var(--vscode-descriptionForeground); display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; }
     .legend span { display: inline-flex; align-items: center; gap: 0.25rem; }
+    .pagination { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.9em; flex-wrap: wrap; }
+    .pagination .page-info { margin: 0 0.25rem; }
+    .btn-page { padding: 0.25rem 0.5rem; cursor: pointer; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; border-radius: 2px; font-size: inherit; }
+    .btn-page:hover:not(:disabled) { background: var(--vscode-button-secondaryHoverBackground); }
+    .btn-page:disabled { opacity: 0.5; cursor: default; }
   </style>
 </head>
 <body>
@@ -181,6 +195,11 @@ export function buildDashboardHtml(
       <tbody id="tbody"></tbody>
     </table>
   </div>
+  <div id="paginationWrap" class="pagination" style="display:none;">
+    <button type="button" class="btn-page" id="prevBtn">${l10n.previous}</button>
+    <span class="page-info" id="pageInfo"></span>
+    <button type="button" class="btn-page" id="nextBtn">${l10n.next}</button>
+  </div>
   <div id="emptyState" class="empty-state" style="display:none;">${l10n.emptyState} <a href="#" id="openSettingsLink">${l10n.openSettings}</a></div>
   <div class="legend" id="legend"><span class="bounce-good"><span class="bounce-dot"></span> ${l10n.legendGood}</span><span class="bounce-warning"><span class="bounce-dot"></span> ${l10n.legendWarning}</span><span class="bounce-high"><span class="bounce-dot"></span> ${l10n.legendHigh}</span><span class="bounce-critical"><span class="bounce-dot"></span> ${l10n.legendCritical}</span></div>
   <script nonce="${nonce}">
@@ -202,6 +221,7 @@ export function buildDashboardHtml(
 
     let sortKey = 'bounceRate';
     let sortDir = -1;
+    let currentPage = 1;
     function sortData(pages) {
       const key = sortKey;
       const dir = sortDir;
@@ -228,8 +248,10 @@ export function buildDashboardHtml(
       const tbody = document.getElementById('tbody');
       const emptyEl = document.getElementById('emptyState');
       const tableWrap = document.getElementById('tableWrap');
+      const paginationWrap = document.getElementById('paginationWrap');
       if (!d.topPages || d.topPages.length === 0) {
         tableWrap.style.display = 'none';
+        if (paginationWrap) paginationWrap.style.display = 'none';
         emptyEl.style.display = 'block';
         tbody.innerHTML = '';
         updateSortIndicator();
@@ -237,8 +259,13 @@ export function buildDashboardHtml(
       }
       tableWrap.style.display = 'block';
       emptyEl.style.display = 'none';
+      const pageSize = Math.max(1, d.pageSize || 20);
       const sorted = sortData(d.topPages);
-      tbody.innerHTML = sorted.map(p => {
+      const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+      if (currentPage > totalPages) currentPage = totalPages;
+      const start = (currentPage - 1) * pageSize;
+      const pageRows = sorted.slice(start, start + pageSize);
+      tbody.innerHTML = pageRows.map(p => {
         const pathEsc = escapeHtml(p.pagePath);
         const bounceCl = bounceClass(p.bounceRate);
         const pct = (p.bounceRate * 100).toFixed(1) + '%';
@@ -250,6 +277,14 @@ export function buildDashboardHtml(
       tbody.querySelectorAll('.page-link').forEach(el => {
         el.addEventListener('click', e => { e.preventDefault(); vscode.postMessage({ type: 'openPage', pagePath: el.getAttribute('data-page-path') }); });
       });
+      if (paginationWrap) {
+        paginationWrap.style.display = totalPages > 1 ? 'flex' : 'none';
+        document.getElementById('pageInfo').textContent = l10n.pageOf.replace('{0}', String(currentPage)).replace('{1}', String(totalPages));
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        prevBtn.disabled = currentPage <= 1;
+        nextBtn.disabled = currentPage >= totalPages;
+      }
       updateSortIndicator();
     }
 
@@ -261,7 +296,7 @@ export function buildDashboardHtml(
       });
     });
 
-    const currentData = { topPages: data.topPages, configured: data.configured, propertyId: data.propertyId, cacheSize: data.cacheSize, lastFetch: data.lastFetch, lookbackDays: data.lookbackDays };
+    const currentData = { topPages: data.topPages, configured: data.configured, propertyId: data.propertyId, cacheSize: data.cacheSize, lastFetch: data.lastFetch, lookbackDays: data.lookbackDays, pageSize: data.pageSize || 20 };
     function updateData(d) {
       currentData.topPages = d.topPages;
       currentData.configured = d.configured;
@@ -269,8 +304,12 @@ export function buildDashboardHtml(
       currentData.cacheSize = d.cacheSize;
       currentData.lastFetch = d.lastFetch;
       currentData.lookbackDays = d.lookbackDays;
+      currentData.pageSize = d.pageSize || 20;
+      currentPage = 1;
       render(currentData);
     }
+    document.getElementById('prevBtn').onclick = () => { if (currentPage > 1) { currentPage--; render(currentData); } };
+    document.getElementById('nextBtn').onclick = () => { const totalPages = Math.ceil((currentData.topPages || []).length / (currentData.pageSize || 20)); if (currentPage < totalPages) { currentPage++; render(currentData); } };
     render(currentData);
     window.addEventListener('message', e => { if (e.data && e.data.type === 'data') updateData(e.data.data); });
     document.getElementById('refreshBtn').onclick = () => vscode.postMessage({ type: 'refresh' });
@@ -336,6 +375,11 @@ export function buildSidebarDashboardHtml(
     .message-box a:hover { text-decoration: underline; }
     .legend { margin-top: 0.5rem; font-size: 0.75em; color: var(--vscode-descriptionForeground); display: flex; flex-wrap: wrap; gap: 0.35rem 0.75rem; align-items: center; }
     .legend span { display: inline-flex; align-items: center; gap: 0.2rem; }
+    .pagination { display: flex; align-items: center; gap: 0.35rem; margin-top: 0.4rem; font-size: 0.8em; flex-wrap: wrap; }
+    .pagination .page-info { margin: 0 0.2rem; }
+    .btn-page { padding: 0.2rem 0.4rem; cursor: pointer; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; border-radius: 2px; font-size: inherit; }
+    .btn-page:hover:not(:disabled) { background: var(--vscode-button-secondaryHoverBackground); }
+    .btn-page:disabled { opacity: 0.5; cursor: default; }
   </style>
 </head>
 <body>
@@ -355,6 +399,11 @@ export function buildSidebarDashboardHtml(
       <tbody id="tbody"></tbody>
     </table>
   </div>
+  <div id="paginationWrap" class="pagination" style="display:none;">
+    <button type="button" class="btn-page" id="prevBtn">${l10n.previous}</button>
+    <span class="page-info" id="pageInfo"></span>
+    <button type="button" class="btn-page" id="nextBtn">${l10n.next}</button>
+  </div>
   <div id="emptyState" class="empty-state" style="display:none;">${l10n.emptyState} <a href="#" id="openSettingsLink">${l10n.openSettings}</a></div>
   <div class="legend" id="legend"><span class="bounce-good"><span class="bounce-dot"></span> ${l10n.legendGood}</span><span class="bounce-warning"><span class="bounce-dot"></span> ${l10n.legendWarning}</span><span class="bounce-high"><span class="bounce-dot"></span> ${l10n.legendHigh}</span><span class="bounce-critical"><span class="bounce-dot"></span> ${l10n.legendCritical}</span></div>
   <script nonce="${nonce}">
@@ -372,6 +421,7 @@ export function buildSidebarDashboardHtml(
 
     let sortKey = 'bounceRate';
     let sortDir = -1;
+    let currentPage = 1;
     function sortData(pages) {
       const key = sortKey;
       const dir = sortDir;
@@ -395,8 +445,10 @@ export function buildSidebarDashboardHtml(
       const tbody = document.getElementById('tbody');
       const emptyEl = document.getElementById('emptyState');
       const tableWrap = document.getElementById('tableWrap');
+      const paginationWrap = document.getElementById('paginationWrap');
       if (!d.topPages || d.topPages.length === 0) {
         tableWrap.style.display = 'none';
+        if (paginationWrap) paginationWrap.style.display = 'none';
         emptyEl.style.display = 'block';
         tbody.innerHTML = '';
         updateSortIndicator();
@@ -404,8 +456,13 @@ export function buildSidebarDashboardHtml(
       }
       tableWrap.style.display = 'block';
       emptyEl.style.display = 'none';
+      const pageSize = Math.max(1, d.pageSize || 20);
       const sorted = sortData(d.topPages);
-      tbody.innerHTML = sorted.map(p => {
+      const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+      if (currentPage > totalPages) currentPage = totalPages;
+      const start = (currentPage - 1) * pageSize;
+      const pageRows = sorted.slice(start, start + pageSize);
+      tbody.innerHTML = pageRows.map(p => {
         const pathEsc = escapeHtml(p.pagePath);
         const bounceCl = bounceClass(p.bounceRate);
         const pct = (p.bounceRate * 100).toFixed(1) + '%';
@@ -417,6 +474,14 @@ export function buildSidebarDashboardHtml(
       tbody.querySelectorAll('.page-link').forEach(el => {
         el.addEventListener('click', e => { e.preventDefault(); vscode.postMessage({ type: 'openPage', pagePath: el.getAttribute('data-page-path') }); });
       });
+      if (paginationWrap) {
+        paginationWrap.style.display = totalPages > 1 ? 'flex' : 'none';
+        document.getElementById('pageInfo').textContent = l10n.pageOf.replace('{0}', String(currentPage)).replace('{1}', String(totalPages));
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        prevBtn.disabled = currentPage <= 1;
+        nextBtn.disabled = currentPage >= totalPages;
+      }
       updateSortIndicator();
     }
 
@@ -428,7 +493,7 @@ export function buildSidebarDashboardHtml(
       });
     });
 
-    const currentData = { topPages: data.topPages, configured: data.configured, propertyId: data.propertyId, cacheSize: data.cacheSize, lastFetch: data.lastFetch, lookbackDays: data.lookbackDays };
+    const currentData = { topPages: data.topPages, configured: data.configured, propertyId: data.propertyId, cacheSize: data.cacheSize, lastFetch: data.lastFetch, lookbackDays: data.lookbackDays, pageSize: data.pageSize || 20 };
     function updateData(d) {
       currentData.topPages = d.topPages;
       currentData.configured = d.configured;
@@ -436,8 +501,12 @@ export function buildSidebarDashboardHtml(
       currentData.cacheSize = d.cacheSize;
       currentData.lastFetch = d.lastFetch;
       currentData.lookbackDays = d.lookbackDays;
+      currentData.pageSize = d.pageSize || 20;
+      currentPage = 1;
       render(currentData);
     }
+    document.getElementById('prevBtn').onclick = () => { if (currentPage > 1) { currentPage--; render(currentData); } };
+    document.getElementById('nextBtn').onclick = () => { const totalPages = Math.ceil((currentData.topPages || []).length / (currentData.pageSize || 20)); if (currentPage < totalPages) { currentPage++; render(currentData); } };
     render(currentData);
     window.addEventListener('message', e => { if (e.data && e.data.type === 'data') updateData(e.data.data); });
     document.getElementById('refreshBtn').onclick = () => vscode.postMessage({ type: 'refresh' });

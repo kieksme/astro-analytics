@@ -13,6 +13,7 @@
   "config.contentRoot": "Pasta raiz do conteúdo Astro (.md/.mdx) relativa à área de trabalho",
   "config.pagesRoot": "Pasta raiz das páginas Astro (.astro) relativa à área de trabalho",
   "config.dashboardMaxPages": "Número máximo de páginas mostradas no painel (ordenadas por pior taxa de rejeição primeiro)",
+  "config.dashboardPageSize": "Número de entradas por página no painel (paginação).",
   "viewContainer.title": "Astro Analytics",
   "view.dashboard.name": "Painel",
   "icon.analytics.description": "Painel Astro Analytics",

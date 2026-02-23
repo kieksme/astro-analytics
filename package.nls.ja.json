@@ -13,6 +13,7 @@
   "config.contentRoot": "ワークスペースに対する Astro コンテンツのルートフォルダ（.md/.mdx）",
   "config.pagesRoot": "ワークスペースに対する Astro ページのルートフォルダ（.astro）",
   "config.dashboardMaxPages": "ダッシュボードに表示する最大ページ数（直帰率が悪い順）",
+  "config.dashboardPageSize": "ダッシュボードの1ページあたりの表示件数（ページネーション）。",
   "viewContainer.title": "Astro Analytics",
   "view.dashboard.name": "ダッシュボード",
   "icon.analytics.description": "Astro Analytics ダッシュボード",

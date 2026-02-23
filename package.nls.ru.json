@@ -13,6 +13,7 @@
   "config.contentRoot": "Корневая папка контента Astro (.md/.mdx) относительно рабочей области",
   "config.pagesRoot": "Корневая папка страниц Astro (.astro) относительно рабочей области",
   "config.dashboardMaxPages": "Максимальное количество страниц в панели (сортировка по худшему показателю отказов)",
+  "config.dashboardPageSize": "Количество записей на страницу в панели (пагинация).",
   "viewContainer.title": "Astro Analytics",
   "view.dashboard.name": "Панель",
   "icon.analytics.description": "Панель Astro Analytics",

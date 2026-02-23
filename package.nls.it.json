@@ -13,6 +13,7 @@
   "config.contentRoot": "Cartella radice dei contenuti Astro (.md/.mdx) relativa all'area di lavoro",
   "config.pagesRoot": "Cartella radice delle pagine Astro (.astro) relativa all'area di lavoro",
   "config.dashboardMaxPages": "Numero massimo di pagine mostrate nella dashboard (ordinate per peggior tasso di rimbalzo)",
+  "config.dashboardPageSize": "Numero di voci per pagina nella dashboard (paginazione).",
   "viewContainer.title": "Astro Analytics",
   "view.dashboard.name": "Dashboard",
   "icon.analytics.description": "Dashboard Astro Analytics",

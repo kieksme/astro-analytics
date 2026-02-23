@@ -13,6 +13,7 @@
   "config.contentRoot": "Dossier racine du contenu Astro (.md/.mdx) par rapport à l'espace de travail",
   "config.pagesRoot": "Dossier racine des pages Astro (.astro) par rapport à l'espace de travail",
   "config.dashboardMaxPages": "Nombre maximum de pages affichées dans le tableau de bord (tri par taux de rebond le pire en premier)",
+  "config.dashboardPageSize": "Nombre d'entrées par page dans le tableau de bord (pagination).",
   "viewContainer.title": "Astro Analytics",
   "view.dashboard.name": "Tableau de bord",
   "icon.analytics.description": "Tableau de bord Astro Analytics",

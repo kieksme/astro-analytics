@@ -34,6 +34,9 @@ const l10nDefaults: Record<string, string> = {
   'dashboard.legendWarning': '25–45%',
   'dashboard.legendHigh': '45–65%',
   'dashboard.legendCritical': '≥65%',
+  'dashboard.pageOf': 'Page {0} of {1}',
+  'dashboard.previous': 'Previous',
+  'dashboard.next': 'Next',
 };
 
 /** Localization: use vscode.l10n when available (VS Code 1.74+), else use defaults or key with {0} replaced. */
@@ -356,7 +359,8 @@ function getDashboardData() {
     {
       propertyId: config.get<string>('propertyId', ''),
       lookbackDays: config.get<number>('lookbackDays', 30),
-      maxPages: config.get<number>('dashboardMaxPages', 20),
+      maxPages: config.get<number>('dashboardMaxPages', 500),
+      pageSize: config.get<number>('dashboardPageSize', 20),
     },
     metricsCache,
     lastFetch,
@@ -386,6 +390,9 @@ function getDashboardHtml(webview: vscode.Webview, data: ReturnType<typeof getDa
     legendWarning: l10nT('dashboard.legendWarning'),
     legendHigh: l10nT('dashboard.legendHigh'),
     legendCritical: l10nT('dashboard.legendCritical'),
+    pageOf: l10nT('dashboard.pageOf'),
+    previous: l10nT('dashboard.previous'),
+    next: l10nT('dashboard.next'),
   };
   return buildDashboardHtml(data, l10n, {
     cspSource: webview.cspSource,
@@ -415,6 +422,9 @@ function getSidebarDashboardHtml(webview: vscode.Webview, data: ReturnType<typeo
     legendWarning: l10nT('dashboard.legendWarning'),
     legendHigh: l10nT('dashboard.legendHigh'),
     legendCritical: l10nT('dashboard.legendCritical'),
+    pageOf: l10nT('dashboard.pageOf'),
+    previous: l10nT('dashboard.previous'),
+    next: l10nT('dashboard.next'),
   };
   return buildSidebarDashboardHtml(data, l10n, {
     cspSource: webview.cspSource,

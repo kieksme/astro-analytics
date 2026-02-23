@@ -30,11 +30,14 @@ const defaultL10n: DashboardL10n = {
   legendWarning: '25–45%',
   legendHigh: '45–65%',
   legendCritical: '≥65%',
+  pageOf: 'Page {0} of {1}',
+  previous: 'Previous',
+  next: 'Next',
 };
 
 describe('getDashboardDataFromState', () => {
   it('returns empty topPages and zero cacheSize when cache is empty', () => {
-    const config: DashboardConfig = { propertyId: '123', lookbackDays: 30, maxPages: 20 };
+    const config: DashboardConfig = { propertyId: '123', lookbackDays: 30, maxPages: 20, pageSize: 20 };
     const data = getDashboardDataFromState(config, new Map(), 0, () => null);
     expect(data.topPages).toEqual([]);
     expect(data.cacheSize).toBe(0);
@@ -42,10 +45,11 @@ describe('getDashboardDataFromState', () => {
     expect(data.propertyId).toBe('123');
     expect(data.lookbackDays).toBe(30);
     expect(data.lastFetch).toBe(0);
+    expect(data.pageSize).toBe(20);
   });
 
   it('returns configured false when propertyId is empty', () => {
-    const config: DashboardConfig = { propertyId: '', lookbackDays: 30, maxPages: 20 };
+    const config: DashboardConfig = { propertyId: '', lookbackDays: 30, maxPages: 20, pageSize: 20 };
     const data = getDashboardDataFromState(config, new Map(), 0, () => null);
     expect(data.configured).toBe(false);
   });
@@ -56,7 +60,7 @@ describe('getDashboardDataFromState', () => {
       ['/b/', { pagePath: '/b/', views: 100, users: 50, bounceRate: 0.5, avgSessionDuration: 90 }],
       ['/c/', { pagePath: '/c/', views: 50, users: 20, bounceRate: 0.2, avgSessionDuration: 120 }],
     ]);
-    const config: DashboardConfig = { propertyId: '1', lookbackDays: 30, maxPages: 20 };
+    const config: DashboardConfig = { propertyId: '1', lookbackDays: 30, maxPages: 20, pageSize: 20 };
     const data = getDashboardDataFromState(config, cache, 1, () => null);
     expect(data.topPages.map(p => p.pagePath)).toEqual(['/b/', '/a/', '/c/']);
     expect(data.topPages[0].bounceRate).toBe(0.5);
@@ -67,7 +71,7 @@ describe('getDashboardDataFromState', () => {
     const cache = new Map<string, PageMetrics>([
       ['/blog/', { pagePath: '/blog/', views: 1, users: 1, bounceRate: 0, avgSessionDuration: 0 }],
     ]);
-    const config: DashboardConfig = { propertyId: '1', lookbackDays: 30, maxPages: 20 };
+    const config: DashboardConfig = { propertyId: '1', lookbackDays: 30, maxPages: 20, pageSize: 20 };
     const dataWithFile = getDashboardDataFromState(config, cache, 0, (path) =>
       path === '/blog/' ? '/fake/blog/index.md' : null
     );
@@ -88,7 +92,7 @@ describe('getDashboardDataFromState', () => {
         avgSessionDuration: 60,
       });
     }
-    const config: DashboardConfig = { propertyId: '1', lookbackDays: 30, maxPages: 20 };
+    const config: DashboardConfig = { propertyId: '1', lookbackDays: 30, maxPages: 20, pageSize: 20 };
     const data = getDashboardDataFromState(config, cache, 0, () => null);
     expect(data.topPages).toHaveLength(20);
     expect(data.topPages[0].bounceRate).toBeGreaterThan(data.topPages[19].bounceRate);
@@ -102,7 +106,7 @@ describe('getDashboardDataFromState', () => {
       ['/d/', { pagePath: '/d/', views: 1, users: 1, bounceRate: 0.4, avgSessionDuration: 0 }],
       ['/e/', { pagePath: '/e/', views: 1, users: 1, bounceRate: 0.5, avgSessionDuration: 0 }],
     ]);
-    const config: DashboardConfig = { propertyId: '1', lookbackDays: 30, maxPages: 3 };
+    const config: DashboardConfig = { propertyId: '1', lookbackDays: 30, maxPages: 3, pageSize: 20 };
     const data = getDashboardDataFromState(config, cache, 0, () => null);
     expect(data.topPages).toHaveLength(3);
     expect(data.topPages.map(p => p.pagePath)).toEqual(['/e/', '/d/', '/c/']);
@@ -112,7 +116,7 @@ describe('getDashboardDataFromState', () => {
     const cache = new Map<string, PageMetrics>([
       ['/a/', { pagePath: '/a/', views: 1, users: 1, bounceRate: 0.5, avgSessionDuration: 0 }],
     ]);
-    const config: DashboardConfig = { propertyId: '1', lookbackDays: 30, maxPages: 0 };
+    const config: DashboardConfig = { propertyId: '1', lookbackDays: 30, maxPages: 0, pageSize: 20 };
     const data = getDashboardDataFromState(config, cache, 0, () => null);
     expect(data.topPages).toHaveLength(1);
   });
@@ -128,6 +132,7 @@ describe('buildDashboardHtml', () => {
       cacheSize: 0,
       lastFetch: 0,
       lookbackDays: 30,
+      pageSize: 20,
       topPages: [],
     };
     const html = buildDashboardHtml(data, defaultL10n, options);
@@ -148,6 +153,7 @@ describe('buildDashboardHtml', () => {
       cacheSize: 0,
       lastFetch: 0,
       lookbackDays: 30,
+      pageSize: 20,
       topPages: [],
     };
     const html = buildDashboardHtml(data, defaultL10n, options);
@@ -165,6 +171,7 @@ describe('buildDashboardHtml', () => {
       cacheSize: 0,
       lastFetch: 0,
       lookbackDays: 30,
+      pageSize: 20,
       topPages: [],
     };
     const html = buildDashboardHtml(data, defaultL10n, options);
@@ -180,6 +187,7 @@ describe('buildDashboardHtml', () => {
       cacheSize: 1,
       lastFetch: 1000,
       lookbackDays: 30,
+      pageSize: 20,
       topPages: [
         {
           pagePath: '/blog/',
@@ -206,6 +214,7 @@ describe('buildDashboardHtml', () => {
       cacheSize: 0,
       lastFetch: 0,
       lookbackDays: 30,
+      pageSize: 20,
       topPages: [],
     };
     const html = buildDashboardHtml(data, defaultL10n, options);
@@ -220,6 +229,7 @@ describe('buildDashboardHtml', () => {
       cacheSize: 0,
       lastFetch: 0,
       lookbackDays: 30,
+      pageSize: 20,
       topPages: [],
     };
     const html = buildDashboardHtml(data, defaultL10n, options);
@@ -234,6 +244,7 @@ describe('buildDashboardHtml', () => {
       cacheSize: 0,
       lastFetch: 0,
       lookbackDays: 30,
+      pageSize: 20,
       topPages: [],
     };
     const html = buildDashboardHtml(data, defaultL10n, options);
@@ -247,6 +258,7 @@ describe('buildDashboardHtml', () => {
       cacheSize: 0,
       lastFetch: 0,
       lookbackDays: 30,
+      pageSize: 20,
       topPages: [],
     };
     const html = buildDashboardHtml(data, defaultL10n, options);
@@ -263,6 +275,7 @@ describe('buildDashboardHtml', () => {
       cacheSize: 0,
       lastFetch: 0,
       lookbackDays: 30,
+      pageSize: 20,
       topPages: [],
     };
     const html = buildDashboardHtml(data, defaultL10n, options);
@@ -283,6 +296,7 @@ describe('buildSidebarDashboardHtml', () => {
       cacheSize: 0,
       lastFetch: 0,
       lookbackDays: 30,
+      pageSize: 20,
       topPages: [],
     };
     const html = buildSidebarDashboardHtml(data, defaultL10n, options);
@@ -300,6 +314,7 @@ describe('buildSidebarDashboardHtml', () => {
       cacheSize: 0,
       lastFetch: 0,
       lookbackDays: 30,
+      pageSize: 20,
       topPages: [],
     };
     const html = buildSidebarDashboardHtml(data, defaultL10n, options);
@@ -317,6 +332,7 @@ describe('buildSidebarDashboardHtml', () => {
       cacheSize: 2,
       lastFetch: 1000,
       lookbackDays: 30,
+      pageSize: 20,
       topPages: [
         {
           pagePath: '/blog/',
@@ -345,6 +361,7 @@ describe('buildSidebarDashboardHtml', () => {
       cacheSize: 1,
       lastFetch: 0,
       lookbackDays: 30,
+      pageSize: 20,
       topPages: [
         {
           pagePath: '/test/',

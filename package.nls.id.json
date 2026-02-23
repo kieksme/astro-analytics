@@ -13,6 +13,7 @@
   "config.contentRoot": "Folder root konten Astro (.md/.mdx) relatif ke ruang kerja",
   "config.pagesRoot": "Folder root halaman Astro (.astro) relatif ke ruang kerja",
   "config.dashboardMaxPages": "Jumlah maksimum halaman yang ditampilkan di dasbor (diurutkan berdasarkan tingkat pentalan terburuk)",
+  "config.dashboardPageSize": "Jumlah entri per halaman di dasbor (paginasi).",
   "viewContainer.title": "Astro Analytics",
   "view.dashboard.name": "Dasbor",
   "icon.analytics.description": "Dasbor Astro Analytics",

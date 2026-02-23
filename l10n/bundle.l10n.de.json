@@ -46,5 +46,8 @@
   "dashboard.legendGood": "<25 %",
   "dashboard.legendWarning": "25–45 %",
   "dashboard.legendHigh": "45–65 %",
-  "dashboard.legendCritical": "≥65 %"
+  "dashboard.legendCritical": "≥65 %",
+  "dashboard.pageOf": "Seite {0} von {1}",
+  "dashboard.previous": "Zurück",
+  "dashboard.next": "Weiter"
 }

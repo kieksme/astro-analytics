@@ -13,6 +13,7 @@
   "config.contentRoot": "Basis map van Astro-inhoud (.md/.mdx) relatief aan de werkruimte",
   "config.pagesRoot": "Basis map voor Astro-pagina's (.astro) relatief aan de werkruimte",
   "config.dashboardMaxPages": "Maximaal aantal pagina's in het dashboard (gesorteerd op slechtste bouncepercentage eerst)",
+  "config.dashboardPageSize": "Aantal vermeldingen per pagina in het dashboard (paginering).",
   "viewContainer.title": "Astro Analytics",
   "view.dashboard.name": "Dashboard",
   "icon.analytics.description": "Astro Analytics-dashboard",

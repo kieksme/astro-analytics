@@ -13,6 +13,7 @@
   "config.contentRoot": "Folder główny treści Astro (.md/.mdx) względem obszaru roboczego",
   "config.pagesRoot": "Folder główny stron Astro (.astro) względem obszaru roboczego",
   "config.dashboardMaxPages": "Maksymalna liczba stron w panelu (sortowanie od najgorszej stopy odrzuceń)",
+  "config.dashboardPageSize": "Liczba wpisów na stronę w panelu (paginacja).",
   "viewContainer.title": "Astro Analytics",
   "view.dashboard.name": "Panel",
   "icon.analytics.description": "Panel Astro Analytics",
