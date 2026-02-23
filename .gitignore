@@ -1,4 +1,6 @@
 node_modules
+.agents
+.cursor
 .env
 *.vsix
 .pnpm-store
