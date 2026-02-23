@@ -2,7 +2,7 @@
   "name": "astro-analytics",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "publisher": "kieksme",
   "repository": {
     "type": "git",
@@ -152,6 +152,7 @@
     "views": {
       "astroAnalytics": [
         {
+          "type": "webview",
           "id": "astroAnalytics.dashboard",
           "name": "%view.dashboard.name%"
         }

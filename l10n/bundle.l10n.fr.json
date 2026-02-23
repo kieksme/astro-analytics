@@ -41,6 +41,7 @@
   "dashboard.bounce": "Rebond",
   "dashboard.avgDuration": "Durée moy.",
   "dashboard.emptyState": "Aucune page en cache. Configurer GA4 et exécuter Actualiser les données.",
+  "dashboard.notConfigured": "GA4 n'est pas configuré. Définissez l'ID de propriété et les identifiants dans les paramètres pour charger les données d'analyse.",
   "dashboard.notSet": "(non défini)",
   "dashboard.legendGood": "< 25 %",
   "dashboard.legendWarning": "25–45 %",

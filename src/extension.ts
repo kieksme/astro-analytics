@@ -359,6 +359,8 @@ function getDashboardHtml(webview: vscode.Webview, data: ReturnType<typeof getDa
     bounce: l10nT('dashboard.bounce'),
     avgDuration: l10nT('dashboard.avgDuration'),
     emptyState: l10nT('dashboard.emptyState'),
+    notConfigured: l10nT('dashboard.notConfigured'),
+    openSettings: l10nT('msg.openSettings'),
     notSet: l10nT('dashboard.notSet'),
     legendGood: l10nT('dashboard.legendGood'),
     legendWarning: l10nT('dashboard.legendWarning'),
@@ -398,7 +400,13 @@ function getDashboardHtml(webview: vscode.Webview, data: ReturnType<typeof getDa
     .bounce-warning .bounce-dot { background: var(--vscode-editorWarning-foreground, #eab308); }
     .bounce-high .bounce-dot { background: #f97316; }
     .bounce-critical .bounce-dot { background: var(--vscode-errorForeground, #ef4444); }
-    .empty-state { padding: 1.5rem; text-align: center; color: var(--vscode-descriptionForeground); }
+    .empty-state { padding: 1.5rem; text-align: center; color: var(--vscode-foreground); background: var(--vscode-inputValidation-warningBackground, rgba(204, 160, 0, 0.15)); border: 1px solid var(--vscode-editorWarning-foreground, #eab308); border-radius: 4px; margin: 0.5rem 0; }
+    .empty-state a { color: var(--vscode-textLink-foreground); text-decoration: none; font-weight: 600; }
+    .empty-state a:hover { text-decoration: underline; }
+    .message-box { padding: 0.75rem 1rem; margin: 0.5rem 0; border-radius: 4px; font-size: 0.9em; }
+    .message-box.message-warning { background: var(--vscode-inputValidation-warningBackground, rgba(204, 160, 0, 0.15)); border: 1px solid var(--vscode-editorWarning-foreground, #eab308); color: var(--vscode-foreground); }
+    .message-box a { color: var(--vscode-textLink-foreground); text-decoration: none; font-weight: 600; }
+    .message-box a:hover { text-decoration: underline; }
     .legend { margin-top: 0.75rem; font-size: 0.8em; color: var(--vscode-descriptionForeground); display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; }
     .legend span { display: inline-flex; align-items: center; gap: 0.25rem; }
   </style>
@@ -408,6 +416,7 @@ function getDashboardHtml(webview: vscode.Webview, data: ReturnType<typeof getDa
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="24" height="24"><path fill="currentColor" d="M4 20v-4h4v4H4zm6 0v-8h4v8h-4zm6 0V8h4v12h-4zm6 0V4h4v16h-4z"/></svg>
     <h1>${l10n.title}</h1>
   </div>
+  <div id="notConfiguredBanner" class="message-box message-warning" style="display:none;">${l10n.notConfigured} <a href="#" id="openSettingsBannerLink">${l10n.openSettings}</a></div>
   <div class="meta">
     <span><strong>${l10n.propertyId}</strong> <span id="propertyId">-</span></span>
     <span><strong>${l10n.pagesInCache}</strong> <span id="cacheSize">0</span></span>
@@ -427,7 +436,7 @@ function getDashboardHtml(webview: vscode.Webview, data: ReturnType<typeof getDa
       <tbody id="tbody"></tbody>
     </table>
   </div>
-  <div id="emptyState" class="empty-state" style="display:none;">${l10n.emptyState}</div>
+  <div id="emptyState" class="empty-state" style="display:none;">${l10n.emptyState} <a href="#" id="openSettingsLink">${l10n.openSettings}</a></div>
   <div class="legend" id="legend"><span class="bounce-good"><span class="bounce-dot"></span> ${l10n.legendGood}</span><span class="bounce-warning"><span class="bounce-dot"></span> ${l10n.legendWarning}</span><span class="bounce-high"><span class="bounce-dot"></span> ${l10n.legendHigh}</span><span class="bounce-critical"><span class="bounce-dot"></span> ${l10n.legendCritical}</span></div>
   <script nonce="${nonce}">
     const vscode = acquireVsCodeApi();
@@ -459,6 +468,8 @@ function getDashboardHtml(webview: vscode.Webview, data: ReturnType<typeof getDa
     }
 
     function render(d) {
+      const banner = document.getElementById('notConfiguredBanner');
+      if (banner) banner.style.display = d.configured ? 'none' : 'block';
       document.getElementById('propertyId').textContent = d.configured ? d.propertyId : l10n.notSet;
       document.getElementById('cacheSize').textContent = String(d.cacheSize);
       document.getElementById('lastFetch').textContent = d.lastFetch ? new Date(d.lastFetch).toLocaleString() : '-';
@@ -510,6 +521,8 @@ function getDashboardHtml(webview: vscode.Webview, data: ReturnType<typeof getDa
     render(currentData);
     window.addEventListener('message', e => { if (e.data && e.data.type === 'data') updateData(e.data.data); });
     document.getElementById('refreshBtn').onclick = () => vscode.postMessage({ type: 'refresh' });
+    document.getElementById('openSettingsLink')?.addEventListener('click', e => { e.preventDefault(); vscode.postMessage({ type: 'openSettings' }); });
+    document.getElementById('openSettingsBannerLink')?.addEventListener('click', e => { e.preventDefault(); vscode.postMessage({ type: 'openSettings' }); });
   </script>
 </body>
 </html>`;
@@ -605,6 +618,8 @@ class DashboardViewProvider implements vscode.WebviewViewProvider {
         });
       } else if (msg.type === 'openPage' && msg.pagePath) {
         openPageInEditor(msg.pagePath);
+      } else if (msg.type === 'openSettings') {
+        vscode.commands.executeCommand('workbench.action.openSettings', 'astroAnalytics');
       }
     });
   }
@@ -635,6 +650,8 @@ function showDashboard(context: vscode.ExtensionContext, codeLensProvider: Analy
         });
       } else if (msg.type === 'openPage' && msg.pagePath) {
         openPageInEditor(msg.pagePath);
+      } else if (msg.type === 'openSettings') {
+        vscode.commands.executeCommand('workbench.action.openSettings', 'astroAnalytics');
       }
     });
     dashboardPanel.onDidDispose(() => {
@@ -705,7 +722,11 @@ async function refreshData(
         const msg = getErrorMessage(err);
         outputChannel.appendLine(`[ERROR] ${msg}`);
         outputChannel.show(true);
-        vscode.window.showErrorMessage(l10nT('msg.analyticsError', msg));
+        vscode.window.showErrorMessage(l10nT('msg.analyticsError', msg), l10nT('msg.openSettings')).then(choice => {
+          if (choice === l10nT('msg.openSettings')) {
+            vscode.commands.executeCommand('workbench.action.openSettings', 'astroAnalytics');
+          }
+        });
         statusBarItem.text = `$(graph) ${l10nT('msg.analyticsErrorStatus')}`;
       }
     }
@@ -744,7 +765,11 @@ export function activate(context: vscode.ExtensionContext): void {
           const msg = getErrorMessage(err);
           outputChannel.appendLine(`[ERROR] showDashboard: ${msg}`);
           outputChannel.show(true);
-          vscode.window.showErrorMessage(l10nT('msg.dashboardFailed'));
+          vscode.window.showErrorMessage(l10nT('msg.dashboardFailed'), l10nT('msg.openSettings')).then(choice => {
+            if (choice === l10nT('msg.openSettings')) {
+              vscode.commands.executeCommand('workbench.action.openSettings', 'astroAnalytics');
+            }
+          });
         }
       })
     );

@@ -41,6 +41,7 @@
   "dashboard.bounce": "Bounce",
   "dashboard.avgDuration": "Ø Dauer",
   "dashboard.emptyState": "Keine gecachten Seiten. GA4 konfigurieren und „Daten aktualisieren“ ausführen.",
+  "dashboard.notConfigured": "GA4 ist nicht konfiguriert. Property-ID und Anmeldedaten in den Einstellungen setzen, um Analytics-Daten zu laden.",
   "dashboard.notSet": "(nicht gesetzt)",
   "dashboard.legendGood": "<25 %",
   "dashboard.legendWarning": "25–45 %",

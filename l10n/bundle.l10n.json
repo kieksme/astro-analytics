@@ -41,6 +41,7 @@
   "dashboard.bounce": "Bounce",
   "dashboard.avgDuration": "Avg duration",
   "dashboard.emptyState": "No cached pages. Configure GA4 and run Refresh Data.",
+  "dashboard.notConfigured": "GA4 is not configured. Set Property ID and credentials in Settings to load analytics data.",
   "dashboard.notSet": "(not set)",
   "dashboard.legendGood": "<25%",
   "dashboard.legendWarning": "25–45%",

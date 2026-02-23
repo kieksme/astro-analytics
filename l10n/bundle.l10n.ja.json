@@ -41,6 +41,7 @@
   "dashboard.bounce": "直帰率",
   "dashboard.avgDuration": "平均時間",
   "dashboard.emptyState": "キャッシュされたページがありません。GA4 を設定して「データを更新」を実行してください。",
+  "dashboard.notConfigured": "GA4 が設定されていません。分析データを読み込むには、設定でプロパティ ID と認証情報を設定してください。",
   "dashboard.notSet": "（未設定）",
   "dashboard.legendGood": "<25%",
   "dashboard.legendWarning": "25–45%",

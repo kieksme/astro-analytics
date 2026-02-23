@@ -41,6 +41,7 @@
   "dashboard.bounce": "跳出率",
   "dashboard.avgDuration": "平均时长",
   "dashboard.emptyState": "无缓存页面。请配置 GA4 并执行刷新数据。",
+  "dashboard.notConfigured": "GA4 未配置。请在设置中配置媒体资源 ID 和凭据以加载分析数据。",
   "dashboard.notSet": "（未设置）",
   "dashboard.legendGood": "<25%",
   "dashboard.legendWarning": "25–45%",

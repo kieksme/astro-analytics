@@ -41,6 +41,7 @@
   "dashboard.bounce": "बाउंस",
   "dashboard.avgDuration": "औसत अवधि",
   "dashboard.emptyState": "कोई कैश्ड पेज नहीं। GA4 कॉन्फ़िगर करें और डेटा रिफ़्रेश चलाएं।",
+  "dashboard.notConfigured": "GA4 कॉन्फ़िगर नहीं है। एनालिटिक्स डेटा लोड करने के लिए सेटिंग्स में प्रॉपर्टी ID और क्रेडेंशियल सेट करें।",
   "dashboard.notSet": "(सेट नहीं)",
   "dashboard.legendGood": "<25%",
   "dashboard.legendWarning": "25–45%",
