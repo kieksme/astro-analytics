@@ -2,8 +2,12 @@
   "name": "astro-analytics",
   "displayName": "Astro Analytics",
   "description": "Shows Google Analytics GA4 metrics (Bounce Rate, Views, Users) for Astro Markdown pages and .astro files inline in VSCode",
-  "version": "0.2.3",
-  "publisher": "Thinkport GmbH",
+  "version": "0.2.4",
+  "publisher": "kieks.me",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kieksme/astro-analytics"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
