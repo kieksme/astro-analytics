@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import * as path from 'path';
-import { filePathToSlug, slugToFilePaths, normalizePagePath } from '../../src/lib/slug';
+import {
+  filePathToSlug,
+  slugToFilePaths,
+  normalizePagePath,
+  isDynamicRouteFilePath,
+  getDynamicRouteMatchSpec,
+  pagePathMatchesDynamicRoute,
+} from '../../src/lib/slug';
 
 const workspace = path.join('/fake', 'workspace');
 const contentRoot = 'src/content';
@@ -54,6 +61,16 @@ describe('filePathToSlug', () => {
       const filePath = path.join(workspace, contentRoot, 'page.astro');
       expect(filePathToSlug(filePath, workspace, contentRoot, pagesRoot)).toBeNull();
     });
+
+    it('returns null for dynamic route [slug].astro', () => {
+      const filePath = path.join(workspace, pagesRoot, '[slug].astro');
+      expect(filePathToSlug(filePath, workspace, contentRoot, pagesRoot)).toBeNull();
+    });
+
+    it('returns null for dynamic route [...slug].astro', () => {
+      const filePath = path.join(workspace, pagesRoot, '[...slug].astro');
+      expect(filePathToSlug(filePath, workspace, contentRoot, pagesRoot)).toBeNull();
+    });
   });
 
   describe('edge cases', () => {
@@ -70,7 +87,7 @@ describe('filePathToSlug', () => {
 });
 
 describe('slugToFilePaths', () => {
-  it('returns content index + pages index for root path "/"', () => {
+  it('returns content index + pages index for root path "/" (no dynamic candidates)', () => {
     const result = slugToFilePaths(workspace, contentRoot, pagesRoot, '/');
     expect(result).toContain(path.join(workspace, contentRoot, 'index.md'));
     expect(result).toContain(path.join(workspace, contentRoot, 'index.mdx'));
@@ -84,6 +101,11 @@ describe('slugToFilePaths', () => {
     expect(result[result.length - 1]).toBe(path.join(workspace, pagesRoot, 'index.astro'));
   });
 
+  it('does not add dynamic route candidates for root path', () => {
+    const result = slugToFilePaths(workspace, contentRoot, pagesRoot, '/');
+    expect(result).not.toContain(path.join(workspace, pagesRoot, '[slug].astro'));
+  });
+
   it('returns candidates for single-segment path "/blog/"', () => {
     const result = slugToFilePaths(workspace, contentRoot, pagesRoot, '/blog/');
     expect(result).toContain(path.join(workspace, contentRoot, 'blog', 'index.md'));
@@ -92,6 +114,9 @@ describe('slugToFilePaths', () => {
     expect(result).toContain(path.join(workspace, contentRoot, 'blog.mdx'));
     expect(result).toContain(path.join(workspace, pagesRoot, 'blog', 'index.astro'));
     expect(result).toContain(path.join(workspace, pagesRoot, 'blog.astro'));
+    expect(result).toContain(path.join(workspace, pagesRoot, '[slug].astro'));
+    expect(result).toContain(path.join(workspace, pagesRoot, '[id].astro'));
+    expect(result).toContain(path.join(workspace, pagesRoot, '[...slug].astro'));
   });
 
   it('returns candidates for multi-segment path "/blog/my-post/"', () => {
@@ -100,6 +125,8 @@ describe('slugToFilePaths', () => {
     expect(result).toContain(path.join(workspace, contentRoot, 'blog', 'my-post', 'index.mdx'));
     expect(result).toContain(path.join(workspace, pagesRoot, 'blog', 'my-post', 'index.astro'));
     expect(result).not.toContain(path.join(workspace, contentRoot, 'blog.my-post.md'));
+    expect(result).toContain(path.join(workspace, pagesRoot, '[slug]', '[id].astro'));
+    expect(result).toContain(path.join(workspace, pagesRoot, '[...slug].astro'));
   });
 
   it('strips trailing slash from input path', () => {
@@ -117,6 +144,78 @@ describe('slugToFilePaths', () => {
     const result = slugToFilePaths(workspace, contentRoot, pagesRoot, '');
     expect(result).toContain(path.join(workspace, contentRoot, 'index.md'));
     expect(result).toContain(path.join(workspace, pagesRoot, 'index.astro'));
+  });
+});
+
+describe('isDynamicRouteFilePath', () => {
+  it('returns true for [slug].astro under pages root', () => {
+    const filePath = path.join(workspace, pagesRoot, '[slug].astro');
+    expect(isDynamicRouteFilePath(filePath, workspace, pagesRoot)).toBe(true);
+  });
+
+  it('returns true for [...slug].astro', () => {
+    const filePath = path.join(workspace, pagesRoot, '[...slug].astro');
+    expect(isDynamicRouteFilePath(filePath, workspace, pagesRoot)).toBe(true);
+  });
+
+  it('returns true for [slug]/[id].astro', () => {
+    const filePath = path.join(workspace, pagesRoot, '[slug]', '[id].astro');
+    expect(isDynamicRouteFilePath(filePath, workspace, pagesRoot)).toBe(true);
+  });
+
+  it('returns false for static about.astro', () => {
+    const filePath = path.join(workspace, pagesRoot, 'about.astro');
+    expect(isDynamicRouteFilePath(filePath, workspace, pagesRoot)).toBe(false);
+  });
+
+  it('returns false for file outside pages root', () => {
+    const filePath = path.join(workspace, contentRoot, '[slug].astro');
+    expect(isDynamicRouteFilePath(filePath, workspace, pagesRoot)).toBe(false);
+  });
+});
+
+describe('getDynamicRouteMatchSpec', () => {
+  it('returns segmentCount 1 and catchAll false for [slug].astro', () => {
+    const filePath = path.join(workspace, pagesRoot, '[slug].astro');
+    const spec = getDynamicRouteMatchSpec(filePath, workspace, pagesRoot);
+    expect(spec).toEqual({ segmentCount: 1, catchAll: false });
+  });
+
+  it('returns segmentCount 1 and catchAll true for [...slug].astro', () => {
+    const filePath = path.join(workspace, pagesRoot, '[...slug].astro');
+    const spec = getDynamicRouteMatchSpec(filePath, workspace, pagesRoot);
+    expect(spec).toEqual({ segmentCount: 1, catchAll: true });
+  });
+
+  it('returns segmentCount 2 for [slug]/[id].astro', () => {
+    const filePath = path.join(workspace, pagesRoot, '[slug]', '[id].astro');
+    const spec = getDynamicRouteMatchSpec(filePath, workspace, pagesRoot);
+    expect(spec).toEqual({ segmentCount: 2, catchAll: false });
+  });
+
+  it('returns null for static about.astro', () => {
+    const filePath = path.join(workspace, pagesRoot, 'about.astro');
+    expect(getDynamicRouteMatchSpec(filePath, workspace, pagesRoot)).toBeNull();
+  });
+});
+
+describe('pagePathMatchesDynamicRoute', () => {
+  it('matches single-segment path when segmentCount 1 and not catchAll', () => {
+    expect(pagePathMatchesDynamicRoute('/blog/', 1, false)).toBe(true);
+    expect(pagePathMatchesDynamicRoute('/blog', 1, false)).toBe(true);
+    expect(pagePathMatchesDynamicRoute('/', 1, false)).toBe(false);
+    expect(pagePathMatchesDynamicRoute('/blog/post/', 1, false)).toBe(false);
+  });
+
+  it('matches 1+ segments when catchAll', () => {
+    expect(pagePathMatchesDynamicRoute('/blog/', 1, true)).toBe(true);
+    expect(pagePathMatchesDynamicRoute('/blog/post/', 1, true)).toBe(true);
+    expect(pagePathMatchesDynamicRoute('/', 1, true)).toBe(false);
+  });
+
+  it('matches two segments when segmentCount 2', () => {
+    expect(pagePathMatchesDynamicRoute('/blog/post/', 2, false)).toBe(true);
+    expect(pagePathMatchesDynamicRoute('/blog/', 2, false)).toBe(false);
   });
 });
 

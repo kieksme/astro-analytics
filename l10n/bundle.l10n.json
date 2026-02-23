@@ -10,6 +10,7 @@
   "hover.activeUsers": "Active users",
   "hover.avgSessionDuration": "Avg. session duration",
   "hover.footer": "Last {0} days · GA4 Property {1}",
+  "hover.dynamicRouteAggregated": "(dynamic route, aggregated)",
   "decoration.tooltip": "Bounce {0} | {1} Views | {2} Users | Ø {3}",
   "status.analyticsNone": "Analytics: —",
   "status.noDataTooltip": "No data for {0}",

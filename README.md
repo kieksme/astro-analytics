@@ -80,6 +80,11 @@ src/pages/blog/my-post.astro           →  /blog/my-post/
 src/pages/index.astro                  →  /
 ```
 
+**Dynamic routes** (`[slug].astro`, `[...slug].astro`, `[slug]/[id].astro`) are supported:
+
+- In the **dashboard**, a GA4 path like `/blog/` can resolve to a dynamic route file (e.g. `src/pages/[slug].astro`) when no static file exists, so the row stays clickable and opens that file.
+- When you **open a dynamic route file**, the extension shows **aggregated** bounce rate, views, users, and session duration for all GA4 paths that match that route (e.g. all single-segment paths for `[slug].astro`).
+
 ### 4. Test that data is loading
 
 If you don’t see any metrics (CodeLens shows “no data” or status bar stays empty):

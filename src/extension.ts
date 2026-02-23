@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import { GoogleAuth } from 'google-auth-library';
 import fetch from 'node-fetch';
 import { filePathToSlug, slugToFilePaths, normalizePagePath } from './lib/slug';
+import { getAggregatedMetricsForDynamicRoute } from './lib/aggregate';
 import { bounceColor, bounceStatusBarCodicon, fmtPct, fmtDuration } from './lib/format';
 import { getDashboardDataFromState, buildDashboardHtml, buildSidebarDashboardHtml } from './lib/dashboard';
 
@@ -11,6 +12,7 @@ const l10nDefaults: Record<string, string> = {
   'codelens.noData': 'Analytics: no data ($(sync) refresh)',
   'codelens.tooltip': 'Click to refresh analytics data',
   'codelens.title': 'Bounce {0}   $(eye) {1} Views   $(person) {2} Users   $(watch) {3}',
+  'hover.dynamicRouteAggregated': '(dynamic route, aggregated)',
   'status.text': 'Bounce · {0} Views',
   'status.tooltip': 'Bounce: {0} | Views: {1} | Users: {2} | Ø {3}',
   'status.a11y': 'Analytics: Bounce {0}, {1} views, {2} users. Click to refresh.',
@@ -177,9 +179,10 @@ class AnalyticsCodeLensProvider implements vscode.CodeLensProvider {
     const pagesRoot = config.get<string>('pagesRoot', 'src/pages');
 
     const slug = filePathToSlug(document.uri.fsPath, wsFolder.uri.fsPath, contentRoot, pagesRoot);
-    if (!slug) return [];
-
-    const metrics = metricsCache.get(slug) ?? metricsCache.get(normalizePagePath(slug));
+    let metrics = slug != null ? (metricsCache.get(slug) ?? metricsCache.get(normalizePagePath(slug))) : null;
+    if (!metrics) {
+      metrics = getAggregatedMetricsForDynamicRoute(document.uri.fsPath, wsFolder.uri.fsPath, pagesRoot, metricsCache);
+    }
     const range = new vscode.Range(0, 0, 0, 0);
 
     if (!metrics) {
@@ -224,16 +227,18 @@ class AnalyticsHoverProvider implements vscode.HoverProvider {
     const pagesRoot = config.get<string>('pagesRoot', 'src/pages');
 
     const slug = filePathToSlug(document.uri.fsPath, wsFolder.uri.fsPath, contentRoot, pagesRoot);
-    if (!slug) return null;
-
-    const metrics = metricsCache.get(slug) ?? metricsCache.get(normalizePagePath(slug));
+    let metrics = slug != null ? (metricsCache.get(slug) ?? metricsCache.get(normalizePagePath(slug))) : null;
+    if (!metrics) {
+      metrics = getAggregatedMetricsForDynamicRoute(document.uri.fsPath, wsFolder.uri.fsPath, pagesRoot, metricsCache);
+    }
     if (!metrics) return null;
 
     const bounceIcon = bounceColor(metrics.bounceRate);
     const locale = uiLanguage();
     const md = new vscode.MarkdownString(undefined, true);
     md.isTrusted = false;
-    md.appendMarkdown(`### $(graph) ${l10nT('hover.analyticsTitle')}\`${slug}\`\n\n`);
+    const titleSlug = slug ?? l10nT('hover.dynamicRouteAggregated');
+    md.appendMarkdown(`### $(graph) ${l10nT('hover.analyticsTitle')}\`${titleSlug}\`\n\n`);
     md.appendMarkdown(`| ${l10nT('hover.metric')} | ${l10nT('hover.value')} |\n|---|---|\n`);
     md.appendMarkdown(`| $(${bounceIcon}) ${l10nT('hover.bounceRate')} | **${fmtPct(metrics.bounceRate)}** |\n`);
     md.appendMarkdown(`| $(eye) ${l10nT('hover.pageViews')} | **${metrics.views.toLocaleString(locale)}** |\n`);
@@ -271,9 +276,10 @@ class AnalyticsFileDecorationProvider implements vscode.FileDecorationProvider {
     const pagesRoot = config.get<string>('pagesRoot', 'src/pages');
 
     const slug = filePathToSlug(uri.fsPath, wsFolder.uri.fsPath, contentRoot, pagesRoot);
-    if (!slug) return undefined;
-
-    const metrics = metricsCache.get(slug) ?? metricsCache.get(normalizePagePath(slug));
+    let metrics = slug != null ? (metricsCache.get(slug) ?? metricsCache.get(normalizePagePath(slug))) : null;
+    if (!metrics) {
+      metrics = getAggregatedMetricsForDynamicRoute(uri.fsPath, wsFolder.uri.fsPath, pagesRoot, metricsCache);
+    }
     if (!metrics) return undefined;
 
     const locale = uiLanguage();
@@ -301,14 +307,15 @@ function updateStatusBar(document: vscode.TextDocument | undefined) {
   const pagesRoot = config.get<string>('pagesRoot', 'src/pages');
 
   const slug = filePathToSlug(document.uri.fsPath, wsFolder.uri.fsPath, contentRoot, pagesRoot);
-  if (!slug) { statusBarItem.hide(); return; }
-
-  const metrics = metricsCache.get(slug) ?? metricsCache.get(normalizePagePath(slug));
+  let metrics = slug != null ? (metricsCache.get(slug) ?? metricsCache.get(normalizePagePath(slug))) : null;
+  if (!metrics) {
+    metrics = getAggregatedMetricsForDynamicRoute(document.uri.fsPath, wsFolder.uri.fsPath, pagesRoot, metricsCache);
+  }
   const locale = uiLanguage();
   if (!metrics) {
     statusBarItem.text = `$(graph) ${l10nT('status.analyticsNone')}`;
-    statusBarItem.tooltip = l10nT('status.noDataTooltip', slug);
-    statusBarItem.accessibilityInformation = { label: l10nT('status.noDataA11y', slug), role: 'status' };
+    statusBarItem.tooltip = slug != null ? l10nT('status.noDataTooltip', slug) : l10nT('status.noDataA11y', document.uri.fsPath);
+    statusBarItem.accessibilityInformation = { label: l10nT('status.noDataA11y', slug ?? document.uri.fsPath), role: 'status' };
     statusBarItem.show();
     return;
   }

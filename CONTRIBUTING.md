@@ -50,3 +50,83 @@ pnpx vsce package --no-dependencies --allow-missing-repository
 ```
 
 Install the generated `.vsix` in VS Code: `Cmd+Shift+P` → **"Install from VSIX..."**.
+
+For publishing to the VS Code Marketplace, the `repository` field in `package.json` must be set (it is used for links on the Marketplace page). This project already has it configured.
+
+## Publishing to the VS Code Marketplace
+
+This section describes how to publish the extension to the [VS Code Marketplace](https://marketplace.visualstudio.com/vscode) so it is publicly installable.
+
+### Prerequisites
+
+- **Node.js** and **pnpm** (see Development above).
+- A **Microsoft account** linked to [Azure DevOps](https://azure.microsoft.com/services/devops/) for Marketplace authentication.
+
+### Create a publisher
+
+Every extension needs a **publisher** identity on the Marketplace.
+
+1. Open the [Visual Studio Marketplace publisher management page](https://marketplace.visualstudio.com/manage).
+2. Sign in with your Microsoft account.
+3. Click **Create publisher** and set:
+   - **ID:** Must match the `publisher` field in `package.json` exactly (this project uses `kieksme`). The ID cannot be changed later.
+   - **Name:** Display name for your publisher (e.g. company or brand).
+
+### Personal Access Token (PAT)
+
+Publishing uses a **Personal Access Token** from Azure DevOps, not your password.
+
+1. Go to the [Azure DevOps portal](https://dev.azure.com) and select your organization.
+2. Open **User settings** (dropdown next to your profile) → **Personal access tokens**.
+3. Click **New Token**.
+4. Under **Scopes**, choose **Custom defined**, then find **Marketplace** and select **Manage**.
+5. Create the token and **copy it immediately** (it is shown only once).
+
+Store the token securely and **never commit it**. For local publishing you can use a `.env` file (add `VSCE_PAT=your-token` and ensure `.env` is in `.gitignore`) or set the `VSCE_PAT` environment variable when running publish.
+
+### Pre-publish checklist
+
+Before publishing:
+
+- **Version:** Bump the version in `package.json` if needed (use [SemVer](https://semver.org/)).
+- **CHANGELOG.md:** Add an entry for the new version; this content is shown as **Release Notes** on the Marketplace page.
+- **Build:** Run `pnpm run compile` (or `pnpm run build`) so `dist/extension.js` is up to date.
+- **Content:** Ensure README and CHANGELOG do not use user-provided SVG images (only [approved badges](https://code.visualstudio.com/api/references/extension-manifest#approved-badges) are allowed). Image URLs must use `https://`. The extension icon in `package.json` must be a PNG (e.g. `icon.png`).
+- **License:** The Marketplace expects a LICENSE file in the project root; this project provides `LICENSE.md`.
+
+### Publish command
+
+**One-time login** (if not using `VSCE_PAT`):
+
+```bash
+pnpx vsce login kieksme
+```
+
+Enter your PAT when prompted. Alternatively, set the `VSCE_PAT` environment variable (e.g. from `.env`) and skip login.
+
+**Publish:**
+
+```bash
+pnpm run compile
+pnpx vsce publish
+```
+
+Or use the convenience script (compile + publish):
+
+```bash
+pnpm run publish
+```
+
+To bump the version and publish in one step:
+
+```bash
+pnpx vsce publish minor    # e.g. 0.5.0 → 0.6.0
+pnpx vsce publish patch    # e.g. 0.5.0 → 0.5.1
+pnpx vsce publish 1.0.0     # set exact version
+```
+
+If you run `vsce publish` in a Git repository, it may create a version commit and tag (via npm-version). You can pass a custom commit message with `-m "Release %s"`.
+
+### Automated publishing (optional)
+
+You can publish from CI (e.g. on a release tag or from `main`) by storing the PAT as a secret (e.g. `VSCE_PAT` in GitHub Actions) and running `pnpm run compile` then `pnpx vsce publish`. See [Continuous Integration](https://code.visualstudio.com/api/working-with-extensions/continuous-integration) in the VS Code docs for examples and best practices.

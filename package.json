@@ -180,7 +180,8 @@
     "test:integration": "pnpm run compile && pnpm run compile:tests && vscode-test",
     "vscode:prepublish": "pnpm run compile",
     "bundle": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
-    "package": "pnpm run compile && pnpx vsce package --no-dependencies --allow-missing-repository"
+    "package": "pnpm run compile && pnpx vsce package --no-dependencies --allow-missing-repository",
+    "publish": "pnpm run compile && pnpx vsce publish"
   },
   "dependencies": {
     "google-auth-library": "^9.6.3",
