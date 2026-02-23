@@ -88,6 +88,14 @@ function normalizePagePath(pagePath: string): string {
   return p;
 }
 
+/** Bounce rate (0–1) to ThemeColor for Explorer badge. Returns undefined for good (default style). */
+function bounceThemeColor(rate: number): vscode.ThemeColor | undefined {
+  if (rate < 0.25) return new vscode.ThemeColor('testing.iconPassed');
+  if (rate < 0.45) return new vscode.ThemeColor('editorWarning.foreground');
+  if (rate < 0.65) return new vscode.ThemeColor('editorWarning.foreground');
+  return new vscode.ThemeColor('editorError.foreground');
+}
+
 // ---------------------------------------------------------------------------
 // Extension state
 // ---------------------------------------------------------------------------
@@ -98,6 +106,7 @@ const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 let statusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
 let dashboardPanel: vscode.WebviewPanel | undefined;
+let fileDecorationProvider: AnalyticsFileDecorationProvider;
 
 // ---------------------------------------------------------------------------
 // CodeLens provider
@@ -181,6 +190,43 @@ class AnalyticsHoverProvider implements vscode.HoverProvider {
     md.appendMarkdown(`\n\n${footer}`);
 
     return new vscode.Hover(md);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// File decoration provider (Explorer: bounce rate badge at filename level)
+// ---------------------------------------------------------------------------
+class AnalyticsFileDecorationProvider implements vscode.FileDecorationProvider {
+  private _onDidChangeFileDecorations = new vscode.EventEmitter<vscode.Uri | vscode.Uri[] | undefined>();
+  readonly onDidChangeFileDecorations = this._onDidChangeFileDecorations.event;
+
+  refresh(): void {
+    this._onDidChangeFileDecorations.fire(undefined);
+  }
+
+  provideFileDecoration(
+    uri: vscode.Uri,
+    _token: vscode.CancellationToken
+  ): vscode.ProviderResult<vscode.FileDecoration> {
+    if (!uri.fsPath.match(/\.(md|mdx|astro)$/)) return undefined;
+
+    const wsFolder = vscode.workspace.getWorkspaceFolder(uri);
+    if (!wsFolder) return undefined;
+
+    const config = vscode.workspace.getConfiguration('astroAnalytics');
+    const contentRoot = config.get<string>('contentRoot', 'src/content');
+    const pagesRoot = config.get<string>('pagesRoot', 'src/pages');
+
+    const slug = filePathToSlug(uri.fsPath, wsFolder.uri.fsPath, contentRoot, pagesRoot);
+    if (!slug) return undefined;
+
+    const metrics = metricsCache.get(slug) ?? metricsCache.get(normalizePagePath(slug));
+    if (!metrics) return undefined;
+
+    const badge = (metrics.bounceRate * 100).toFixed(0) + '%';
+    const tooltip = `Bounce ${fmtPct(metrics.bounceRate)} | ${metrics.views.toLocaleString('de')} Views | ${metrics.users.toLocaleString('de')} Users | Ø ${fmtDuration(metrics.avgSessionDuration)}`;
+    const color = bounceThemeColor(metrics.bounceRate);
+    return new vscode.FileDecoration(badge, tooltip, color);
   }
 }
 
@@ -620,6 +666,7 @@ async function refreshData(
         outputChannel.appendLine(`  Sample pagePaths: ${sample}${data.length > 5 ? '…' : ''}`);
 
         codeLensProvider.refresh();
+        fileDecorationProvider.refresh();
         updateStatusBar(vscode.window.activeTextEditor?.document);
 
         vscode.window.setStatusBarMessage(`$(check) Analytics: ${data.length} Seiten geladen`, 3000);
@@ -681,11 +728,13 @@ export function activate(context: vscode.ExtensionContext): void {
     // Providers
     codeLensProvider = new AnalyticsCodeLensProvider();
     hoverProvider = new AnalyticsHoverProvider();
+    fileDecorationProvider = new AnalyticsFileDecorationProvider();
     const dashboardViewProvider = new DashboardViewProvider(codeLensProvider);
     context.subscriptions.push(
       vscode.window.registerWebviewViewProvider('astroAnalytics.dashboard', dashboardViewProvider, {
         webviewOptions: { retainContextWhenHidden: true },
       }),
+      vscode.window.registerFileDecorationProvider(fileDecorationProvider),
       vscode.languages.registerCodeLensProvider(
         [{ language: 'markdown' }, { language: 'mdx' }, { language: 'astro' }],
         codeLensProvider

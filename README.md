@@ -6,24 +6,24 @@
 
 Shows Google Analytics GA4 metrics directly in VS Code when you open Astro Markdown or `.astro` files.
 
-
 ## Features
 
 - **CodeLens** at the top of each `.md`/`.mdx`/`.astro` file with Bounce Rate, Views, Users, and Session Duration
+- **Explorer** — Bounce rate shown next to file names in the directory tree when analytics data exists (badge + tooltip)
 - **Hover tooltip** with full metrics table (hover over the first lines of the file)
 - **Status Bar** in the bottom-right with the Bounce Rate of the currently open page
 - Automatic caching (5-minute TTL), manual refresh on click
 
 ## Bounce Rate Color Coding
 
-The extension shows bounce rate with colored indicators (green / yellow / orange / red) in CodeLens, hover, status bar, and the dashboard:
+The extension shows bounce rate with colored indicators (green / yellow / orange / red) in CodeLens, Explorer file tree, hover, status bar, and the dashboard:
 
-| Level     | Bounce Rate               |
-|-----------|---------------------------|
-| Green     | < 25% — Very good         |
-| Yellow    | 25–44% — Good             |
-| Orange    | 45–64% — Average          |
-| Red       | ≥ 65% — Needs improvement |
+| Level | Bounce Rate               |
+|-------|---------------------------|
+| 🟢    | < 25% — Very good         |
+| 🟡    | 25–44% — Good             |
+| 🟠    | 45–64% — Average          |
+| 🔴    | ≥ 65% — Needs improvement |
 
 ## Setup
 
@@ -49,13 +49,13 @@ Credentials saved to file: [~/.config/gcloud/application_default_credentials.jso
 
 In VS Code: `Cmd+,` → search for **Astro Analytics**
 
-| Setting                          | Description                            | Default       |
-|----------------------------------|----------------------------------------|---------------|
-| `astroAnalytics.propertyId`      | GA4 Property ID (numeric)              | `364493652`   |
-| `astroAnalytics.credentialsPath` | Path to credentials JSON               | (ADC default) |
-| `astroAnalytics.lookbackDays`    | Time range in days                     | `30`          |
-| `astroAnalytics.contentRoot`     | Astro content folder                   | `src/content` |
-| `astroAnalytics.pagesRoot`       | Astro pages folder                     | `src/pages`   |
+| Setting                          | Description               | Default       |
+|----------------------------------|---------------------------|---------------|
+| `astroAnalytics.propertyId`      | GA4 Property ID (numeric) | `364493652`   |
+| `astroAnalytics.credentialsPath` | Path to credentials JSON  | (ADC default) |
+| `astroAnalytics.lookbackDays`    | Time range in days        | `30`          |
+| `astroAnalytics.contentRoot`     | Astro content folder      | `src/content` |
+| `astroAnalytics.pagesRoot`       | Astro pages folder        | `src/pages`   |
 
 Example `settings.json`:
 
@@ -103,6 +103,7 @@ If you don’t see any metrics (CodeLens shows “no data” or status bar stays
 
 **If the command "Astro Analytics: Test API Connection" is not found:**  
 Rebuild the extension and reload the window where the extension runs.  
+
 - **Extension Development Host (F5):** Run `pnpm run compile` (or `pnpm run bundle`), then in the *Extension Development Host* window: `Cmd+Shift+P` → **Developer: Reload Window**.  
 - **Installed from VSIX:** Run `pnpm run compile` then repackage and reinstall the `.vsix`.
 
