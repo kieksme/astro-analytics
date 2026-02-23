@@ -31,4 +31,12 @@ suite('Astro Analytics Extension Test Suite', () => {
       'Command astro-analytics.configure should be registered'
     );
   });
+
+  test('Test API Connection command is registered', async () => {
+    const commands = await vscode.commands.getCommands();
+    assert.ok(
+      commands.includes('astro-analytics.testConnection'),
+      'Command astro-analytics.testConnection should be registered'
+    );
+  });
 });

@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="logos/icon.svg" alt="Astro Analytics Logo" width="128" />
-</p>
-
 # Astro Analytics — VS Code Extension
 
 **Publisher:** kieks.me GbR
@@ -80,6 +76,31 @@ src/content/karriere/index.md          →  /karriere/
 src/pages/blog/my-post.astro           →  /blog/my-post/
 src/pages/index.astro                  →  /
 ```
+
+### 4. Test that data is loading
+
+If you don’t see any metrics (CodeLens shows “no data” or status bar stays empty):
+
+1. **Run the test command**  
+   `Cmd+Shift+P` → **“Astro Analytics: Test API Connection”**.  
+   The **Output** panel (channel “Astro Analytics”) will show:
+   - Whether the GA4 API call succeeded and how many page paths were returned
+   - The first 15 `pagePath` values from GA4 (so you can compare with your slug mapping)
+   - If a `.md`/`.mdx`/`.astro` file is open: the **current file’s slug** and whether it matches any GA4 path
+
+2. **Check configuration**  
+   Ensure `astroAnalytics.propertyId` is set (numeric GA4 Property ID) and, if needed, `astroAnalytics.credentialsPath` points to your credentials JSON.
+
+3. **Check slug matching**  
+   GA4 `pagePath` and the extension’s slug both use a trailing slash (e.g. `/blog/my-post/`). If your site sends paths without a trailing slash, the extension normalizes them for lookup; the test output shows both raw and normalized paths.
+
+4. **Check the Output channel**  
+   After a normal refresh, the same channel logs e.g. `Loaded N pages from GA4` and sample `pagePath` values. Any API errors appear there and as an error notification.
+
+**If the command "Astro Analytics: Test API Connection" is not found:**  
+Rebuild the extension and reload the window where the extension runs.  
+- **Extension Development Host (F5):** Run `pnpm run compile` (or `pnpm run bundle`), then in the *Extension Development Host* window: `Cmd+Shift+P` → **Developer: Reload Window**.  
+- **Installed from VSIX:** Run `pnpm run compile` then repackage and reinstall the `.vsix`.
 
 ## Installation
 

@@ -2,7 +2,7 @@
   "name": "astro-analytics",
   "displayName": "Astro Analytics",
   "description": "Shows Google Analytics GA4 metrics (Bounce Rate, Views, Users) for Astro Markdown pages and .astro files inline in VSCode",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "publisher": "kieksme",
   "repository": {
     "type": "git",
@@ -16,10 +16,9 @@
   "license": "GPL-3.0",
   "icon": "icon.png",
   "activationEvents": [
+    "onStartupFinished",
     "onLanguage:markdown",
-    "onLanguage:astro",
-    "onCommand:astro-analytics.refresh",
-    "onCommand:astro-analytics.configure"
+    "onLanguage:astro"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -28,6 +27,12 @@
         "command": "astro-analytics.refresh",
         "title": "Analytics: Refresh Data",
         "icon": "$(sync)",
+        "category": "Astro Analytics"
+      },
+      {
+        "command": "astro-analytics.testConnection",
+        "title": "Analytics: Test API Connection",
+        "icon": "$(debug-start)",
         "category": "Astro Analytics"
       },
       {
@@ -75,6 +80,11 @@
       "editor/title": [
         {
           "command": "astro-analytics.refresh",
+          "when": "resourceExtname == .md || resourceExtname == .mdx || resourceExtname == .astro",
+          "group": "navigation"
+        },
+        {
+          "command": "astro-analytics.testConnection",
           "when": "resourceExtname == .md || resourceExtname == .mdx || resourceExtname == .astro",
           "group": "navigation"
         }

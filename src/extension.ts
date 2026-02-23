@@ -80,10 +80,17 @@ async function fetchAnalyticsData(
   return rows;
 }
 
+/** Normalize GA4 pagePath to match slug format (trailing slash) for cache lookup. */
+function normalizePagePath(pagePath: string): string {
+  const p = pagePath.trim();
+  if (!p.endsWith('/')) return p + '/';
+  return p;
+}
+
 // ---------------------------------------------------------------------------
 // Extension state
 // ---------------------------------------------------------------------------
-let metricsCache = new Map<string, PageMetrics>(); // keyed by pagePath
+let metricsCache = new Map<string, PageMetrics>(); // keyed by normalized pagePath (with trailing slash)
 let lastFetch = 0;
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -110,7 +117,7 @@ class AnalyticsCodeLensProvider implements vscode.CodeLensProvider {
     const slug = filePathToSlug(document.uri.fsPath, wsFolder.uri.fsPath, contentRoot, pagesRoot);
     if (!slug) return [];
 
-    const metrics = metricsCache.get(slug);
+    const metrics = metricsCache.get(slug) ?? metricsCache.get(normalizePagePath(slug));
     const range = new vscode.Range(0, 0, 0, 0);
 
     if (!metrics) {
@@ -156,7 +163,7 @@ class AnalyticsHoverProvider implements vscode.HoverProvider {
     const slug = filePathToSlug(document.uri.fsPath, wsFolder.uri.fsPath, contentRoot, pagesRoot);
     if (!slug) return null;
 
-    const metrics = metricsCache.get(slug);
+    const metrics = metricsCache.get(slug) ?? metricsCache.get(normalizePagePath(slug));
     if (!metrics) return null;
 
     const icon = bounceColor(metrics.bounceRate);
@@ -197,7 +204,7 @@ function updateStatusBar(document: vscode.TextDocument | undefined) {
   const slug = filePathToSlug(document.uri.fsPath, wsFolder.uri.fsPath, contentRoot, pagesRoot);
   if (!slug) { statusBarItem.hide(); return; }
 
-  const metrics = metricsCache.get(slug);
+  const metrics = metricsCache.get(slug) ?? metricsCache.get(normalizePagePath(slug));
   if (!metrics) {
     statusBarItem.text = '$(graph) Analytics: —';
     statusBarItem.tooltip = `No data for ${slug}`;
@@ -219,6 +226,71 @@ function updateStatusBar(document: vscode.TextDocument | undefined) {
 
 function getErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
+}
+
+// ---------------------------------------------------------------------------
+// Test API connection (for debugging)
+// ---------------------------------------------------------------------------
+async function testConnection() {
+  const config = vscode.workspace.getConfiguration('astroAnalytics');
+  const propertyId = config.get<string>('propertyId', '');
+  const credentialsPath = config.get<string>('credentialsPath', '');
+  const lookbackDays = config.get<number>('lookbackDays', 30);
+
+  outputChannel.clear();
+  outputChannel.show(true);
+  outputChannel.appendLine('--- Astro Analytics: Test API Connection ---');
+  outputChannel.appendLine(`Property ID: ${propertyId || '(not set)'}`);
+  outputChannel.appendLine(`Credentials: ${credentialsPath || '(default ADC)'}`);
+  outputChannel.appendLine(`Lookback: ${lookbackDays} days`);
+  outputChannel.appendLine('');
+
+  if (!propertyId) {
+    outputChannel.appendLine('[ERROR] Set astroAnalytics.propertyId in settings first.');
+    return;
+  }
+
+  const resolvedCreds = credentialsPath.replace(/^~/, process.env.HOME ?? '');
+
+  try {
+    outputChannel.appendLine('Calling GA4 Data API…');
+    const data = await fetchAnalyticsData(propertyId, resolvedCreds, lookbackDays);
+    outputChannel.appendLine(`[OK] Fetched ${data.length} page paths from GA4.`);
+    outputChannel.appendLine('');
+    outputChannel.appendLine('First 15 pagePaths from GA4 (these must match your file slugs):');
+    data.slice(0, 15).forEach((m, i) => {
+      outputChannel.appendLine(`  ${i + 1}. "${m.pagePath}" → normalized: "${normalizePagePath(m.pagePath)}" (${m.views} views)`);
+    });
+    if (data.length > 15) {
+      outputChannel.appendLine(`  … and ${data.length - 15} more.`);
+    }
+
+    const doc = vscode.window.activeTextEditor?.document;
+    if (doc?.fileName.match(/\.(md|mdx|astro)$/)) {
+      const wsFolder = vscode.workspace.getWorkspaceFolder(doc.uri);
+      if (wsFolder) {
+        const contentRoot = config.get<string>('contentRoot', 'src/content');
+        const pagesRoot = config.get<string>('pagesRoot', 'src/pages');
+        const slug = filePathToSlug(doc.uri.fsPath, wsFolder.uri.fsPath, contentRoot, pagesRoot);
+        outputChannel.appendLine('');
+        outputChannel.appendLine(`Current file slug for matching: "${slug ?? '(none)'}"`);
+        if (slug) {
+          const normalized = normalizePagePath(slug);
+          const found = data.some(m => normalizePagePath(m.pagePath) === normalized || normalizePagePath(m.pagePath) === slug);
+          outputChannel.appendLine(found ? '  → Match found in GA4 data.' : '  → No match in GA4 data (check contentRoot/pagesRoot and path structure).');
+        }
+      }
+    } else {
+      outputChannel.appendLine('');
+      outputChannel.appendLine('Tip: Open a .md/.mdx/.astro file and run this again to see its slug vs GA4 paths.');
+    }
+  } catch (err: unknown) {
+    const msg = getErrorMessage(err);
+    outputChannel.appendLine(`[ERROR] ${msg}`);
+  }
+
+  outputChannel.appendLine('');
+  outputChannel.appendLine('--- End of test ---');
 }
 
 // ---------------------------------------------------------------------------
@@ -260,9 +332,11 @@ async function refreshData(codeLensProvider: AnalyticsCodeLensProvider) {
         const data = await fetchAnalyticsData(propertyId, resolvedCreds, lookbackDays);
         if (token.isCancellationRequested) return;
 
-        metricsCache = new Map(data.map(m => [m.pagePath, m]));
+        metricsCache = new Map(data.map(m => [normalizePagePath(m.pagePath), m]));
         lastFetch = Date.now();
         outputChannel.appendLine(`[${new Date().toISOString()}] Loaded ${data.length} pages from GA4.`);
+        const sample = data.slice(0, 5).map(m => m.pagePath).join(', ');
+        outputChannel.appendLine(`  Sample pagePaths: ${sample}${data.length > 5 ? '…' : ''}`);
 
         codeLensProvider.refresh();
         updateStatusBar(vscode.window.activeTextEditor?.document);
@@ -282,59 +356,68 @@ async function refreshData(codeLensProvider: AnalyticsCodeLensProvider) {
 // ---------------------------------------------------------------------------
 // Activate
 // ---------------------------------------------------------------------------
-export function activate(context: vscode.ExtensionContext) {
-  outputChannel = vscode.window.createOutputChannel('Astro Analytics');
-  context.subscriptions.push(outputChannel);
+export function activate(context: vscode.ExtensionContext): void {
+  try {
+    outputChannel = vscode.window.createOutputChannel('Astro Analytics');
+    context.subscriptions.push(outputChannel);
 
-  // Status bar
-  statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-  context.subscriptions.push(statusBarItem);
+    // Status bar
+    statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+    context.subscriptions.push(statusBarItem);
 
-  // Providers
-  const codeLensProvider = new AnalyticsCodeLensProvider();
-  const hoverProvider = new AnalyticsHoverProvider();
+    // Providers
+    const codeLensProvider = new AnalyticsCodeLensProvider();
+    const hoverProvider = new AnalyticsHoverProvider();
 
-  context.subscriptions.push(
-    vscode.languages.registerCodeLensProvider(
-      [{ language: 'markdown' }, { language: 'mdx' }, { language: 'astro' }],
-      codeLensProvider
-    ),
-    vscode.languages.registerHoverProvider(
-      [{ language: 'markdown' }, { language: 'mdx' }, { language: 'astro' }],
-      hoverProvider
-    )
-  );
+    context.subscriptions.push(
+      vscode.languages.registerCodeLensProvider(
+        [{ language: 'markdown' }, { language: 'mdx' }, { language: 'astro' }],
+        codeLensProvider
+      ),
+      vscode.languages.registerHoverProvider(
+        [{ language: 'markdown' }, { language: 'mdx' }, { language: 'astro' }],
+        hoverProvider
+      )
+    );
 
-  // Commands
-  context.subscriptions.push(
-    vscode.commands.registerCommand('astro-analytics.refresh', () => {
-      refreshData(codeLensProvider);
-    }),
-    vscode.commands.registerCommand('astro-analytics.configure', () => {
-      vscode.commands.executeCommand(
-        'workbench.action.openSettings',
-        'astroAnalytics'
-      );
-    })
-  );
-
-  // Auto-update status bar on editor change
-  context.subscriptions.push(
-    vscode.window.onDidChangeActiveTextEditor(editor => {
-      updateStatusBar(editor?.document);
-      // Auto-refresh if cache is stale and a markdown file is opened
-      if (editor?.document.fileName.match(/\.(md|mdx|astro)$/) && Date.now() - lastFetch > CACHE_TTL_MS) {
+    // Commands
+    context.subscriptions.push(
+      vscode.commands.registerCommand('astro-analytics.refresh', () => {
         refreshData(codeLensProvider);
-      }
-    })
-  );
+      }),
+      vscode.commands.registerCommand('astro-analytics.testConnection', () => {
+        testConnection();
+      }),
+      vscode.commands.registerCommand('astro-analytics.configure', () => {
+        vscode.commands.executeCommand(
+          'workbench.action.openSettings',
+          'astroAnalytics'
+        );
+      })
+    );
 
-  // Initial load if a markdown file is already open
-  if (vscode.window.activeTextEditor?.document.fileName.match(/\.(md|mdx|astro)$/)) {
-    refreshData(codeLensProvider);
+    // Auto-update status bar on editor change
+    context.subscriptions.push(
+      vscode.window.onDidChangeActiveTextEditor(editor => {
+        updateStatusBar(editor?.document);
+        // Auto-refresh if cache is stale and a markdown file is opened
+        if (editor?.document.fileName.match(/\.(md|mdx|astro)$/) && Date.now() - lastFetch > CACHE_TTL_MS) {
+          refreshData(codeLensProvider);
+        }
+      })
+    );
+
+    // Initial load if a markdown file is already open
+    if (vscode.window.activeTextEditor?.document.fileName.match(/\.(md|mdx|astro)$/)) {
+      refreshData(codeLensProvider);
+    }
+
+    outputChannel.appendLine('Astro Analytics extension activated.');
+  } catch (err) {
+    const msg = getErrorMessage(err);
+    console.error('[Astro Analytics] Activation failed:', msg);
+    throw err;
   }
-
-  outputChannel.appendLine('Astro Analytics extension activated.');
 }
 
 export function deactivate() {

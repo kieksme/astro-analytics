@@ -6,3 +6,4 @@ dist
 .env
 *.vsix
 .pnpm-store
+test-results.txt
