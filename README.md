@@ -1,32 +1,36 @@
-# Astro Analytics — VSCode Extension
+<p align="center">
+  <img src="logos/icon.svg" alt="Astro Analytics Logo" width="128" />
+</p>
+
+# Astro Analytics — VS Code Extension
 
 **Publisher:** kieks.me GbR
 
-Zeigt Google Analytics GA4 Metriken direkt in VSCode an, wenn du Astro Markdown- oder .astro-Dateien öffnest.
+Shows Google Analytics GA4 metrics directly in VS Code when you open Astro Markdown or `.astro` files.
 
 ## Features
 
-- **CodeLens** oben in jeder `.md`/`.mdx`/`.astro` Datei mit Bounce Rate, Views, Nutzern und Session-Dauer
-- **Hover-Tooltip** mit vollständiger Metriktabelle (Hover über die ersten Zeilen der Datei)
-- **Status Bar** unten rechts mit der Bounce Rate der aktuell geöffneten Seite
-- Automatisches Caching (5 Minuten TTL), manuelle Aktualisierung per Klick
+- **CodeLens** at the top of each `.md`/`.mdx`/`.astro` file with Bounce Rate, Views, Users, and Session Duration
+- **Hover tooltip** with full metrics table (hover over the first lines of the file)
+- **Status Bar** in the bottom-right with the Bounce Rate of the currently open page
+- Automatic caching (5-minute TTL), manual refresh on click
 
-## Farbcodierung Bounce Rate
+## Bounce Rate Color Coding
 
-| Symbol | Bounce Rate                |
-|--------|----------------------------|
-| 🟢     | < 25% — Sehr gut           |
-| 🟡     | 25–44% — Gut               |
-| 🟠     | 45–64% — Mittel            |
-| 🔴     | ≥ 65% — Optimierungsbedarf |
+| Symbol | Bounce Rate              |
+|--------|--------------------------|
+| 🟢     | < 25% — Very good        |
+| 🟡     | 25–44% — Good            |
+| 🟠     | 45–64% — Average         |
+| 🔴     | ≥ 65% — Needs improvement |
 
 ## Setup
 
-### 1. Credentials vorbereiten
+### 1. Prepare credentials
 
-Die Extension benötigt Google Application Default Credentials mit dem Scope `analytics.readonly`.
+The extension requires Google Application Default Credentials with the `analytics.readonly` scope.
 
-Falls noch nicht vorhanden, ADC erstellen:
+If you don't have them yet, create ADC:
 
 ```bash
 gcloud auth application-default login \
@@ -34,26 +38,26 @@ gcloud auth application-default login \
   --client-id-file=~/Certificates/gcp/internal-dev.json
 ```
 
-Der Pfad zur erstellten Credentials-Datei wird in der Konsole ausgegeben:
+The path to the created credentials file is printed in the console:
 
 ```text
 Credentials saved to file: [~/.config/gcloud/application_default_credentials.json]
 ```
 
-### 2. Extension konfigurieren
+### 2. Configure the extension
 
-In VSCode: `Cmd+,` → Suche nach **Astro Analytics**
+In VS Code: `Cmd+,` → search for **Astro Analytics**
 
-| Einstellung                       | Beschreibung              | Default       |
-|-----------------------------------|---------------------------|---------------|
-| `astroAnalytics.propertyId`       | GA4 Property ID (numerisch) | `364493652` |
-| `astroAnalytics.measurementId`    | GA4 Measurement ID (z. B. G-XXXXXXXXXX) | (leer) |
-| `astroAnalytics.credentialsPath` | Pfad zur Credentials JSON | (ADC default) |
-| `astroAnalytics.lookbackDays`     | Zeitraum in Tagen         | `30`          |
-| `astroAnalytics.contentRoot`      | Astro Content-Ordner      | `src/content` |
-| `astroAnalytics.pagesRoot`        | Astro Pages-Ordner        | `src/pages`   |
+| Setting                       | Description                    | Default       |
+|-------------------------------|--------------------------------|---------------|
+| `astroAnalytics.propertyId`   | GA4 Property ID (numeric)      | `364493652`   |
+| `astroAnalytics.measurementId`| GA4 Measurement ID (e.g. G-XXXXXXXXXX) | (empty) |
+| `astroAnalytics.credentialsPath` | Path to credentials JSON  | (ADC default) |
+| `astroAnalytics.lookbackDays` | Time range in days             | `30`          |
+| `astroAnalytics.contentRoot`  | Astro content folder           | `src/content` |
+| `astroAnalytics.pagesRoot`    | Astro pages folder             | `src/pages`   |
 
-Beispiel `settings.json`:
+Example `settings.json`:
 
 ```json
 {
@@ -66,9 +70,9 @@ Beispiel `settings.json`:
 }
 ```
 
-### 3. URL-Slug Mapping
+### 3. URL slug mapping
 
-Die Extension leitet den GA4-`pagePath` automatisch aus dem Dateipfad ab:
+The extension derives the GA4 `pagePath` from the file path:
 
 ```text
 src/content/blog/datenstrategie-ki.md  →  /blog/datenstrategie-ki/
@@ -85,36 +89,36 @@ pnpm run compile
 pnpx vsce package --no-dependencies --allow-missing-repository
 ```
 
-Dann die erzeugte `.vsix` Datei in VSCode installieren:
+Then install the generated `.vsix` file in VS Code:
 
 ```text
 Cmd+Shift+P → "Install from VSIX..."
 ```
 
-## Entwicklung
+## Development
 
 ```bash
 pnpm install
-pnpm run compile   # baut TypeScript + Bundle (dist/extension.js)
-# F5 in VSCode → öffnet Extension Development Host
+pnpm run compile   # builds TypeScript + bundle (dist/extension.js)
+# F5 in VS Code → opens Extension Development Host
 ```
 
-Für inkrementellen TypeScript-Build: `pnpm run watch` (danach ggf. `pnpm run bundle` zum Aktualisieren der Extension).
+For incremental TypeScript build: `pnpm run watch` (then optionally `pnpm run bundle` to refresh the extension).
 
 ## Tests
 
-**Unit-Tests (Vitest)** in `tests/` – z. B. `tests/lib/slug.test.ts`:
+**Unit tests (Vitest)** in `tests/` — e.g. `tests/lib/slug.test.ts`:
 
 ```bash
 pnpm test
 ```
 
-Watch-Modus: `pnpm run test:watch`
+Watch mode: `pnpm run test:watch`
 
-**Integrationstests** (Extension in VS Code starten und Befehle prüfen):
+**Integration tests** (launch extension in VS Code and verify commands):
 
 ```bash
 pnpm run test:integration
 ```
 
-(Hinweis: Kein anderes VS Code-Fenster sollte laufen, wenn du die Tests von der Kommandozeile startest.)
+(Note: No other VS Code window should be running when you start the tests from the command line.)
