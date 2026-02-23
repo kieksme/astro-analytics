@@ -31,7 +31,7 @@ The extension shows bounce rate with colored indicators (green / yellow / orange
 
 The extension requires Google Application Default Credentials with the `analytics.readonly` scope.
 
-If you don't have them yet, create ADC:
+If you don't have them yet, create ADC. For a visual walkthrough, see e.g. [Authenticate with GCP using gcloud auth application-default login](https://www.youtube.com/watch?v=5utoA5gnKQ4).
 
 ```bash
 gcloud auth application-default login \
@@ -102,51 +102,8 @@ If you don’t see any metrics (CodeLens shows “no data” or status bar stays
    After a normal refresh, the same channel logs e.g. `Loaded N pages from GA4` and sample `pagePath` values. Any API errors appear there and as an error notification.
 
 **If the command "Astro Analytics: Test API Connection" is not found:**  
-Rebuild the extension and reload the window where the extension runs.  
-
-- **Extension Development Host (F5):** Run `pnpm run compile` (or `pnpm run bundle`), then in the *Extension Development Host* window: `Cmd+Shift+P` → **Developer: Reload Window**.  
-- **Installed from VSIX:** Run `pnpm run compile` then repackage and reinstall the `.vsix`.
+Rebuild the extension and reload the window. See [CONTRIBUTING.md](CONTRIBUTING.md) for build and reload steps.
 
 ## Installation
 
-```bash
-pnpm install
-pnpm run compile
-pnpx vsce package --no-dependencies --allow-missing-repository
-```
-
-Then install the generated `.vsix` file in VS Code:
-
-```text
-Cmd+Shift+P → "Install from VSIX..."
-```
-
-## Development
-
-This project uses **pnpm** only. Do not run `npm install` — it will report many "missing" peer/optional dependency warnings and can leave the workspace in an inconsistent state.
-
-```bash
-pnpm install
-pnpm run compile   # builds TypeScript + bundle (dist/extension.js)
-# F5 in VS Code → opens Extension Development Host
-```
-
-For incremental TypeScript build: `pnpm run watch` (then optionally `pnpm run bundle` to refresh the extension).
-
-## Tests
-
-**Unit tests (Vitest)** in `tests/` — e.g. `tests/lib/slug.test.ts`:
-
-```bash
-pnpm test
-```
-
-Watch mode: `pnpm run test:watch`
-
-**Integration tests** (launch extension in VS Code and verify commands):
-
-```bash
-pnpm run test:integration
-```
-
-(Note: No other VS Code window should be running when you start the tests from the command line.)
+Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=kieksme.astro-analytics) or from a `.vsix` file (`Cmd+Shift+P` → **"Install from VSIX..."**). To build from source, see [CONTRIBUTING.md](CONTRIBUTING.md).
