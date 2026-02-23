@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
 import { GoogleAuth } from 'google-auth-library';
 import fetch from 'node-fetch';
+import { filePathToSlug } from './lib/slug';
+import { bounceColor, fmtPct, fmtDuration } from './lib/format';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -77,64 +78,6 @@ async function fetchAnalyticsData(
   }));
 
   return rows;
-}
-
-// ---------------------------------------------------------------------------
-// Slug → pagePath derivation
-// .md/.mdx: src/content/blog/my-post.md → /blog/my-post/
-// .astro:   src/pages/blog/my-post.astro → /blog/my-post/
-// ---------------------------------------------------------------------------
-function filePathToSlug(
-  filePath: string,
-  workspaceRoot: string,
-  contentRoot: string,
-  pagesRoot: string
-): string | null {
-  const isAstro = filePath.endsWith('.astro');
-  const isContent = /\.(md|mdx)$/.test(filePath);
-
-  let absRoot: string;
-  let rel: string;
-
-  if (isAstro) {
-    absRoot = path.join(workspaceRoot, pagesRoot);
-    if (!filePath.startsWith(absRoot)) return null;
-    rel = filePath.slice(absRoot.length).replace(/\.astro$/, '');
-  } else if (isContent) {
-    absRoot = path.join(workspaceRoot, contentRoot);
-    if (!filePath.startsWith(absRoot)) return null;
-    rel = filePath.slice(absRoot.length).replace(/\.(md|mdx)$/, '');
-  } else {
-    return null;
-  }
-
-  // Remove index
-  rel = rel.replace(/\/index$/, '/');
-  // Ensure leading slash and trailing slash
-  if (!rel.startsWith('/')) rel = '/' + rel;
-  if (!rel.endsWith('/')) rel = rel + '/';
-
-  return rel;
-}
-
-// ---------------------------------------------------------------------------
-// Bounce rate → colour
-// ---------------------------------------------------------------------------
-function bounceColor(rate: number): string {
-  if (rate < 0.25) return '🟢';
-  if (rate < 0.45) return '🟡';
-  if (rate < 0.65) return '🟠';
-  return '🔴';
-}
-
-function fmtPct(rate: number): string {
-  return (rate * 100).toFixed(1) + '%';
-}
-
-function fmtDuration(sec: number): string {
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60);
-  return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
 
 // ---------------------------------------------------------------------------
@@ -225,7 +168,11 @@ class AnalyticsHoverProvider implements vscode.HoverProvider {
     md.appendMarkdown(`| 👁 Seitenaufrufe | **${metrics.views.toLocaleString('de')}** |\n`);
     md.appendMarkdown(`| 👤 Aktive Nutzer | **${metrics.users.toLocaleString('de')}** |\n`);
     md.appendMarkdown(`| ⏱ Ø Session-Dauer | **${fmtDuration(metrics.avgSessionDuration)}** |\n`);
-    md.appendMarkdown(`\n\n*Letzten ${config.get<number>('lookbackDays', 30)} Tage · GA4 Property ${config.get<string>('propertyId')}*`);
+    const measurementId = config.get<string>('measurementId', '');
+    const footer = measurementId
+      ? `*Letzten ${config.get<number>('lookbackDays', 30)} Tage · Property ${config.get<string>('propertyId')} · ${measurementId}*`
+      : `*Letzten ${config.get<number>('lookbackDays', 30)} Tage · GA4 Property ${config.get<string>('propertyId')}*`;
+    md.appendMarkdown(`\n\n${footer}`);
 
     return new vscode.Hover(md);
   }

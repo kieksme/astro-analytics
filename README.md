@@ -44,19 +44,21 @@ Credentials saved to file: [~/.config/gcloud/application_default_credentials.jso
 
 In VSCode: `Cmd+,` → Suche nach **Astro Analytics**
 
-| Einstellung                      | Beschreibung              | Default       |
-|----------------------------------|---------------------------|---------------|
-| `astroAnalytics.propertyId`      | GA4 Property ID           | `364493652`   |
+| Einstellung                       | Beschreibung              | Default       |
+|-----------------------------------|---------------------------|---------------|
+| `astroAnalytics.propertyId`       | GA4 Property ID (numerisch) | `364493652` |
+| `astroAnalytics.measurementId`    | GA4 Measurement ID (z. B. G-XXXXXXXXXX) | (leer) |
 | `astroAnalytics.credentialsPath` | Pfad zur Credentials JSON | (ADC default) |
-| `astroAnalytics.lookbackDays`    | Zeitraum in Tagen         | `30`          |
-| `astroAnalytics.contentRoot`     | Astro Content-Ordner      | `src/content` |
-| `astroAnalytics.pagesRoot`       | Astro Pages-Ordner        | `src/pages`   |
+| `astroAnalytics.lookbackDays`     | Zeitraum in Tagen         | `30`          |
+| `astroAnalytics.contentRoot`      | Astro Content-Ordner      | `src/content` |
+| `astroAnalytics.pagesRoot`        | Astro Pages-Ordner        | `src/pages`   |
 
 Beispiel `settings.json`:
 
 ```json
 {
   "astroAnalytics.propertyId": "364493652",
+  "astroAnalytics.measurementId": "G-XXXXXXXXXX",
   "astroAnalytics.credentialsPath": "~/.config/gcloud/application_default_credentials.json",
   "astroAnalytics.lookbackDays": 90,
   "astroAnalytics.contentRoot": "src/content",
@@ -96,3 +98,14 @@ pnpm install
 pnpm run watch
 # F5 in VSCode → öffnet Extension Development Host
 ```
+
+## Tests
+
+Unit tests (Vitest) in `test/` – Struktur spiegelt `src/` wider (z. B. `test/lib/slug.test.ts` → `src/lib/slug.ts`):
+
+```bash
+pnpm install
+pnpm test
+```
+
+Watch-Modus: `pnpm run test:watch`
