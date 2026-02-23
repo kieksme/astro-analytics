@@ -29,24 +29,24 @@
     "commands": [
       {
         "command": "astro-analytics.refresh",
-        "title": "Analytics: Refresh Data",
+        "title": "Refresh Data",
         "icon": "$(sync)",
         "category": "Astro Analytics"
       },
       {
         "command": "astro-analytics.testConnection",
-        "title": "Analytics: Test API Connection",
+        "title": "Test API Connection",
         "icon": "$(debug-start)",
         "category": "Astro Analytics"
       },
       {
         "command": "astro-analytics.configure",
-        "title": "Analytics: Configure",
+        "title": "Configure",
         "category": "Astro Analytics"
       },
       {
         "command": "astro-analytics.showDashboard",
-        "title": "Analytics: Open Dashboard",
+        "title": "Open Dashboard",
         "icon": "$(dashboard)",
         "category": "Astro Analytics"
       }
