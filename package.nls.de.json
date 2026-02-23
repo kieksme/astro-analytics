@@ -12,6 +12,7 @@
   "config.lookbackDays": "Anzahl der Tage für die Auswertung der Analysedaten",
   "config.contentRoot": "Stammordner für Astro-Content (.md/.mdx) relativ zum Workspace",
   "config.pagesRoot": "Stammordner für Astro-Seiten (.astro) relativ zum Workspace",
+  "config.dashboardMaxPages": "Maximale Anzahl der im Dashboard angezeigten Seiten (sortiert nach schlechtester Absprungrate zuerst)",
   "viewContainer.title": "Astro Analytics",
   "view.dashboard.name": "Dashboard",
   "icon.analytics.description": "Astro-Analytics-Dashboard",

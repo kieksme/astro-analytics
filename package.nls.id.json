@@ -12,6 +12,7 @@
   "config.lookbackDays": "Jumlah hari untuk data analitik",
   "config.contentRoot": "Folder root konten Astro (.md/.mdx) relatif ke ruang kerja",
   "config.pagesRoot": "Folder root halaman Astro (.astro) relatif ke ruang kerja",
+  "config.dashboardMaxPages": "Jumlah maksimum halaman yang ditampilkan di dasbor (diurutkan berdasarkan tingkat pentalan terburuk)",
   "viewContainer.title": "Astro Analytics",
   "view.dashboard.name": "Dasbor",
   "icon.analytics.description": "Dasbor Astro Analytics",

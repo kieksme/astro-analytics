@@ -12,6 +12,7 @@
   "config.lookbackDays": "분석 데이터를 조회할 일수",
   "config.contentRoot": "작업 영역에 대한 Astro 콘텐츠 루트 폴더(.md/.mdx)",
   "config.pagesRoot": "작업 영역에 대한 Astro 페이지 루트 폴더(.astro)",
+  "config.dashboardMaxPages": "대시보드에 표시할 최대 페이지 수 (이탈률이 높은 순)",
   "viewContainer.title": "Astro Analytics",
   "view.dashboard.name": "대시보드",
   "icon.analytics.description": "Astro Analytics 대시보드",

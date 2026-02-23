@@ -12,6 +12,7 @@
   "config.lookbackDays": "Liczba dni wstecz dla danych analitycznych",
   "config.contentRoot": "Folder główny treści Astro (.md/.mdx) względem obszaru roboczego",
   "config.pagesRoot": "Folder główny stron Astro (.astro) względem obszaru roboczego",
+  "config.dashboardMaxPages": "Maksymalna liczba stron w panelu (sortowanie od najgorszej stopy odrzuceń)",
   "viewContainer.title": "Astro Analytics",
   "view.dashboard.name": "Panel",
   "icon.analytics.description": "Panel Astro Analytics",

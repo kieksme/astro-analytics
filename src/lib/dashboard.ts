@@ -6,6 +6,8 @@
 export interface DashboardConfig {
   propertyId: string;
   lookbackDays: number;
+  /** Maximum number of top pages to show (default 20). */
+  maxPages: number;
 }
 
 export interface PageMetrics {
@@ -72,10 +74,11 @@ export function getDashboardDataFromState(
 ): DashboardData {
   const propertyId = config.propertyId ?? '';
   const lookbackDays = config.lookbackDays ?? 30;
+  const maxPages = Math.max(1, config.maxPages ?? 20);
   const entries = Array.from(metricsCache.entries());
   const topPages: DashboardTopPage[] = entries
-    .sort((a, b) => b[1].views - a[1].views)
-    .slice(0, 20)
+    .sort((a, b) => b[1].bounceRate - a[1].bounceRate)
+    .slice(0, maxPages)
     .map(([path, m]) => ({
       pagePath: path,
       views: m.views,
@@ -128,7 +131,9 @@ export function buildDashboardHtml(
     th, td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--vscode-widget-border); }
     th { font-weight: 600; cursor: pointer; user-select: none; white-space: nowrap; }
     th:hover { background: var(--vscode-list-hoverBackground); }
+    th.th-sort-active { background: var(--vscode-list-activeSelectionBackground, rgba(0, 122, 204, 0.2)); color: var(--vscode-list-activeSelectionForeground, var(--vscode-foreground)); border-bottom: 2px solid var(--vscode-focusBorder, #007acc); }
     th .sort-icon { display: inline-block; vertical-align: middle; margin-left: 2px; opacity: 0.6; }
+    th.th-sort-active .sort-icon { opacity: 1; }
     tbody tr:hover { background: var(--vscode-list-hoverBackground); }
     .page-link { color: var(--vscode-textLink-foreground); text-decoration: none; cursor: pointer; }
     .page-link:hover { text-decoration: underline; }
@@ -194,7 +199,7 @@ export function buildDashboardHtml(
     }
     function escapeHtml(s) { const div = document.createElement('div'); div.textContent = s; return div.innerHTML; }
 
-    let sortKey = 'views';
+    let sortKey = 'bounceRate';
     let sortDir = -1;
     function sortData(pages) {
       const key = sortKey;
@@ -203,6 +208,12 @@ export function buildDashboardHtml(
         let va = a[key], vb = b[key];
         if (key === 'pagePath') { va = (va || '').toLowerCase(); vb = (vb || '').toLowerCase(); return (va < vb ? -1 : va > vb ? 1 : 0) * dir; }
         return (va - vb) * dir;
+      });
+    }
+
+    function updateSortIndicator() {
+      document.querySelectorAll('th[data-sort]').forEach(th => {
+        th.classList.toggle('th-sort-active', th.getAttribute('data-sort') === sortKey);
       });
     }
 
@@ -220,6 +231,7 @@ export function buildDashboardHtml(
         tableWrap.style.display = 'none';
         emptyEl.style.display = 'block';
         tbody.innerHTML = '';
+        updateSortIndicator();
         return;
       }
       tableWrap.style.display = 'block';
@@ -237,6 +249,7 @@ export function buildDashboardHtml(
       tbody.querySelectorAll('.page-link').forEach(el => {
         el.addEventListener('click', e => { e.preventDefault(); vscode.postMessage({ type: 'openPage', pagePath: el.getAttribute('data-page-path') }); });
       });
+      updateSortIndicator();
     }
 
     document.querySelectorAll('th[data-sort]').forEach(th => {

@@ -12,6 +12,7 @@
   "config.lookbackDays": "Número de días a consultar para los datos de análisis",
   "config.contentRoot": "Carpeta raíz del contenido Astro (.md/.mdx) relativa al espacio de trabajo",
   "config.pagesRoot": "Carpeta raíz de las páginas Astro (.astro) relativa al espacio de trabajo",
+  "config.dashboardMaxPages": "Número máximo de páginas mostradas en el panel (ordenadas por peor tasa de rebote primero)",
   "viewContainer.title": "Astro Analytics",
   "view.dashboard.name": "Panel de control",
   "icon.analytics.description": "Panel de control de Astro Analytics",

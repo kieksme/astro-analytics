@@ -12,6 +12,7 @@
   "config.lookbackDays": "Number of days to look back for analytics data",
   "config.contentRoot": "Root folder of Astro content (.md/.mdx files) relative to workspace",
   "config.pagesRoot": "Root folder for Astro pages (.astro files) relative to workspace",
+  "config.dashboardMaxPages": "Maximum number of pages shown in the dashboard (sorted by worst bounce rate first)",
   "viewContainer.title": "Astro Analytics",
   "view.dashboard.name": "Dashboard",
   "icon.analytics.description": "Astro Analytics dashboard",

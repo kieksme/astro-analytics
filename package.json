@@ -123,6 +123,11 @@
           "type": "string",
           "default": "src/pages",
           "description": "%config.pagesRoot%"
+        },
+        "astroAnalytics.dashboardMaxPages": {
+          "type": "number",
+          "default": 20,
+          "description": "%config.dashboardMaxPages%"
         }
       }
     },

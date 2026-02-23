@@ -33,7 +33,7 @@ const defaultL10n: DashboardL10n = {
 
 describe('getDashboardDataFromState', () => {
   it('returns empty topPages and zero cacheSize when cache is empty', () => {
-    const config: DashboardConfig = { propertyId: '123', lookbackDays: 30 };
+    const config: DashboardConfig = { propertyId: '123', lookbackDays: 30, maxPages: 20 };
     const data = getDashboardDataFromState(config, new Map(), 0, () => null);
     expect(data.topPages).toEqual([]);
     expect(data.cacheSize).toBe(0);
@@ -44,21 +44,21 @@ describe('getDashboardDataFromState', () => {
   });
 
   it('returns configured false when propertyId is empty', () => {
-    const config: DashboardConfig = { propertyId: '', lookbackDays: 30 };
+    const config: DashboardConfig = { propertyId: '', lookbackDays: 30, maxPages: 20 };
     const data = getDashboardDataFromState(config, new Map(), 0, () => null);
     expect(data.configured).toBe(false);
   });
 
-  it('sorts topPages by views descending and limits to 20', () => {
+  it('sorts topPages by bounce rate descending (worst first) and limits to maxPages', () => {
     const cache = new Map<string, PageMetrics>([
       ['/a/', { pagePath: '/a/', views: 10, users: 5, bounceRate: 0.3, avgSessionDuration: 60 }],
       ['/b/', { pagePath: '/b/', views: 100, users: 50, bounceRate: 0.5, avgSessionDuration: 90 }],
       ['/c/', { pagePath: '/c/', views: 50, users: 20, bounceRate: 0.2, avgSessionDuration: 120 }],
     ]);
-    const config: DashboardConfig = { propertyId: '1', lookbackDays: 30 };
+    const config: DashboardConfig = { propertyId: '1', lookbackDays: 30, maxPages: 20 };
     const data = getDashboardDataFromState(config, cache, 1, () => null);
-    expect(data.topPages.map(p => p.pagePath)).toEqual(['/b/', '/c/', '/a/']);
-    expect(data.topPages[0].views).toBe(100);
+    expect(data.topPages.map(p => p.pagePath)).toEqual(['/b/', '/a/', '/c/']);
+    expect(data.topPages[0].bounceRate).toBe(0.5);
     expect(data.cacheSize).toBe(3);
   });
 
@@ -66,7 +66,7 @@ describe('getDashboardDataFromState', () => {
     const cache = new Map<string, PageMetrics>([
       ['/blog/', { pagePath: '/blog/', views: 1, users: 1, bounceRate: 0, avgSessionDuration: 0 }],
     ]);
-    const config: DashboardConfig = { propertyId: '1', lookbackDays: 30 };
+    const config: DashboardConfig = { propertyId: '1', lookbackDays: 30, maxPages: 20 };
     const dataWithFile = getDashboardDataFromState(config, cache, 0, (path) =>
       path === '/blog/' ? '/fake/blog/index.md' : null
     );
@@ -76,22 +76,44 @@ describe('getDashboardDataFromState', () => {
     expect(dataWithoutFile.topPages[0].hasFile).toBe(false);
   });
 
-  it('returns at most 20 top pages', () => {
+  it('returns at most maxPages top pages', () => {
     const cache = new Map<string, PageMetrics>();
     for (let i = 0; i < 25; i++) {
       cache.set(`/p${i}/`, {
         pagePath: `/p${i}/`,
         views: 100 - i,
         users: 1,
-        bounceRate: 0.5,
+        bounceRate: 0.4 + i * 0.02,
         avgSessionDuration: 60,
       });
     }
-    const config: DashboardConfig = { propertyId: '1', lookbackDays: 30 };
+    const config: DashboardConfig = { propertyId: '1', lookbackDays: 30, maxPages: 20 };
     const data = getDashboardDataFromState(config, cache, 0, () => null);
     expect(data.topPages).toHaveLength(20);
-    expect(data.topPages[0].pagePath).toBe('/p0/');
-    expect(data.topPages[19].pagePath).toBe('/p19/');
+    expect(data.topPages[0].bounceRate).toBeGreaterThan(data.topPages[19].bounceRate);
+  });
+
+  it('respects config.maxPages', () => {
+    const cache = new Map<string, PageMetrics>([
+      ['/a/', { pagePath: '/a/', views: 1, users: 1, bounceRate: 0.1, avgSessionDuration: 0 }],
+      ['/b/', { pagePath: '/b/', views: 1, users: 1, bounceRate: 0.2, avgSessionDuration: 0 }],
+      ['/c/', { pagePath: '/c/', views: 1, users: 1, bounceRate: 0.3, avgSessionDuration: 0 }],
+      ['/d/', { pagePath: '/d/', views: 1, users: 1, bounceRate: 0.4, avgSessionDuration: 0 }],
+      ['/e/', { pagePath: '/e/', views: 1, users: 1, bounceRate: 0.5, avgSessionDuration: 0 }],
+    ]);
+    const config: DashboardConfig = { propertyId: '1', lookbackDays: 30, maxPages: 3 };
+    const data = getDashboardDataFromState(config, cache, 0, () => null);
+    expect(data.topPages).toHaveLength(3);
+    expect(data.topPages.map(p => p.pagePath)).toEqual(['/e/', '/d/', '/c/']);
+  });
+
+  it('clamps maxPages to at least 1', () => {
+    const cache = new Map<string, PageMetrics>([
+      ['/a/', { pagePath: '/a/', views: 1, users: 1, bounceRate: 0.5, avgSessionDuration: 0 }],
+    ]);
+    const config: DashboardConfig = { propertyId: '1', lookbackDays: 30, maxPages: 0 };
+    const data = getDashboardDataFromState(config, cache, 0, () => null);
+    expect(data.topPages).toHaveLength(1);
   });
 });
 
@@ -190,6 +212,20 @@ describe('buildDashboardHtml', () => {
     expect(html).toContain('lang="en"');
   });
 
+  it('uses initial sort by bounce rate (worst first)', () => {
+    const data: DashboardData = {
+      configured: true,
+      propertyId: '',
+      cacheSize: 0,
+      lastFetch: 0,
+      lookbackDays: 30,
+      topPages: [],
+    };
+    const html = buildDashboardHtml(data, defaultL10n, options);
+    expect(html).toContain("sortKey = 'bounceRate'");
+    expect(html).toContain('sortDir = -1');
+  });
+
   it('includes CSP with cspSource', () => {
     const data: DashboardData = {
       configured: true,
@@ -201,5 +237,37 @@ describe('buildDashboardHtml', () => {
     };
     const html = buildDashboardHtml(data, defaultL10n, options);
     expect(html).toContain('https://vscode-csp');
+  });
+
+  it('includes CSS for active sort column highlight', () => {
+    const data: DashboardData = {
+      configured: true,
+      propertyId: '',
+      cacheSize: 0,
+      lastFetch: 0,
+      lookbackDays: 30,
+      topPages: [],
+    };
+    const html = buildDashboardHtml(data, defaultL10n, options);
+    expect(html).toContain('th.th-sort-active');
+    expect(html).toContain('th-sort-active');
+    expect(html).toContain('list-activeSelectionBackground');
+    expect(html).toContain('focusBorder');
+  });
+
+  it('includes updateSortIndicator and calls it from render', () => {
+    const data: DashboardData = {
+      configured: true,
+      propertyId: '',
+      cacheSize: 0,
+      lastFetch: 0,
+      lookbackDays: 30,
+      topPages: [],
+    };
+    const html = buildDashboardHtml(data, defaultL10n, options);
+    expect(html).toContain('function updateSortIndicator()');
+    expect(html).toContain("th.getAttribute('data-sort') === sortKey");
+    expect(html).toContain("classList.toggle('th-sort-active'");
+    expect(html).toContain('updateSortIndicator();');
   });
 });

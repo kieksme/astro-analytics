@@ -12,6 +12,7 @@
   "config.lookbackDays": "จำนวนวันในการดึงข้อมูลวิเคราะห์",
   "config.contentRoot": "โฟลเดอร์รูทของเนื้อหา Astro (.md/.mdx) สัมพันธ์กับพื้นที่ทำงาน",
   "config.pagesRoot": "โฟลเดอร์รูทของหน้า Astro (.astro) สัมพันธ์กับพื้นที่ทำงาน",
+  "config.dashboardMaxPages": "จำนวนหน้าสูงสุดที่แสดงในแดชบอร์ด (เรียงตามอัตราการตีกลับที่แย่ที่สุดก่อน)",
   "viewContainer.title": "Astro Analytics",
   "view.dashboard.name": "แดชบอร์ด",
   "icon.analytics.description": "แดชบอร์ด Astro Analytics",

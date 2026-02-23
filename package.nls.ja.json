@@ -12,6 +12,7 @@
   "config.lookbackDays": "分析データの遡及日数",
   "config.contentRoot": "ワークスペースに対する Astro コンテンツのルートフォルダ（.md/.mdx）",
   "config.pagesRoot": "ワークスペースに対する Astro ページのルートフォルダ（.astro）",
+  "config.dashboardMaxPages": "ダッシュボードに表示する最大ページ数（直帰率が悪い順）",
   "viewContainer.title": "Astro Analytics",
   "view.dashboard.name": "ダッシュボード",
   "icon.analytics.description": "Astro Analytics ダッシュボード",

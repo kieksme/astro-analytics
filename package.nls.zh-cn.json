@@ -12,6 +12,7 @@
   "config.lookbackDays": "分析数据回溯天数",
   "config.contentRoot": "Astro 内容根目录（.md/.mdx）相对于工作区",
   "config.pagesRoot": "Astro 页面根目录（.astro）相对于工作区",
+  "config.dashboardMaxPages": "仪表板中显示的最大页面数（按跳出率从高到低排序）",
   "viewContainer.title": "Astro Analytics",
   "view.dashboard.name": "仪表板",
   "icon.analytics.description": "Astro Analytics 仪表板",

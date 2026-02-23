@@ -12,6 +12,7 @@
   "config.lookbackDays": "Số ngày truy vấn dữ liệu phân tích",
   "config.contentRoot": "Thư mục gốc nội dung Astro (.md/.mdx) so với không gian làm việc",
   "config.pagesRoot": "Thư mục gốc trang Astro (.astro) so với không gian làm việc",
+  "config.dashboardMaxPages": "Số trang tối đa hiển thị trên bảng điều khiển (sắp xếp theo tỷ lệ thoát cao nhất trước)",
   "viewContainer.title": "Astro Analytics",
   "view.dashboard.name": "Bảng điều khiển",
   "icon.analytics.description": "Bảng điều khiển Astro Analytics",

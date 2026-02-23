@@ -356,6 +356,7 @@ function getDashboardData() {
     {
       propertyId: config.get<string>('propertyId', ''),
       lookbackDays: config.get<number>('lookbackDays', 30),
+      maxPages: config.get<number>('dashboardMaxPages', 20),
     },
     metricsCache,
     lastFetch,

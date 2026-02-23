@@ -12,6 +12,7 @@
   "config.lookbackDays": "বিশ্লেষণ ডেটার জন্য পিছনে দেখার দিনের সংখ্যা",
   "config.contentRoot": "ওয়ার্কস্পেসের সাপেক্ষে Astro কন্টেন্টের রুট ফোল্ডার (.md/.mdx)",
   "config.pagesRoot": "ওয়ার্কস্পেসের সাপেক্ষে Astro পৃষ্ঠার রুট ফোল্ডার (.astro)",
+  "config.dashboardMaxPages": "ড্যাশবোর্ডে প্রদর্শিত পৃষ্ঠার সর্বোচ্চ সংখ্যা (সবচেয়ে খারাপ বাউন্স রেট প্রথমে সাজানো)",
   "viewContainer.title": "Astro Analytics",
   "view.dashboard.name": "ড্যাশবোর্ড",
   "icon.analytics.description": "Astro Analytics ড্যাশবোর্ড",
