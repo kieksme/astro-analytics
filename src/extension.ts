@@ -8,6 +8,9 @@ import { getDashboardDataFromState, buildDashboardHtml, buildSidebarDashboardHtm
 
 /** Default (en) strings when l10n returns the key or l10n is unavailable. */
 const l10nDefaults: Record<string, string> = {
+  'codelens.noData': 'Analytics: no data ($(sync) refresh)',
+  'codelens.tooltip': 'Click to refresh analytics data',
+  'codelens.title': 'Bounce {0}   $(eye) {1} Views   $(person) {2} Users   $(watch) {3}',
   'status.text': 'Bounce · {0} Views',
   'status.tooltip': 'Bounce: {0} | Views: {1} | Users: {2} | Ø {3}',
   'status.a11y': 'Analytics: Bounce {0}, {1} views, {2} users. Click to refresh.',

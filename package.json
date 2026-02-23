@@ -2,7 +2,7 @@
   "name": "astro-analytics",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "publisher": "kieksme",
   "repository": {
     "type": "git",
