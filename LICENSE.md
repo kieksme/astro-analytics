@@ -1,6 +1,6 @@
 # GNU General Public License v3.0
 
-Copyright (c) Thinkport GmbH
+Copyright (c) kieks.me GbR
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 
