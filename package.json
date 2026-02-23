@@ -2,7 +2,7 @@
   "name": "astro-analytics",
   "displayName": "Astro Analytics",
   "description": "Shows Google Analytics GA4 metrics (Bounce Rate, Views, Users) for Astro Markdown pages and .astro files inline in VSCode",
-  "version": "0.2.13",
+  "version": "0.2.14",
   "publisher": "kieksme",
   "repository": {
     "type": "git",
@@ -112,7 +112,7 @@
     "test:watch": "vitest",
     "test:integration": "pnpm run compile && pnpm run compile:tests && vscode-test",
     "vscode:prepublish": "pnpm run compile",
-    "bundle": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --external:google-auth-library --external:node-fetch --format=cjs --platform=node",
+    "bundle": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
     "package": "pnpm run compile && pnpx vsce package --no-dependencies --allow-missing-repository"
   },
   "dependencies": {
