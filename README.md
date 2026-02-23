@@ -1,5 +1,7 @@
 # Astro Analytics — VS Code Extension
 
+[![Version](https://img.shields.io/visual-studio-marketplace/v/kieksme.astro-analytics)](https://marketplace.visualstudio.com/items?itemName=kieksme.astro-analytics)
+
 **Publisher:** kieks.me GbR
 
 Shows Google Analytics GA4 metrics directly in VS Code when you open Astro Markdown or `.astro` files.

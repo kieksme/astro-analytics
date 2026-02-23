@@ -342,36 +342,43 @@ async function refreshData(codeLensProvider) {
 // Activate
 // ---------------------------------------------------------------------------
 function activate(context) {
-    outputChannel = vscode.window.createOutputChannel('Astro Analytics');
-    context.subscriptions.push(outputChannel);
-    // Status bar
-    statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-    context.subscriptions.push(statusBarItem);
-    // Providers
-    const codeLensProvider = new AnalyticsCodeLensProvider();
-    const hoverProvider = new AnalyticsHoverProvider();
-    context.subscriptions.push(vscode.languages.registerCodeLensProvider([{ language: 'markdown' }, { language: 'mdx' }, { language: 'astro' }], codeLensProvider), vscode.languages.registerHoverProvider([{ language: 'markdown' }, { language: 'mdx' }, { language: 'astro' }], hoverProvider));
-    // Commands
-    context.subscriptions.push(vscode.commands.registerCommand('astro-analytics.refresh', () => {
-        refreshData(codeLensProvider);
-    }), vscode.commands.registerCommand('astro-analytics.testConnection', () => {
-        testConnection();
-    }), vscode.commands.registerCommand('astro-analytics.configure', () => {
-        vscode.commands.executeCommand('workbench.action.openSettings', 'astroAnalytics');
-    }));
-    // Auto-update status bar on editor change
-    context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
-        updateStatusBar(editor?.document);
-        // Auto-refresh if cache is stale and a markdown file is opened
-        if (editor?.document.fileName.match(/\.(md|mdx|astro)$/) && Date.now() - lastFetch > CACHE_TTL_MS) {
+    try {
+        outputChannel = vscode.window.createOutputChannel('Astro Analytics');
+        context.subscriptions.push(outputChannel);
+        // Status bar
+        statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+        context.subscriptions.push(statusBarItem);
+        // Providers
+        const codeLensProvider = new AnalyticsCodeLensProvider();
+        const hoverProvider = new AnalyticsHoverProvider();
+        context.subscriptions.push(vscode.languages.registerCodeLensProvider([{ language: 'markdown' }, { language: 'mdx' }, { language: 'astro' }], codeLensProvider), vscode.languages.registerHoverProvider([{ language: 'markdown' }, { language: 'mdx' }, { language: 'astro' }], hoverProvider));
+        // Commands
+        context.subscriptions.push(vscode.commands.registerCommand('astro-analytics.refresh', () => {
+            refreshData(codeLensProvider);
+        }), vscode.commands.registerCommand('astro-analytics.testConnection', () => {
+            testConnection();
+        }), vscode.commands.registerCommand('astro-analytics.configure', () => {
+            vscode.commands.executeCommand('workbench.action.openSettings', 'astroAnalytics');
+        }));
+        // Auto-update status bar on editor change
+        context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
+            updateStatusBar(editor?.document);
+            // Auto-refresh if cache is stale and a markdown file is opened
+            if (editor?.document.fileName.match(/\.(md|mdx|astro)$/) && Date.now() - lastFetch > CACHE_TTL_MS) {
+                refreshData(codeLensProvider);
+            }
+        }));
+        // Initial load if a markdown file is already open
+        if (vscode.window.activeTextEditor?.document.fileName.match(/\.(md|mdx|astro)$/)) {
             refreshData(codeLensProvider);
         }
-    }));
-    // Initial load if a markdown file is already open
-    if (vscode.window.activeTextEditor?.document.fileName.match(/\.(md|mdx|astro)$/)) {
-        refreshData(codeLensProvider);
+        outputChannel.appendLine('Astro Analytics extension activated.');
     }
-    outputChannel.appendLine('Astro Analytics extension activated.');
+    catch (err) {
+        const msg = getErrorMessage(err);
+        console.error('[Astro Analytics] Activation failed:', msg);
+        throw err;
+    }
 }
 function deactivate() {
     // Resources are disposed via context.subscriptions
