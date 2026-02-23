@@ -52,7 +52,6 @@ In VS Code: `Cmd+,` → search for **Astro Analytics**
 | Setting                          | Description                            | Default       |
 |----------------------------------|----------------------------------------|---------------|
 | `astroAnalytics.propertyId`      | GA4 Property ID (numeric)              | `364493652`   |
-| `astroAnalytics.measurementId`   | GA4 Measurement ID (e.g. G-XXXXXXXXXX) | (empty)       |
 | `astroAnalytics.credentialsPath` | Path to credentials JSON               | (ADC default) |
 | `astroAnalytics.lookbackDays`    | Time range in days                     | `30`          |
 | `astroAnalytics.contentRoot`     | Astro content folder                   | `src/content` |
@@ -63,7 +62,6 @@ Example `settings.json`:
 ```json
 {
   "astroAnalytics.propertyId": "364493652",
-  "astroAnalytics.measurementId": "G-XXXXXXXXXX",
   "astroAnalytics.credentialsPath": "~/.config/gcloud/application_default_credentials.json",
   "astroAnalytics.lookbackDays": 90,
   "astroAnalytics.contentRoot": "src/content",

@@ -102,11 +102,6 @@
           "default": "",
           "description": "Google Analytics GA4 Property ID (numeric). Set in settings to enable."
         },
-        "astroAnalytics.measurementId": {
-          "type": "string",
-          "default": "",
-          "description": "Google Analytics GA4 Measurement ID (e.g. G-XXXXXXXXXX), for reference"
-        },
         "astroAnalytics.credentialsPath": {
           "type": "string",
           "default": "",

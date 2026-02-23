@@ -177,10 +177,7 @@ class AnalyticsHoverProvider implements vscode.HoverProvider {
     md.appendMarkdown(`| $(eye) Seitenaufrufe | **${metrics.views.toLocaleString('de')}** |\n`);
     md.appendMarkdown(`| $(person) Aktive Nutzer | **${metrics.users.toLocaleString('de')}** |\n`);
     md.appendMarkdown(`| $(watch) Ø Session-Dauer | **${fmtDuration(metrics.avgSessionDuration)}** |\n`);
-    const measurementId = config.get<string>('measurementId', '');
-    const footer = measurementId
-      ? `*Letzten ${config.get<number>('lookbackDays', 30)} Tage · Property ${config.get<string>('propertyId')} · ${measurementId}*`
-      : `*Letzten ${config.get<number>('lookbackDays', 30)} Tage · GA4 Property ${config.get<string>('propertyId')}*`;
+    const footer = `*Letzten ${config.get<number>('lookbackDays', 30)} Tage · GA4 Property ${config.get<string>('propertyId')}*`;
     md.appendMarkdown(`\n\n${footer}`);
 
     return new vscode.Hover(md);
