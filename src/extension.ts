@@ -230,6 +230,18 @@ function getErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
+/** Resolve pagePath to the first existing workspace file, or null if none. */
+function resolvePagePathToFile(pagePath: string): string | null {
+  const wsFolder = vscode.workspace.workspaceFolders?.[0];
+  if (!wsFolder) return null;
+  const config = vscode.workspace.getConfiguration('astroAnalytics');
+  const contentRoot = config.get<string>('contentRoot', 'src/content');
+  const pagesRoot = config.get<string>('pagesRoot', 'src/pages');
+  const candidates = slugToFilePaths(wsFolder.uri.fsPath, contentRoot, pagesRoot, pagePath);
+  const found = candidates.find(p => fs.existsSync(p));
+  return found ?? null;
+}
+
 /** Resolve pagePath to a workspace file and open it. */
 function openPageInEditor(pagePath: string): void {
   const wsFolder = vscode.workspace.workspaceFolders?.[0];
@@ -237,11 +249,7 @@ function openPageInEditor(pagePath: string): void {
     vscode.window.showWarningMessage('Astro Analytics: No workspace folder open.');
     return;
   }
-  const config = vscode.workspace.getConfiguration('astroAnalytics');
-  const contentRoot = config.get<string>('contentRoot', 'src/content');
-  const pagesRoot = config.get<string>('pagesRoot', 'src/pages');
-  const candidates = slugToFilePaths(wsFolder.uri.fsPath, contentRoot, pagesRoot, pagePath);
-  const found = candidates.find(p => fs.existsSync(p));
+  const found = resolvePagePathToFile(pagePath);
   if (!found) {
     vscode.window.showWarningMessage(`Astro Analytics: No file found for path ${pagePath}`);
     return;
@@ -256,7 +264,7 @@ function getDashboardData(): {
   cacheSize: number;
   lastFetch: number;
   lookbackDays: number;
-  topPages: Array<{ pagePath: string; views: number; users: number; bounceRate: number; avgSessionDuration: number }>;
+  topPages: Array<{ pagePath: string; views: number; users: number; bounceRate: number; avgSessionDuration: number; hasFile: boolean }>;
 } {
   const config = vscode.workspace.getConfiguration('astroAnalytics');
   const propertyId = config.get<string>('propertyId', '');
@@ -271,6 +279,7 @@ function getDashboardData(): {
       users: m.users,
       bounceRate: m.bounceRate,
       avgSessionDuration: m.avgSessionDuration,
+      hasFile: resolvePagePathToFile(path) !== null,
     }));
   return {
     configured: !!propertyId,
@@ -310,6 +319,7 @@ function getDashboardHtml(webview: vscode.Webview, data: ReturnType<typeof getDa
     tbody tr:hover { background: var(--vscode-list-hoverBackground); }
     .page-link { color: var(--vscode-textLink-foreground); text-decoration: none; cursor: pointer; }
     .page-link:hover { text-decoration: underline; }
+    .page-text { color: var(--vscode-foreground); cursor: default; }
     .bounce-cell { display: flex; align-items: center; gap: 0.35rem; }
     .bounce-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .bounce-good .bounce-dot { background: var(--vscode-testing-iconPassed, #22c55e); }
@@ -396,7 +406,10 @@ function getDashboardHtml(webview: vscode.Webview, data: ReturnType<typeof getDa
         const pathEsc = escapeHtml(p.pagePath);
         const bounceCl = bounceClass(p.bounceRate);
         const pct = (p.bounceRate * 100).toFixed(1) + '%';
-        return '<tr><td><a class="page-link" href="#" data-page-path="' + escapeHtml(p.pagePath) + '">' + pathEsc + '</a></td><td>' + p.views.toLocaleString() + '</td><td>' + p.users.toLocaleString() + '</td><td class="bounce-cell ' + bounceCl + '"><span class="bounce-dot"></span>' + pct + '</td><td>' + formatDuration(p.avgSessionDuration) + '</td></tr>';
+        const pageCell = p.hasFile
+          ? '<a class="page-link" href="#" data-page-path="' + escapeHtml(p.pagePath) + '">' + pathEsc + '</a>'
+          : '<span class="page-text">' + pathEsc + '</span>';
+        return '<tr><td>' + pageCell + '</td><td>' + p.views.toLocaleString() + '</td><td>' + p.users.toLocaleString() + '</td><td class="bounce-cell ' + bounceCl + '"><span class="bounce-dot"></span>' + pct + '</td><td>' + formatDuration(p.avgSessionDuration) + '</td></tr>';
       }).join('');
       tbody.querySelectorAll('.page-link').forEach(el => {
         el.addEventListener('click', e => { e.preventDefault(); vscode.postMessage({ type: 'openPage', pagePath: el.getAttribute('data-page-path') }); });
