@@ -10,6 +10,7 @@
   "hover.activeUsers": "アクティブユーザー",
   "hover.avgSessionDuration": "平均セッション時間",
   "hover.footer": "過去 {0} 日間 · GA4 プロパティ {1}",
+  "hover.dynamicRouteAggregated": "(動的ルート、集計)",
   "decoration.tooltip": "直帰率 {0} | {1} 閲覧 | {2} ユーザー | Ø {3}",
   "status.analyticsNone": "Analytics: —",
   "status.noDataTooltip": "{0} のデータなし",
@@ -46,5 +47,8 @@
   "dashboard.legendGood": "<25%",
   "dashboard.legendWarning": "25–45%",
   "dashboard.legendHigh": "45–65%",
-  "dashboard.legendCritical": "≥65%"
+  "dashboard.legendCritical": "≥65%",
+  "dashboard.pageOf": "ページ {0} / {1}",
+  "dashboard.previous": "前へ",
+  "dashboard.next": "次へ"
 }

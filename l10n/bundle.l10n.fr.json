@@ -10,6 +10,7 @@
   "hover.activeUsers": "Utilisateurs actifs",
   "hover.avgSessionDuration": "Durée moy. de session",
   "hover.footer": "Derniers {0} jours · Propriété GA4 {1}",
+  "hover.dynamicRouteAggregated": "(route dynamique, agrégée)",
   "decoration.tooltip": "Rebond {0} | {1} vues | {2} utilisateurs | Ø {3}",
   "status.analyticsNone": "Analytics : —",
   "status.noDataTooltip": "Aucune donnée pour {0}",
@@ -46,5 +47,8 @@
   "dashboard.legendGood": "< 25 %",
   "dashboard.legendWarning": "25–45 %",
   "dashboard.legendHigh": "45–65 %",
-  "dashboard.legendCritical": "≥ 65 %"
+  "dashboard.legendCritical": "≥ 65 %",
+  "dashboard.pageOf": "Page {0} sur {1}",
+  "dashboard.previous": "Précédent",
+  "dashboard.next": "Suivant"
 }

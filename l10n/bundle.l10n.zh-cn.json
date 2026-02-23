@@ -10,6 +10,7 @@
   "hover.activeUsers": "活跃用户",
   "hover.avgSessionDuration": "平均会话时长",
   "hover.footer": "最近 {0} 天 · GA4 媒体资源 {1}",
+  "hover.dynamicRouteAggregated": "(动态路由，已汇总)",
   "decoration.tooltip": "跳出率 {0} | {1} 次浏览 | {2} 用户 | Ø {3}",
   "status.analyticsNone": "Analytics：—",
   "status.noDataTooltip": "无 {0} 的数据",
@@ -46,5 +47,8 @@
   "dashboard.legendGood": "<25%",
   "dashboard.legendWarning": "25–45%",
   "dashboard.legendHigh": "45–65%",
-  "dashboard.legendCritical": "≥65%"
+  "dashboard.legendCritical": "≥65%",
+  "dashboard.pageOf": "第 {0} 页，共 {1} 页",
+  "dashboard.previous": "上一页",
+  "dashboard.next": "下一页"
 }
