@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { GoogleAuth } from 'google-auth-library';
 import fetch from 'node-fetch';
-import { filePathToSlug, slugToFilePaths } from './lib/slug';
+import { filePathToSlug, slugToFilePaths, normalizePagePath } from './lib/slug';
 import { bounceColor, fmtPct, fmtDuration } from './lib/format';
 
 /** Localization: use vscode.l10n when available (VS Code 1.74+), else return message key. */
@@ -90,13 +90,6 @@ async function fetchAnalyticsData(
   }));
 
   return rows;
-}
-
-/** Normalize GA4 pagePath to match slug format (trailing slash) for cache lookup. */
-function normalizePagePath(pagePath: string): string {
-  const p = pagePath.trim();
-  if (!p.endsWith('/')) return p + '/';
-  return p;
 }
 
 /** Bounce rate (0–1) to ThemeColor for Explorer badge. Returns undefined for good (default style). */

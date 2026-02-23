@@ -32,6 +32,11 @@ describe('fmtPct', () => {
     expect(fmtPct(0.123)).toBe('12.3%');
     expect(fmtPct(1)).toBe('100.0%');
   });
+
+  it('rounds to one decimal', () => {
+    expect(fmtPct(0.999)).toBe('99.9%');
+    expect(fmtPct(0.001)).toBe('0.1%');
+  });
 });
 
 describe('fmtDuration', () => {
@@ -45,5 +50,14 @@ describe('fmtDuration', () => {
     expect(fmtDuration(60)).toBe('1m 0s');
     expect(fmtDuration(90)).toBe('1m 30s');
     expect(fmtDuration(125)).toBe('2m 5s');
+  });
+
+  it('floors fractional seconds', () => {
+    expect(fmtDuration(59.9)).toBe('59s');
+    expect(fmtDuration(90.7)).toBe('1m 30s');
+  });
+
+  it('handles large durations', () => {
+    expect(fmtDuration(3661)).toBe('61m 1s');
   });
 });

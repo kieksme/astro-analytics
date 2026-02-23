@@ -85,3 +85,12 @@ export function slugToFilePaths(
 
   return candidates;
 }
+
+/**
+ * Normalize GA4 pagePath to slug format (trailing slash) for cache lookup.
+ */
+export function normalizePagePath(pagePath: string): string {
+  const p = pagePath.trim();
+  if (!p.endsWith('/')) return p + '/';
+  return p;
+}
