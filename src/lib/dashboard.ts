@@ -61,6 +61,7 @@ export interface BuildDashboardHtmlOptions {
 }
 
 const SORT_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="12" height="12"><path fill="currentColor" d="M4 6h8l-4-4-4 4zm0 4l4 4 4-4H4z"/></svg>';
+const REFRESH_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M1,12A11,11,0,0,1,17.882,2.7l1.411-1.41A1,1,0,0,1,21,2V6a1,1,0,0,1-1,1H16a1,1,0,0,1-.707-1.707l1.128-1.128A8.994,8.994,0,0,0,3,12a1,1,0,0,1-2,0Zm21-1a1,1,0,0,0-1,1,9.01,9.01,0,0,1-9,9,8.9,8.9,0,0,1-4.42-1.166l1.127-1.127A1,1,0,0,0,8,17H4a1,1,0,0,0-1,1v4a1,1,0,0,0,.617.924A.987.987,0,0,0,4,23a1,1,0,0,0,.707-.293L6.118,21.3A10.891,10.891,0,0,0,12,23,11.013,11.013,0,0,0,23,12,1,1,0,0,0,22,11Z"/></svg>';
 
 /**
  * Build serializable dashboard data from config, cache, and a file-resolver.
@@ -167,7 +168,7 @@ export function buildDashboardHtml(
     <span><strong>${l10n.lastFetch}</strong> <span id="lastFetch">-</span></span>
     <span><strong>${l10n.lookback}</strong> <span id="lookbackDays">-</span> ${l10n.days}</span>
   </div>
-  <button type="button" class="btn-refresh" id="refreshBtn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill="currentColor" d="M8 2a6 6 0 1 1-4.5 2.02L6 5h3V2l2.5 2.5L9 7V4H7.17A4 4 0 1 0 8 14a4 4 0 0 0 3.5-2.08l1.2.92A6 6 0 1 1 8 2z"/></svg> ${l10n.refreshData}</button>
+  <button type="button" class="btn-refresh" id="refreshBtn">${REFRESH_SVG} ${l10n.refreshData}</button>
   <div id="tableWrap">
     <table>
       <thead><tr>
