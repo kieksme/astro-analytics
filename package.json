@@ -2,7 +2,7 @@
   "name": "astro-analytics",
   "displayName": "Astro Analytics",
   "description": "Shows Google Analytics GA4 metrics (Bounce Rate, Views, Users) for Astro Markdown pages and .astro files inline in VSCode",
-  "version": "0.2.14",
+  "version": "0.3.0",
   "publisher": "kieksme",
   "repository": {
     "type": "git",
@@ -23,10 +23,71 @@
     "onCommand:astro-analytics.showDashboard",
     "onCommand:astro-analytics.testConnection",
     "onCommand:astro-analytics.refresh",
-    "onCommand:astro-analytics.configure"
+    "onCommand:astro-analytics.configure",
+    "onView:astroAnalytics.dashboard"
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "icons": [
+      {
+        "id": "astro-analytics.analytics",
+        "description": "Astro Analytics dashboard",
+        "default": {
+          "light": "resources/icons/analytics.svg",
+          "dark": "resources/icons/analytics.svg"
+        }
+      },
+      {
+        "id": "astro-analytics.bounce-good",
+        "description": "Bounce rate good",
+        "default": {
+          "light": "resources/icons/bounce-good.svg",
+          "dark": "resources/icons/bounce-good.svg"
+        }
+      },
+      {
+        "id": "astro-analytics.bounce-warning",
+        "description": "Bounce rate warning",
+        "default": {
+          "light": "resources/icons/bounce-warning.svg",
+          "dark": "resources/icons/bounce-warning.svg"
+        }
+      },
+      {
+        "id": "astro-analytics.bounce-high",
+        "description": "Bounce rate high",
+        "default": {
+          "light": "resources/icons/bounce-high.svg",
+          "dark": "resources/icons/bounce-high.svg"
+        }
+      },
+      {
+        "id": "astro-analytics.bounce-critical",
+        "description": "Bounce rate critical",
+        "default": {
+          "light": "resources/icons/bounce-critical.svg",
+          "dark": "resources/icons/bounce-critical.svg"
+        }
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "astroAnalytics",
+          "title": "Astro Analytics",
+          "icon": "resources/icons/analytics.svg"
+        }
+      ]
+    },
+    "views": {
+      "astroAnalytics": [
+        {
+          "type": "webview",
+          "id": "astroAnalytics.dashboard",
+          "name": "Dashboard"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "astro-analytics.refresh",
@@ -48,7 +109,7 @@
       {
         "command": "astro-analytics.showDashboard",
         "title": "Open Dashboard",
-        "icon": "$(dashboard)",
+        "icon": "$(astro-analytics.analytics)",
         "category": "Astro Analytics"
       }
     ],

@@ -1,11 +1,14 @@
+/** Icon id for bounce rate (used as $(astro-analytics.bounce-good) etc.). */
+export type BounceIconId = 'astro-analytics.bounce-good' | 'astro-analytics.bounce-warning' | 'astro-analytics.bounce-high' | 'astro-analytics.bounce-critical';
+
 /**
- * Bounce rate (0–1) to color emoji.
+ * Bounce rate (0–1) to contributed icon id. Use in UI as $(bounceIconId).
  */
-export function bounceColor(rate: number): string {
-  if (rate < 0.25) return '🟢';
-  if (rate < 0.45) return '🟡';
-  if (rate < 0.65) return '🟠';
-  return '🔴';
+export function bounceColor(rate: number): BounceIconId {
+  if (rate < 0.25) return 'astro-analytics.bounce-good';
+  if (rate < 0.45) return 'astro-analytics.bounce-warning';
+  if (rate < 0.65) return 'astro-analytics.bounce-high';
+  return 'astro-analytics.bounce-critical';
 }
 
 /**

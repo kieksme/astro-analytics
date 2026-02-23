@@ -16,12 +16,14 @@ Shows Google Analytics GA4 metrics directly in VS Code when you open Astro Markd
 
 ## Bounce Rate Color Coding
 
-| Symbol | Bounce Rate               |
-|--------|---------------------------|
-| 🟢     | < 25% — Very good         |
-| 🟡     | 25–44% — Good             |
-| 🟠     | 45–64% — Average          |
-| 🔴     | ≥ 65% — Needs improvement |
+The extension shows bounce rate with colored indicators (green / yellow / orange / red) in CodeLens, hover, status bar, and the dashboard:
+
+| Level     | Bounce Rate               |
+|-----------|---------------------------|
+| Green     | < 25% — Very good         |
+| Yellow    | 25–44% — Good             |
+| Orange    | 45–64% — Average          |
+| Red       | ≥ 65% — Needs improvement |
 
 ## Setup
 
@@ -86,7 +88,7 @@ If you don’t see any metrics (CodeLens shows “no data” or status bar stays
 
 1. **Run the test command**  
    `Cmd+Shift+P` → **“Astro Analytics: Test API Connection”**.  
-   You can also open **“Analytics: Open Dashboard”** for a webview summary of cached pages and a refresh button.  
+   You can also open the **Astro Analytics** sidebar (activity bar icon) or run **“Astro Analytics: Open Dashboard”** for a sortable table of cached pages, bounce rate indicators, clickable page links (open in editor), and a refresh button.  
    The **Output** panel (channel “Astro Analytics”) will show:
    - Whether the GA4 API call succeeded and how many page paths were returned
    - The first 15 `pagePath` values from GA4 (so you can compare with your slug mapping)

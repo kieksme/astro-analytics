@@ -35,3 +35,53 @@ export function filePathToSlug(
 
   return rel;
 }
+
+/**
+ * Returns candidate absolute file paths for a GA4 pagePath (slug).
+ * Order: content index.md/mdx first, then pages index.astro, then flat .md/.mdx/.astro.
+ * Caller should open the first path that exists.
+ */
+export function slugToFilePaths(
+  workspaceRoot: string,
+  contentRoot: string,
+  pagesRoot: string,
+  pagePath: string
+): string[] {
+  const normalized = pagePath.trim().replace(/\/$/, '') || '';
+  const segments = normalized ? normalized.split('/').filter(Boolean) : [];
+  const relDir = segments.length > 0 ? segments.join(path.sep) : '';
+  const contentBase = path.join(workspaceRoot, contentRoot);
+  const pagesBase = path.join(workspaceRoot, pagesRoot);
+  const candidates: string[] = [];
+
+  // Content: .../blog/post/index.md, index.mdx; or .../blog/post.md for single segment
+  if (relDir) {
+    candidates.push(
+      path.join(contentBase, relDir, 'index.md'),
+      path.join(contentBase, relDir, 'index.mdx')
+    );
+    if (segments.length === 1) {
+      candidates.push(
+        path.join(contentBase, segments[0] + '.md'),
+        path.join(contentBase, segments[0] + '.mdx')
+      );
+    }
+  } else {
+    candidates.push(
+      path.join(contentBase, 'index.md'),
+      path.join(contentBase, 'index.mdx')
+    );
+  }
+
+  // Pages: .../blog/post/index.astro or .../blog/post.astro
+  if (relDir) {
+    candidates.push(path.join(pagesBase, relDir, 'index.astro'));
+    if (segments.length === 1) {
+      candidates.push(path.join(pagesBase, segments[0] + '.astro'));
+    }
+  } else {
+    candidates.push(path.join(pagesBase, 'index.astro'));
+  }
+
+  return candidates;
+}

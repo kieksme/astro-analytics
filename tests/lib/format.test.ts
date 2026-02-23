@@ -2,26 +2,26 @@ import { describe, it, expect } from 'vitest';
 import { bounceColor, fmtPct, fmtDuration } from '../../src/lib/format';
 
 describe('bounceColor', () => {
-  it('returns green for rate < 0.25', () => {
-    expect(bounceColor(0)).toBe('🟢');
-    expect(bounceColor(0.24)).toBe('🟢');
+  it('returns bounce-good for rate < 0.25', () => {
+    expect(bounceColor(0)).toBe('astro-analytics.bounce-good');
+    expect(bounceColor(0.24)).toBe('astro-analytics.bounce-good');
   });
 
-  it('returns yellow for 0.25 <= rate < 0.45', () => {
-    expect(bounceColor(0.25)).toBe('🟡');
-    expect(bounceColor(0.35)).toBe('🟡');
-    expect(bounceColor(0.44)).toBe('🟡');
+  it('returns bounce-warning for 0.25 <= rate < 0.45', () => {
+    expect(bounceColor(0.25)).toBe('astro-analytics.bounce-warning');
+    expect(bounceColor(0.35)).toBe('astro-analytics.bounce-warning');
+    expect(bounceColor(0.44)).toBe('astro-analytics.bounce-warning');
   });
 
-  it('returns orange for 0.45 <= rate < 0.65', () => {
-    expect(bounceColor(0.45)).toBe('🟠');
-    expect(bounceColor(0.55)).toBe('🟠');
-    expect(bounceColor(0.64)).toBe('🟠');
+  it('returns bounce-high for 0.45 <= rate < 0.65', () => {
+    expect(bounceColor(0.45)).toBe('astro-analytics.bounce-high');
+    expect(bounceColor(0.55)).toBe('astro-analytics.bounce-high');
+    expect(bounceColor(0.64)).toBe('astro-analytics.bounce-high');
   });
 
-  it('returns red for rate >= 0.65', () => {
-    expect(bounceColor(0.65)).toBe('🔴');
-    expect(bounceColor(1)).toBe('🔴');
+  it('returns bounce-critical for rate >= 0.65', () => {
+    expect(bounceColor(0.65)).toBe('astro-analytics.bounce-critical');
+    expect(bounceColor(1)).toBe('astro-analytics.bounce-critical');
   });
 });
 
