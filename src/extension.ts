@@ -97,6 +97,7 @@ const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 let statusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
+let dashboardPanel: vscode.WebviewPanel | undefined;
 
 // ---------------------------------------------------------------------------
 // CodeLens provider
@@ -227,49 +228,6 @@ function updateStatusBar(document: vscode.TextDocument | undefined) {
 
 function getErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
-}
-
-// ---------------------------------------------------------------------------
-// Dashboard WebviewView provider (sidebar)
-// ---------------------------------------------------------------------------
-class DashboardViewProvider implements vscode.WebviewViewProvider {
-  private _view: vscode.WebviewView | undefined;
-  private _codeLensProvider: AnalyticsCodeLensProvider | undefined;
-
-  setCodeLensProvider(provider: AnalyticsCodeLensProvider): void {
-    this._codeLensProvider = provider;
-  }
-
-  resolveWebviewView(
-    webviewView: vscode.WebviewView,
-    _context: vscode.WebviewViewResolveContext,
-    _token: vscode.CancellationToken
-  ): void | Thenable<void> {
-    this._view = webviewView;
-    webviewView.webview.options = { enableScripts: true };
-    webviewView.webview.html = getDashboardHtml(webviewView.webview, getDashboardData());
-    webviewView.webview.onDidReceiveMessage((msg: { type: string; pagePath?: string }) => {
-      if (msg.type === 'refresh' && this._codeLensProvider) {
-        refreshData(this._codeLensProvider, () => {
-          if (this._view) {
-            this._view.webview.postMessage({ type: 'data', data: getDashboardData() });
-          }
-        });
-      } else if (msg.type === 'openPage' && msg.pagePath) {
-        openPageInEditor(msg.pagePath);
-      }
-    });
-    webviewView.onDidDispose(() => {
-      this._view = undefined;
-    });
-  }
-
-  reveal(): void {
-    if (this._view) {
-      this._view.show?.(true);
-      this._view.webview.html = getDashboardHtml(this._view.webview, getDashboardData());
-    }
-  }
 }
 
 /** Resolve pagePath to a workspace file and open it. */
@@ -537,12 +495,39 @@ async function testConnection() {
 }
 
 // ---------------------------------------------------------------------------
-// Dashboard (sidebar view)
+// Dashboard (webview panel in editor area)
 // ---------------------------------------------------------------------------
-function showDashboard(dashboardProvider: DashboardViewProvider) {
+function showDashboard(context: vscode.ExtensionContext, codeLensProvider: AnalyticsCodeLensProvider) {
   try {
-    vscode.commands.executeCommand('workbench.view.extension.astroAnalytics');
-    dashboardProvider.reveal();
+    const viewType = 'astroAnalytics.dashboard';
+    const title = 'Astro Analytics Dashboard';
+    if (dashboardPanel) {
+      dashboardPanel.reveal();
+      dashboardPanel.webview.html = getDashboardHtml(dashboardPanel.webview, getDashboardData());
+      return;
+    }
+    dashboardPanel = vscode.window.createWebviewPanel(
+      viewType,
+      title,
+      vscode.ViewColumn.Beside,
+      { enableScripts: true }
+    );
+    dashboardPanel.webview.html = getDashboardHtml(dashboardPanel.webview, getDashboardData());
+    dashboardPanel.webview.onDidReceiveMessage((msg: { type: string; pagePath?: string }) => {
+      if (msg.type === 'refresh') {
+        refreshData(codeLensProvider, () => {
+          if (dashboardPanel) {
+            dashboardPanel.webview.postMessage({ type: 'data', data: getDashboardData() });
+          }
+        });
+      } else if (msg.type === 'openPage' && msg.pagePath) {
+        openPageInEditor(msg.pagePath);
+      }
+    });
+    dashboardPanel.onDidDispose(() => {
+      dashboardPanel = undefined;
+    });
+    context.subscriptions.push(dashboardPanel);
   } catch (err: unknown) {
     outputChannel.appendLine(`[ERROR] showDashboard: ${getErrorMessage(err)}`);
     throw err;
@@ -624,8 +609,6 @@ export function activate(context: vscode.ExtensionContext): void {
     // Declare providers so command handlers can close over them (assigned below)
     let codeLensProvider: AnalyticsCodeLensProvider;
     let hoverProvider: AnalyticsHoverProvider;
-    let dashboardProvider: DashboardViewProvider;
-
     // Commands (registered first so they exist even if later activation steps throw)
     context.subscriptions.push(
       vscode.commands.registerCommand('astro-analytics.refresh', () => {
@@ -642,7 +625,7 @@ export function activate(context: vscode.ExtensionContext): void {
       }),
       vscode.commands.registerCommand('astro-analytics.showDashboard', () => {
         try {
-          showDashboard(dashboardProvider);
+          showDashboard(context, codeLensProvider);
         } catch (err: unknown) {
           const msg = getErrorMessage(err);
           outputChannel.appendLine(`[ERROR] showDashboard: ${msg}`);
@@ -661,15 +644,7 @@ export function activate(context: vscode.ExtensionContext): void {
     // Providers
     codeLensProvider = new AnalyticsCodeLensProvider();
     hoverProvider = new AnalyticsHoverProvider();
-    dashboardProvider = new DashboardViewProvider();
-    dashboardProvider.setCodeLensProvider(codeLensProvider);
-
     context.subscriptions.push(
-      vscode.window.registerWebviewViewProvider(
-        'astroAnalytics.dashboard',
-        dashboardProvider,
-        { webviewOptions: { retainContextWhenHidden: true } }
-      ),
       vscode.languages.registerCodeLensProvider(
         [{ language: 'markdown' }, { language: 'mdx' }, { language: 'astro' }],
         codeLensProvider
