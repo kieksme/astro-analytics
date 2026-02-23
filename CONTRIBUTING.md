@@ -72,15 +72,19 @@ Every extension needs a **publisher** identity on the Marketplace.
    - **ID:** Must match the `publisher` field in `package.json` exactly (this project uses `kieksme`). The ID cannot be changed later.
    - **Name:** Display name for your publisher (e.g. company or brand).
 
-### Personal Access Token (PAT)
+### Authentication (Entra ID vs. PAT)
 
-Publishing uses a **Personal Access Token** from Azure DevOps, not your password.
+**Microsoft recommends [Entra ID](https://learn.microsoft.com/en-us/entra/id)** (Microsoft Entra ID) for authenticating with Azure DevOps and the Marketplace when the tool supports it: short-lived tokens, better security, and integration with Conditional Access. Use Entra ID where your workflow supports it.
+
+**For vsce** (the publish CLI), authentication is currently done via a **Personal Access Token (PAT)** from Azure DevOps. Use a PAT only with the **minimum required scope** (Marketplace → Manage) and a **short expiration**, and store it like a password.
+
+**Create a PAT (when using vsce):**
 
 1. Go to the [Azure DevOps portal](https://dev.azure.com) and select your organization.
 2. Open **User settings** (dropdown next to your profile) → **Personal access tokens**.
 3. Click **New Token**.
 4. Under **Scopes**, choose **Custom defined**, then find **Marketplace** and select **Manage**.
-5. Create the token and **copy it immediately** (it is shown only once).
+5. Set an expiration (e.g. 90 days) and create the token. **Copy it immediately** (it is shown only once).
 
 Store the token securely and **never commit it**. For local publishing you can use a `.env` file (add `VSCE_PAT=your-token` and ensure `.env` is in `.gitignore`) or set the `VSCE_PAT` environment variable when running publish.
 
@@ -127,6 +131,22 @@ pnpx vsce publish 1.0.0     # set exact version
 
 If you run `vsce publish` in a Git repository, it may create a version commit and tag (via npm-version). You can pass a custom commit message with `-m "Release %s"`.
 
-### Automated publishing (optional)
+### Automated publishing with GitHub Actions
 
-You can publish from CI (e.g. on a release tag or from `main`) by storing the PAT as a secret (e.g. `VSCE_PAT` in GitHub Actions) and running `pnpm run compile` then `pnpx vsce publish`. See [Continuous Integration](https://code.visualstudio.com/api/working-with-extensions/continuous-integration) in the VS Code docs for examples and best practices.
+A workflow is provided to publish the extension from GitHub without running `vsce` locally.
+
+**Setup (once per repository):**
+
+1. In your GitHub repo: **Settings → Secrets and variables → Actions**.
+2. Add a repository secret named **`VSCE_PAT`** with the value of your Azure DevOps PAT (Marketplace → Manage scope).
+
+**Workflow file:** [`.github/workflows/publish-vscode-extension.yml`](.github/workflows/publish-vscode-extension.yml)
+
+**How it runs:**
+
+- **On release:** When you [create a GitHub Release](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-your-repository) (e.g. tag `v0.6.0`), the workflow runs, checks out that tag, builds, and runs `vsce publish`. Ensure `package.json` and `CHANGELOG.md` for that tag already contain the release version.
+- **Manual run:** In the **Actions** tab, select **Publish VS Code Extension** and click **Run workflow**. It will use the default branch (`main`) to build and publish.
+
+After a successful run, the new version appears on the [VS Code Marketplace](https://marketplace.visualstudio.com/vscode) and in the publisher management page.
+
+For more options (e.g. publishing from a branch or other triggers), see [Continuous Integration](https://code.visualstudio.com/api/working-with-extensions/continuous-integration) in the VS Code docs.
