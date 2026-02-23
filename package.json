@@ -3,7 +3,7 @@
   "displayName": "Astro Analytics",
   "description": "Shows Google Analytics GA4 metrics (Bounce Rate, Views, Users) for Astro Markdown pages and .astro files inline in VSCode",
   "version": "0.2.2",
-  "publisher": "thinkport",
+  "publisher": "Thinkport GmbH",
   "engines": {
     "vscode": "^1.85.0"
   },

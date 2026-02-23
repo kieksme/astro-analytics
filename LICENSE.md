@@ -1,6 +1,8 @@
 # GNU General Public License v3.0
 
-Copyright (c) thinkport
+Copyright (c) Thinkport GmbH
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
 
 This program is free software: you can redistribute it and/or modify it under the
 terms of the GNU General Public License as published by the Free Software
