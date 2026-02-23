@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   getDashboardDataFromState,
   buildDashboardHtml,
+  buildSidebarDashboardHtml,
   type DashboardConfig,
   type DashboardData,
   type DashboardL10n,
@@ -269,5 +270,96 @@ describe('buildDashboardHtml', () => {
     expect(html).toContain("th.getAttribute('data-sort') === sortKey");
     expect(html).toContain("classList.toggle('th-sort-active'");
     expect(html).toContain('updateSortIndicator();');
+  });
+});
+
+describe('buildSidebarDashboardHtml', () => {
+  const options = { cspSource: 'https://vscode-csp', nonce: 'sidebar-nonce', lang: 'en' };
+
+  it('renders only path and bounce columns (no views, users, avgDuration)', () => {
+    const data: DashboardData = {
+      configured: true,
+      propertyId: '',
+      cacheSize: 0,
+      lastFetch: 0,
+      lookbackDays: 30,
+      topPages: [],
+    };
+    const html = buildSidebarDashboardHtml(data, defaultL10n, options);
+    expect(html).toContain('data-sort="pagePath"');
+    expect(html).toContain('data-sort="bounceRate"');
+    expect(html).not.toContain('data-sort="views"');
+    expect(html).not.toContain('data-sort="users"');
+    expect(html).not.toContain('data-sort="avgSessionDuration"');
+  });
+
+  it('contains required element ids', () => {
+    const data: DashboardData = {
+      configured: true,
+      propertyId: '123',
+      cacheSize: 0,
+      lastFetch: 0,
+      lookbackDays: 30,
+      topPages: [],
+    };
+    const html = buildSidebarDashboardHtml(data, defaultL10n, options);
+    expect(html).toContain('id="tbody"');
+    expect(html).toContain('id="refreshBtn"');
+    expect(html).toContain('id="emptyState"');
+    expect(html).toContain('id="notConfiguredBanner"');
+    expect(html).toContain('id="propertyId"');
+  });
+
+  it('embeds serialized data and uses CSP/nonce/lang options', () => {
+    const data: DashboardData = {
+      configured: true,
+      propertyId: '1',
+      cacheSize: 2,
+      lastFetch: 1000,
+      lookbackDays: 30,
+      topPages: [
+        {
+          pagePath: '/blog/',
+          views: 10,
+          users: 5,
+          bounceRate: 0.35,
+          avgSessionDuration: 60,
+          hasFile: true,
+        },
+      ],
+    };
+    const html = buildSidebarDashboardHtml(data, defaultL10n, options);
+    expect(html).toContain('const data = ');
+    expect(html).toContain('"pagePath":"/blog/"');
+    expect(html).toContain('"bounceRate":0.35');
+    expect(html).not.toMatch(/const data = [^;]*<[^/]/);
+    expect(html).toContain('script nonce="sidebar-nonce"');
+    expect(html).toContain('lang="en"');
+    expect(html).toContain('https://vscode-csp');
+  });
+
+  it('row template has only path and bounce (no views/users/duration in row)', () => {
+    const data: DashboardData = {
+      configured: true,
+      propertyId: '',
+      cacheSize: 1,
+      lastFetch: 0,
+      lookbackDays: 30,
+      topPages: [
+        {
+          pagePath: '/test/',
+          views: 99,
+          users: 50,
+          bounceRate: 0.5,
+          avgSessionDuration: 120,
+          hasFile: false,
+        },
+      ],
+    };
+    const html = buildSidebarDashboardHtml(data, defaultL10n, options);
+    expect(html).toContain('pageCell');
+    expect(html).toContain('bounce-cell');
+    expect(html).not.toMatch(/\.toLocaleString\(\)/);
+    expect(html).not.toContain('formatDuration');
   });
 });

@@ -4,7 +4,7 @@ import { GoogleAuth } from 'google-auth-library';
 import fetch from 'node-fetch';
 import { filePathToSlug, slugToFilePaths, normalizePagePath } from './lib/slug';
 import { bounceColor, bounceStatusBarCodicon, fmtPct, fmtDuration } from './lib/format';
-import { getDashboardDataFromState, buildDashboardHtml } from './lib/dashboard';
+import { getDashboardDataFromState, buildDashboardHtml, buildSidebarDashboardHtml } from './lib/dashboard';
 
 /** Default (en) strings when l10n returns the key or l10n is unavailable. */
 const l10nDefaults: Record<string, string> = {
@@ -393,6 +393,35 @@ function getDashboardHtml(webview: vscode.Webview, data: ReturnType<typeof getDa
   });
 }
 
+function getSidebarDashboardHtml(webview: vscode.Webview, data: ReturnType<typeof getDashboardData>): string {
+  const l10n = {
+    title: l10nT('dashboard.title'),
+    propertyId: l10nT('dashboard.propertyId'),
+    pagesInCache: l10nT('dashboard.pagesInCache'),
+    lastFetch: l10nT('dashboard.lastFetch'),
+    lookback: l10nT('dashboard.lookback'),
+    days: l10nT('dashboard.days'),
+    refreshData: l10nT('dashboard.refreshData'),
+    page: l10nT('dashboard.page'),
+    views: l10nT('dashboard.views'),
+    users: l10nT('dashboard.users'),
+    bounce: l10nT('dashboard.bounce'),
+    avgDuration: l10nT('dashboard.avgDuration'),
+    emptyState: l10nT('dashboard.emptyState'),
+    notConfigured: l10nT('dashboard.notConfigured'),
+    openSettings: l10nT('msg.openSettings'),
+    notSet: l10nT('dashboard.notSet'),
+    legendGood: l10nT('dashboard.legendGood'),
+    legendWarning: l10nT('dashboard.legendWarning'),
+    legendHigh: l10nT('dashboard.legendHigh'),
+    legendCritical: l10nT('dashboard.legendCritical'),
+  };
+  return buildSidebarDashboardHtml(data, l10n, {
+    cspSource: webview.cspSource,
+    lang: uiLanguage(),
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Test API connection (for debugging)
 // ---------------------------------------------------------------------------
@@ -473,7 +502,7 @@ class DashboardViewProvider implements vscode.WebviewViewProvider {
   ): void {
     this._view = webviewView;
     webviewView.webview.options = { enableScripts: true };
-    webviewView.webview.html = getDashboardHtml(webviewView.webview, getDashboardData());
+    webviewView.webview.html = getSidebarDashboardHtml(webviewView.webview, getDashboardData());
     webviewView.webview.onDidReceiveMessage((msg: { type: string; pagePath?: string }) => {
       if (msg.type === 'refresh') {
         refreshData(this._codeLensProvider, () => {
