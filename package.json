@@ -18,7 +18,9 @@
   "activationEvents": [
     "onStartupFinished",
     "onLanguage:markdown",
-    "onLanguage:astro"
+    "onLanguage:astro",
+    "onCommand:astro-analytics.showDashboard",
+    "onCommand:astro-analytics.testConnection"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -38,6 +40,12 @@
       {
         "command": "astro-analytics.configure",
         "title": "Analytics: Configure",
+        "category": "Astro Analytics"
+      },
+      {
+        "command": "astro-analytics.showDashboard",
+        "title": "Analytics: Open Dashboard",
+        "icon": "$(dashboard)",
         "category": "Astro Analytics"
       }
     ],

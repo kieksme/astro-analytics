@@ -85,6 +85,7 @@ If you don’t see any metrics (CodeLens shows “no data” or status bar stays
 
 1. **Run the test command**  
    `Cmd+Shift+P` → **“Astro Analytics: Test API Connection”**.  
+   You can also open **“Analytics: Open Dashboard”** for a webview summary of cached pages and a refresh button.  
    The **Output** panel (channel “Astro Analytics”) will show:
    - Whether the GA4 API call succeeded and how many page paths were returned
    - The first 15 `pagePath` values from GA4 (so you can compare with your slug mapping)
