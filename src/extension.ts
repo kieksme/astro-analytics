@@ -505,8 +505,35 @@ async function testConnection() {
 }
 
 // ---------------------------------------------------------------------------
-// Dashboard (webview panel in editor area)
+// Dashboard (sidebar view + optional webview panel in editor area)
 // ---------------------------------------------------------------------------
+class DashboardViewProvider implements vscode.WebviewViewProvider {
+  private _view: vscode.WebviewView | undefined;
+
+  constructor(private _codeLensProvider: AnalyticsCodeLensProvider) {}
+
+  resolveWebviewView(
+    webviewView: vscode.WebviewView,
+    _context: vscode.WebviewViewResolveContext,
+    _token: vscode.CancellationToken
+  ): void {
+    this._view = webviewView;
+    webviewView.webview.options = { enableScripts: true };
+    webviewView.webview.html = getDashboardHtml(webviewView.webview, getDashboardData());
+    webviewView.webview.onDidReceiveMessage((msg: { type: string; pagePath?: string }) => {
+      if (msg.type === 'refresh') {
+        refreshData(this._codeLensProvider, () => {
+          if (this._view) {
+            this._view.webview.postMessage({ type: 'data', data: getDashboardData() });
+          }
+        });
+      } else if (msg.type === 'openPage' && msg.pagePath) {
+        openPageInEditor(msg.pagePath);
+      }
+    });
+  }
+}
+
 function showDashboard(context: vscode.ExtensionContext, codeLensProvider: AnalyticsCodeLensProvider) {
   try {
     const viewType = 'astroAnalytics.dashboard';
@@ -654,7 +681,11 @@ export function activate(context: vscode.ExtensionContext): void {
     // Providers
     codeLensProvider = new AnalyticsCodeLensProvider();
     hoverProvider = new AnalyticsHoverProvider();
+    const dashboardViewProvider = new DashboardViewProvider(codeLensProvider);
     context.subscriptions.push(
+      vscode.window.registerWebviewViewProvider('astroAnalytics.dashboard', dashboardViewProvider, {
+        webviewOptions: { retainContextWhenHidden: true },
+      }),
       vscode.languages.registerCodeLensProvider(
         [{ language: 'markdown' }, { language: 'mdx' }, { language: 'astro' }],
         codeLensProvider
