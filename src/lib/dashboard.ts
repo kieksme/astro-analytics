@@ -180,7 +180,7 @@ export function buildDashboardHtml(
     h1 { font-size: 1.2rem; margin: 0; font-weight: 600; }
     .meta { margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0 1rem; }
     .meta span { font-size: 0.9em; }
-    .btn-refresh { display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.5rem; padding: 0.4rem 0.8rem; cursor: pointer; background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; border-radius: 2px; font-size: inherit; }
+    .btn-refresh { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.8rem; cursor: pointer; background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; border-radius: 2px; font-size: inherit; }
     .btn-refresh:hover { background: var(--vscode-button-hoverBackground); }
     .btn-refresh svg { width: 14px; height: 14px; }
     table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
@@ -216,8 +216,9 @@ export function buildDashboardHtml(
     .btn-page:hover:not(:disabled) { background: var(--vscode-button-secondaryHoverBackground); }
     .btn-page:disabled { opacity: 0.5; cursor: default; }
     .toolbar-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin: 0.5rem 0; }
+    .toolbar-row .btn-refresh { margin: 0; }
     .filter-row { display: flex; align-items: center; gap: 0.5rem; margin: 0; }
-    .filter-row select { font-size: inherit; padding: 0.25rem 0.5rem; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border); border-radius: 2px; }
+    .filter-row select { font-size: inherit; padding: 0.4rem 0.5rem; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border); border-radius: 2px; box-sizing: border-box; height: 2.25rem; }
   </style>
 </head>
 <body>
@@ -414,7 +415,7 @@ export function buildSidebarDashboardHtml(
     .dashboard-header svg { flex-shrink: 0; }
     h1 { font-size: 1.1rem; margin: 0; font-weight: 600; }
     .meta { margin-bottom: 0.5rem; font-size: 0.85em; }
-    .btn-refresh { display: inline-flex; align-items: center; gap: 0.4rem; margin-bottom: 0.5rem; padding: 0.35rem 0.6rem; cursor: pointer; background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; border-radius: 2px; font-size: inherit; }
+    .btn-refresh { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.6rem; cursor: pointer; background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; border-radius: 2px; font-size: inherit; }
     .btn-refresh:hover { background: var(--vscode-button-hoverBackground); }
     .btn-refresh svg { width: 14px; height: 14px; }
     table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
@@ -450,8 +451,9 @@ export function buildSidebarDashboardHtml(
     .btn-page:hover:not(:disabled) { background: var(--vscode-button-secondaryHoverBackground); }
     .btn-page:disabled { opacity: 0.5; cursor: default; }
     .toolbar-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin: 0.5rem 0; }
+    .toolbar-row .btn-refresh { margin: 0; }
     .filter-row { display: flex; align-items: center; gap: 0.5rem; margin: 0; }
-    .filter-row select { font-size: inherit; padding: 0.25rem 0.5rem; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border); border-radius: 2px; }
+    .filter-row select { font-size: inherit; padding: 0.35rem 0.5rem; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border); border-radius: 2px; box-sizing: border-box; height: 2rem; }
   </style>
 </head>
 <body>
