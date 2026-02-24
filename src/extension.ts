@@ -409,10 +409,34 @@ function getDashboardData() {
   );
 }
 
-/** Title for sidebar view including page count badge (e.g. "Dashboard (42)"). */
-function getDashboardViewTitle(data: ReturnType<typeof getDashboardData>): string {
+/** Title for sidebar view (optionally with spinner when refreshing). */
+function getDashboardViewTitle(
+  data: ReturnType<typeof getDashboardData> | undefined,
+  isRefreshing?: boolean
+): string {
   const base = l10nT('dashboard.title');
-  return data.cacheSize > 0 ? `${base} (${data.cacheSize})` : base;
+  if (isRefreshing) return `${base} $(sync~spin)`;
+  return data && data.cacheSize > 0 ? `${base} (${data.cacheSize})` : base;
+}
+
+/** Update sidebar view title and badge (number or spinner during refresh). */
+function updateSidebarViewBadge(
+  view: vscode.WebviewView | undefined,
+  data: ReturnType<typeof getDashboardData>,
+  isRefreshing?: boolean
+): void {
+  if (!view) return;
+  view.title = getDashboardViewTitle(data, isRefreshing);
+  const viewWithBadge = view as vscode.WebviewView & { badge?: { value: number | string; tooltip?: string } };
+  if (typeof viewWithBadge.badge !== 'undefined') {
+    if (isRefreshing) {
+      viewWithBadge.badge = undefined;
+    } else if (data.cacheSize > 0) {
+      viewWithBadge.badge = { value: data.cacheSize, tooltip: l10nT('dashboard.pagesInCache') };
+    } else {
+      viewWithBadge.badge = undefined;
+    }
+  }
 }
 
 function getDashboardHtml(webview: vscode.Webview, data: ReturnType<typeof getDashboardData>): string {
@@ -570,17 +594,17 @@ class DashboardViewProvider implements vscode.WebviewViewProvider {
     this._view = webviewView;
     webviewView.webview.options = { enableScripts: true };
     const data = getDashboardData();
-    webviewView.title = getDashboardViewTitle(data);
+    updateSidebarViewBadge(webviewView, data);
     webviewView.webview.html = getSidebarDashboardHtml(webviewView.webview, data);
     webviewView.webview.onDidReceiveMessage((msg: { type: string; pagePath?: string }) => {
       if (msg.type === 'refresh') {
         refreshData(this._codeLensProvider, () => {
           if (this._view) {
             const newData = getDashboardData();
-            this._view.title = getDashboardViewTitle(newData);
+            updateSidebarViewBadge(this._view, newData);
             this._view.webview.postMessage({ type: 'data', data: newData });
           }
-        });
+        }, this._view);
       } else if (msg.type === 'openPage' && msg.pagePath) {
         openPageInEditor(msg.pagePath);
       } else if (msg.type === 'openSettings') {
@@ -634,7 +658,8 @@ function showDashboard(context: vscode.ExtensionContext, codeLensProvider: Analy
 // ---------------------------------------------------------------------------
 async function refreshData(
   codeLensProvider: AnalyticsCodeLensProvider,
-  onDone?: () => void
+  onDone?: () => void,
+  sidebarView?: vscode.WebviewView
 ) {
   const config = vscode.workspace.getConfiguration('astroAnalytics');
   const propertyId = config.get<string>('propertyId', '');
@@ -651,6 +676,10 @@ async function refreshData(
       }
     });
     return;
+  }
+
+  if (sidebarView) {
+    updateSidebarViewBadge(sidebarView, getDashboardData(), true);
   }
 
   // Expand ~ in credentials path
@@ -693,6 +722,9 @@ async function refreshData(
           }
         });
         statusBarItem.text = `$(graph) ${l10nT('msg.analyticsErrorStatus')}`;
+        if (sidebarView) {
+          updateSidebarViewBadge(sidebarView, getDashboardData(), false);
+        }
       }
     }
   );
