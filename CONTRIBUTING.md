@@ -53,6 +53,27 @@ Install the generated `.vsix` in VS Code: `Cmd+Shift+P` → **"Install from VSIX
 
 For publishing to the VS Code Marketplace, the `repository` field in `package.json` must be set (it is used for links on the Marketplace page). This project already has it configured.
 
+## Releases and versioning (Release Please)
+
+This project uses [Release Please](https://github.com/googleapis/release-please) to automate version bumps, changelog updates, and GitHub Releases. The extension is **not** published to npm; it is published to the VS Code Marketplace when a GitHub Release is created (see Automated publishing below).
+
+**Conventional commits:** Use [Conventional Commits](https://www.conventionalcommits.org/) on the default branch so Release Please can determine the next version and changelog entries:
+
+- `feat: ...` → minor version bump
+- `fix: ...` → patch version bump
+- `fix!: ...` or `feat!: ...` (breaking) → major version bump
+- `chore: ...`, `docs: ...`, etc. → no version bump by default (can be configured)
+
+**Setup (once per repository):** Add a **GitHub Personal Access Token (PAT)** as a repository secret named **`RELEASE_PLEASE_TOKEN`**. The PAT must have `repo` scope (or at least contents and pull-requests). Create it under GitHub → Settings → Developer settings → Personal access tokens. Do not use the default `GITHUB_TOKEN` for this workflow; Release Please requires a PAT.
+
+**Flow:**
+
+1. Push conventional commits to `main` → the [release-please](.github/workflows/release-please.yml) workflow creates or updates a **Release PR**. That PR updates the **version** in `package.json` and the release notes in `CHANGELOG.md`; do not bump the version in `package.json` manually when using this flow.
+2. Merge the Release PR → Release Please creates the version tag (e.g. `0.5.5`) and the **GitHub Release**.
+3. The [Publish VS Code Extension](.github/workflows/publish-vscode-extension.yml) workflow runs on `release: published` and publishes the extension to the Marketplace.
+
+Configuration: [release-please-config.json](release-please-config.json) (single Node package, no npm publish). The `version` field in `package.json` is maintained by Release Please via the release PR.
+
 ## Publishing to the VS Code Marketplace
 
 This section describes how to publish the extension to the [VS Code Marketplace](https://marketplace.visualstudio.com/vscode) so it is publicly installable.
@@ -90,10 +111,10 @@ Store the token securely and **never commit it**. For local publishing you can u
 
 ### Pre-publish checklist
 
-Before publishing:
+Before publishing (when not using the Release Please flow):
 
-- **Version:** Bump the version in `package.json` if needed (use [SemVer](https://semver.org/)).
-- **CHANGELOG.md:** Add an entry for the new version; this content is shown as **Release Notes** on the Marketplace page.
+- **Version:** Bump the version in `package.json` if needed (use [SemVer](https://semver.org/)). When using [Release Please](#releases-and-versioning-release-please), the version in `package.json` is updated automatically by the release PR — do not edit it manually for releases.
+- **CHANGELOG.md:** Add an entry for the new version; this content is shown as **Release Notes** on the Marketplace page. When using Release Please, the changelog is updated automatically by the release PR.
 - **Build:** Run `pnpm run compile` (or `pnpm run build`) so `dist/extension.js` is up to date.
 - **Content:** Ensure README and CHANGELOG do not use user-provided SVG images (only [approved badges](https://code.visualstudio.com/api/references/extension-manifest#approved-badges) are allowed). Image URLs must use `https://`. The extension icon in `package.json` must be a PNG (e.g. `icon.png`).
 - **License:** The Marketplace expects a LICENSE file in the project root; this project provides `LICENSE.md`.
@@ -150,8 +171,9 @@ A workflow is provided to publish the extension from GitHub without running `vsc
 
 **How it runs:**
 
-- **On release:** When you [create a GitHub Release](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-your-repository) (e.g. tag `v0.6.0`), the workflow runs, checks out that tag, builds, and runs `vsce publish`. Ensure `package.json` and `CHANGELOG.md` for that tag already contain the release version.
-- **Manual run:** In the **Actions** tab, select **Publish VS Code Extension** and click **Run workflow**. It will use the default branch (`main`) to build and publish.
+- **On release (recommended):** When a **GitHub Release** is created (e.g. by merging a [Release Please](.github/workflows/release-please.yml) release PR), this workflow runs, checks out the release tag, builds, and runs `vsce publish`. Release Please ensures `package.json` and `CHANGELOG.md` are updated before the tag is created.
+- **Manual release:** You can also [create a GitHub Release](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-your-repository) manually (e.g. tag `v0.6.0`); then ensure that tag has the correct version in `package.json` and `CHANGELOG.md`.
+- **Manual run (no release):** In the **Actions** tab, select **Publish VS Code Extension** and click **Run workflow**. It will use the default branch (`main`) to build and publish.
 
 After a successful run, the new version appears on the [VS Code Marketplace](https://marketplace.visualstudio.com/vscode) and in the publisher management page.
 
