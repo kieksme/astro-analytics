@@ -67,6 +67,8 @@ const l10nDefaults: Record<string, string> = {
   'dashboard.filterStatic': 'Static only',
   'dashboard.filterDynamicOnly': 'Dynamic only',
   'dashboard.filterDynamicLabel': 'Filter by route type',
+  'dashboard.filterEmpty': 'No pages match the current filter. Try "All".',
+  'dashboard.loadError': 'Dashboard failed to load',
   'dashboard.badgeCriticalTooltip': 'Pages with critical bounce rate (≥65%)',
 };
 
@@ -168,6 +170,7 @@ const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 let statusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
 let dashboardPanel: vscode.WebviewPanel | undefined;
+let dashboardViewProvider: DashboardViewProvider | undefined;
 let fileDecorationProvider: AnalyticsFileDecorationProvider;
 
 // ---------------------------------------------------------------------------
@@ -430,94 +433,45 @@ function updateSidebarViewBadge(
 ): void {
   if (!view) return;
   view.title = getDashboardViewTitle(data, isRefreshing);
-  const viewWithBadge = view as vscode.WebviewView & {
-    badge?: { value: number; tooltip: string; variant?: 'default' | 'error' | 'warning' };
-  };
-  if (typeof viewWithBadge.badge !== 'undefined') {
+  try {
     if (isRefreshing) {
-      viewWithBadge.badge = undefined;
+      view.badge = undefined;
     } else if (data.cacheSize > 0) {
       const criticalCount = countCriticalPages(data);
-      viewWithBadge.badge = {
+      view.badge = {
         value: criticalCount,
         tooltip: l10nT('dashboard.badgeCriticalTooltip'),
-        variant: 'error',
       };
     } else {
-      viewWithBadge.badge = undefined;
+      view.badge = undefined;
     }
+  } catch {
+    // badge API not available in this VS Code version
   }
 }
 
+function logDashboardData(data: ReturnType<typeof getDashboardData>, source: string): void {
+  outputChannel.appendLine(`[${new Date().toISOString()}] Dashboard data (${source}):`);
+  outputChannel.appendLine(`  configured: ${data.configured}, propertyId: ${data.propertyId}, cacheSize: ${data.cacheSize}`);
+  outputChannel.appendLine(`  lastFetch: ${data.lastFetch ? new Date(data.lastFetch).toLocaleString() : '-'}, lookbackDays: ${data.lookbackDays}, pageSize: ${data.pageSize}`);
+  outputChannel.appendLine(`  topPages.length: ${data.topPages?.length ?? 0}`);
+  const sample = (data.topPages ?? []).slice(0, 5);
+  sample.forEach((p, i) => outputChannel.appendLine(`    ${i + 1}. ${p.pagePath} | views: ${p.views} | bounce: ${(p.bounceRate * 100).toFixed(1)}% | hasFile: ${p.hasFile}`));
+  if ((data.topPages?.length ?? 0) > 5) outputChannel.appendLine(`    … and ${data.topPages!.length - 5} more`);
+  outputChannel.appendLine('');
+}
+
 function getDashboardHtml(webview: vscode.Webview, data: ReturnType<typeof getDashboardData>): string {
-  const l10n = {
-    title: l10nT('dashboard.title'),
-    propertyId: l10nT('dashboard.propertyId'),
-    pagesInCache: l10nT('dashboard.pagesInCache'),
-    lastFetch: l10nT('dashboard.lastFetch'),
-    lookback: l10nT('dashboard.lookback'),
-    days: l10nT('dashboard.days'),
-    refreshData: l10nT('dashboard.refreshData'),
-    page: l10nT('dashboard.page'),
-    views: l10nT('dashboard.views'),
-    users: l10nT('dashboard.users'),
-    bounce: l10nT('dashboard.bounce'),
-    avgDuration: l10nT('dashboard.avgDuration'),
-    emptyState: l10nT('dashboard.emptyState'),
-    notConfigured: l10nT('dashboard.notConfigured'),
-    openSettings: l10nT('msg.openSettings'),
-    notSet: l10nT('dashboard.notSet'),
-    legendGood: l10nT('dashboard.legendGood'),
-    legendWarning: l10nT('dashboard.legendWarning'),
-    legendHigh: l10nT('dashboard.legendHigh'),
-    legendCritical: l10nT('dashboard.legendCritical'),
-    pageOf: l10nT('dashboard.pageOf'),
-    previous: l10nT('dashboard.previous'),
-    next: l10nT('dashboard.next'),
-    dynamicRouteLabel: l10nT('dashboard.dynamicRoute'),
-    filterAll: l10nT('dashboard.filterAll'),
-    filterStatic: l10nT('dashboard.filterStatic'),
-    filterDynamicOnly: l10nT('dashboard.filterDynamicOnly'),
-    filterDynamicLabel: l10nT('dashboard.filterDynamicLabel'),
-  };
-  return buildDashboardHtml(data, l10n, {
+  logDashboardData(data, 'full');
+  return buildDashboardHtml(data, {
     cspSource: webview.cspSource,
     lang: uiLanguage(),
   });
 }
 
 function getSidebarDashboardHtml(webview: vscode.Webview, data: ReturnType<typeof getDashboardData>): string {
-  const l10n = {
-    title: l10nT('dashboard.title'),
-    propertyId: l10nT('dashboard.propertyId'),
-    pagesInCache: l10nT('dashboard.pagesInCache'),
-    lastFetch: l10nT('dashboard.lastFetch'),
-    lookback: l10nT('dashboard.lookback'),
-    days: l10nT('dashboard.days'),
-    refreshData: l10nT('dashboard.refreshData'),
-    page: l10nT('dashboard.page'),
-    views: l10nT('dashboard.views'),
-    users: l10nT('dashboard.users'),
-    bounce: l10nT('dashboard.bounce'),
-    avgDuration: l10nT('dashboard.avgDuration'),
-    emptyState: l10nT('dashboard.emptyState'),
-    notConfigured: l10nT('dashboard.notConfigured'),
-    openSettings: l10nT('msg.openSettings'),
-    notSet: l10nT('dashboard.notSet'),
-    legendGood: l10nT('dashboard.legendGood'),
-    legendWarning: l10nT('dashboard.legendWarning'),
-    legendHigh: l10nT('dashboard.legendHigh'),
-    legendCritical: l10nT('dashboard.legendCritical'),
-    pageOf: l10nT('dashboard.pageOf'),
-    previous: l10nT('dashboard.previous'),
-    next: l10nT('dashboard.next'),
-    dynamicRouteLabel: l10nT('dashboard.dynamicRoute'),
-    filterAll: l10nT('dashboard.filterAll'),
-    filterStatic: l10nT('dashboard.filterStatic'),
-    filterDynamicOnly: l10nT('dashboard.filterDynamicOnly'),
-    filterDynamicLabel: l10nT('dashboard.filterDynamicLabel'),
-  };
-  return buildSidebarDashboardHtml(data, l10n, {
+  logDashboardData(data, 'sidebar');
+  return buildSidebarDashboardHtml(data, {
     cspSource: webview.cspSource,
     lang: uiLanguage(),
   });
@@ -591,6 +545,20 @@ async function testConnection() {
 // ---------------------------------------------------------------------------
 // Dashboard (sidebar view + optional webview panel in editor area)
 // ---------------------------------------------------------------------------
+/** Sends dashboard data to the webview via postMessage. May be dropped when the webview is hidden. */
+function sendDashboardData(webview: vscode.Webview, data: ReturnType<typeof getDashboardData>): void {
+  webview.postMessage({ type: 'data', data });
+}
+
+/** Updates webview by setting full HTML so the view always shows current data (postMessage can be dropped when hidden). */
+function setDashboardHtml(
+  webview: vscode.Webview,
+  data: ReturnType<typeof getDashboardData>,
+  getHtml: (w: vscode.Webview, d: ReturnType<typeof getDashboardData>) => string
+): void {
+  webview.html = getHtml(webview, data);
+}
+
 class DashboardViewProvider implements vscode.WebviewViewProvider {
   private _view: vscode.WebviewView | undefined;
 
@@ -606,13 +574,18 @@ class DashboardViewProvider implements vscode.WebviewViewProvider {
     const data = getDashboardData();
     updateSidebarViewBadge(webviewView, data);
     webviewView.webview.html = getSidebarDashboardHtml(webviewView.webview, data);
-    webviewView.webview.onDidReceiveMessage((msg: { type: string; pagePath?: string }) => {
+    webviewView.webview.onDidReceiveMessage((msg: { type: string; pagePath?: string; error?: string }) => {
+      if (msg.type === 'scriptError') {
+        outputChannel.appendLine(`[ERROR] Dashboard script error: ${msg.error ?? 'unknown'}`);
+        return;
+      }
       if (msg.type === 'refresh') {
+        outputChannel.appendLine('[Dashboard] Refresh button clicked (sidebar), starting refresh.');
         refreshData(this._codeLensProvider, () => {
           if (this._view) {
             const newData = getDashboardData();
             updateSidebarViewBadge(this._view, newData);
-            this._view.webview.postMessage({ type: 'data', data: newData });
+            setDashboardHtml(this._view.webview, newData, getSidebarDashboardHtml);
           }
         }, this._view);
       } else if (msg.type === 'openPage' && msg.pagePath) {
@@ -622,6 +595,14 @@ class DashboardViewProvider implements vscode.WebviewViewProvider {
       }
     });
   }
+
+  /** Updates the sidebar webview with fresh dashboard data (sets HTML so update is reliable when view was hidden). */
+  updateWithNewData(): void {
+    if (!this._view) return;
+    const newData = getDashboardData();
+    updateSidebarViewBadge(this._view, newData);
+    setDashboardHtml(this._view.webview, newData, getSidebarDashboardHtml);
+  }
 }
 
 function showDashboard(context: vscode.ExtensionContext, codeLensProvider: AnalyticsCodeLensProvider) {
@@ -630,7 +611,7 @@ function showDashboard(context: vscode.ExtensionContext, codeLensProvider: Analy
     const title = l10nT('dashboard.title');
     if (dashboardPanel) {
       dashboardPanel.reveal();
-      dashboardPanel.webview.html = getDashboardHtml(dashboardPanel.webview, getDashboardData());
+      setDashboardHtml(dashboardPanel.webview, getDashboardData(), getDashboardHtml);
       return;
     }
     dashboardPanel = vscode.window.createWebviewPanel(
@@ -640,11 +621,16 @@ function showDashboard(context: vscode.ExtensionContext, codeLensProvider: Analy
       { enableScripts: true }
     );
     dashboardPanel.webview.html = getDashboardHtml(dashboardPanel.webview, getDashboardData());
-    dashboardPanel.webview.onDidReceiveMessage((msg: { type: string; pagePath?: string }) => {
+    dashboardPanel.webview.onDidReceiveMessage((msg: { type: string; pagePath?: string; error?: string }) => {
+      if (msg.type === 'scriptError') {
+        outputChannel.appendLine(`[ERROR] Dashboard script error: ${msg.error ?? 'unknown'}`);
+        return;
+      }
       if (msg.type === 'refresh') {
+        outputChannel.appendLine('[Dashboard] Refresh button clicked (panel), starting refresh.');
         refreshData(codeLensProvider, () => {
           if (dashboardPanel) {
-            dashboardPanel.webview.postMessage({ type: 'data', data: getDashboardData() });
+            setDashboardHtml(dashboardPanel.webview, getDashboardData(), getDashboardHtml);
           }
         });
       } else if (msg.type === 'openPage' && msg.pagePath) {
@@ -666,6 +652,14 @@ function showDashboard(context: vscode.ExtensionContext, codeLensProvider: Analy
 // ---------------------------------------------------------------------------
 // Data refresh
 // ---------------------------------------------------------------------------
+/** Updates sidebar and full dashboard panel with current data (sets HTML so update is reliable). */
+function updateAllDashboardViews(): void {
+  dashboardViewProvider?.updateWithNewData();
+  if (dashboardPanel) {
+    setDashboardHtml(dashboardPanel.webview, getDashboardData(), getDashboardHtml);
+  }
+}
+
 async function refreshData(
   codeLensProvider: AnalyticsCodeLensProvider,
   onDone?: () => void,
@@ -721,7 +715,9 @@ async function refreshData(
         updateStatusBar(vscode.window.activeTextEditor?.document);
 
         vscode.window.setStatusBarMessage(`$(check) ${l10nT('msg.pagesLoaded', String(data.length))}`, 3000);
+        vscode.window.showInformationMessage(l10nT('msg.pagesLoaded', String(data.length)));
         onDone?.();
+        updateAllDashboardViews();
       } catch (err: unknown) {
         const msg = getErrorMessage(err);
         outputChannel.appendLine(`[ERROR] ${msg}`);
@@ -747,6 +743,7 @@ export function activate(context: vscode.ExtensionContext): void {
   try {
     outputChannel = vscode.window.createOutputChannel('Astro Analytics');
     context.subscriptions.push(outputChannel);
+    outputChannel.appendLine(`[${new Date().toISOString()}] ${l10nT('msg.extensionActivated')}`);
 
     // Declare providers so command handlers can close over them (assigned below)
     let codeLensProvider: AnalyticsCodeLensProvider;
@@ -789,7 +786,7 @@ export function activate(context: vscode.ExtensionContext): void {
     codeLensProvider = new AnalyticsCodeLensProvider();
     hoverProvider = new AnalyticsHoverProvider();
     fileDecorationProvider = new AnalyticsFileDecorationProvider();
-    const dashboardViewProvider = new DashboardViewProvider(codeLensProvider);
+    dashboardViewProvider = new DashboardViewProvider(codeLensProvider);
     context.subscriptions.push(
       vscode.window.registerWebviewViewProvider('astroAnalytics.dashboard', dashboardViewProvider, {
         webviewOptions: { retainContextWhenHidden: true },
@@ -830,8 +827,6 @@ export function activate(context: vscode.ExtensionContext): void {
     if (shouldRefreshOnStartup(config.get<string>('propertyId', ''))) {
       refreshData(codeLensProvider);
     }
-
-    outputChannel.appendLine(l10nT('msg.extensionActivated'));
   } catch (err) {
     const msg = getErrorMessage(err);
     console.error('[Astro Analytics] Activation failed:', msg);

@@ -71,7 +71,7 @@ Example `settings.json`:
 
 ### 3. URL slug mapping
 
-The extension derives the GA4 `pagePath` from the file path:
+The extension requests GA4 dimension `pagePath` and derives the slug from the file path:
 
 ```text
 src/content/blog/datenstrategie-ki.md  →  /blog/datenstrategie-ki/

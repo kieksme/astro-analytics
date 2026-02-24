@@ -75,6 +75,10 @@ export interface DashboardL10n {
   filterDynamicOnly?: string;
   /** Aria-label for the filter select. */
   filterDynamicLabel?: string;
+  /** Shown when filter yields no rows but data exists. */
+  filterEmpty?: string;
+  /** Shown when script fails to load (e.g. acquireVsCodeApi). */
+  loadError?: string;
 }
 
 export interface BuildDashboardHtmlOptions {
@@ -153,26 +157,43 @@ export function getDashboardDataFromState(
   };
 }
 
+/** English strings used inside the dashboard script (no l10n message to webview). */
+const DASHBOARD_SCRIPT_L10N = {
+  notSet: 'Not set',
+  filterEmpty: 'No pages match the current filter. Try "All".',
+  pageOf: 'Page {0} of {1}',
+  dynamicRouteLabel: 'dynamic',
+  loadError: 'Dashboard failed to load',
+};
+
 /**
  * Build dashboard HTML string. Pure function: no vscode or global state.
+ * Dashboard UI is English-only (no l10n passed into webview to avoid embedding issues).
  */
 export function buildDashboardHtml(
   data: DashboardData,
-  l10n: DashboardL10n,
   options: BuildDashboardHtmlOptions
 ): string {
   const nonce = options.nonce ?? Date.now().toString(36) + Math.random().toString(36).slice(2);
   const lang = options.lang ?? 'en';
-  const dataJson = JSON.stringify(data);
-  const l10nJson = JSON.stringify(l10n).replace(/</g, '\\u003c');
-  const safeDataJson = dataJson.replace(/</g, '\\u003c');
+  const escapeHtmlAttr = (s: string) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  const escapeHtml = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const payload = { ...data, topPages: Array.isArray(data.topPages) ? data.topPages : [] };
+  const dataJson = JSON.stringify(payload);
+  /** Escape for embedding in <script type="application/json"> so </script> in payload does not close the tag */
+  const dataJsonSafe = dataJson.replace(/<\/script/gi, '\\u003c/script');
+  const initialCacheSize = String(data.cacheSize ?? 0);
+  const initialLastFetch = data.lastFetch ? new Date(data.lastFetch).toLocaleString() : '-';
+  const initialLookbackDays = String(data.lookbackDays ?? 30);
+  /** Inline script l10n (English only); escape </script> so it does not close the tag */
+  const scriptL10nJson = JSON.stringify(DASHBOARD_SCRIPT_L10N).replace(/<\/script/gi, '\\u003c/script');
 
-  return `<!DOCTYPE html>
-<html lang="${lang}">
+  const html = `<!DOCTYPE html>
+<html lang="${escapeHtmlAttr(lang)}">
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}'; style-src 'unsafe-inline' ${options.cspSource};">
-  <title>${l10n.title}</title>
+  <title>Dashboard</title>
   <style>
     body { font-family: var(--vscode-font-family); padding: 1rem; color: var(--vscode-foreground); margin: 0; }
     .dashboard-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
@@ -219,53 +240,107 @@ export function buildDashboardHtml(
     .toolbar-row .btn-refresh { margin: 0; }
     .filter-row { display: flex; align-items: center; gap: 0.5rem; margin: 0; }
     .filter-row select { font-size: inherit; padding: 0.4rem 0.5rem; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border); border-radius: 2px; box-sizing: border-box; height: 2.25rem; }
+    .debug-section { margin-top: 1rem; font-size: 0.75em; }
+    .debug-section summary { cursor: pointer; color: var(--vscode-descriptionForeground); }
+    #debugOutput { width: 100%; min-height: 120px; font-family: var(--vscode-editor-font-family, monospace); font-size: 0.85em; background: var(--vscode-textBlockQuote-background); border: 1px solid var(--vscode-widget-border); border-radius: 2px; padding: 0.5rem; margin-top: 0.25rem; box-sizing: border-box; white-space: pre-wrap; overflow: auto; }
   </style>
 </head>
 <body>
   <div class="dashboard-header">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="24" height="24"><path fill="currentColor" d="M4 20v-4h4v4H4zm6 0v-8h4v8h-4zm6 0V8h4v12h-4zm6 0V4h4v16h-4z"/></svg>
-    <h1>${l10n.title}</h1>
+    <h1>Dashboard</h1>
   </div>
-  <div id="notConfiguredBanner" class="message-box message-warning" style="display:none;">${l10n.notConfigured} <a href="#" id="openSettingsBannerLink">${l10n.openSettings}</a></div>
+  <div id="notConfiguredBanner" class="message-box message-warning" style="display:none;">Analytics not configured. <a href="#" id="openSettingsBannerLink">Open Settings</a></div>
   <div class="meta">
-    <span><strong>${l10n.propertyId}</strong> <span id="propertyId">-</span></span>
-    <span><strong>${l10n.pagesInCache}</strong> <span id="cacheSize">0</span></span>
-    <span><strong>${l10n.lastFetch}</strong> <span id="lastFetch">-</span></span>
-    <span><strong>${l10n.lookback}</strong> <span id="lookbackDays">-</span> ${l10n.days}</span>
+    <span><strong>Property ID</strong> <span id="propertyId">${(data.propertyId || 'Not set').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')}</span></span>
+    <span><strong>Pages in cache</strong> <span id="cacheSize">${escapeHtmlAttr(initialCacheSize)}</span></span>
+    <span><strong>Last fetch</strong> <span id="lastFetch">${escapeHtmlAttr(initialLastFetch)}</span></span>
+    <span><strong>Lookback</strong> <span id="lookbackDays">${escapeHtmlAttr(initialLookbackDays)}</span> days</span>
   </div>
   <div class="toolbar-row">
-    <button type="button" class="btn-refresh" id="refreshBtn">${REFRESH_SVG} ${l10n.refreshData}</button>
+    <button type="button" class="btn-refresh" id="refreshBtn">${REFRESH_SVG} Refresh data</button>
     <div class="filter-row">
-      <select id="filterDynamic" aria-label="${l10n.filterDynamicLabel || 'Filter by route type'}">
-        <option value="all">${l10n.filterAll ?? 'All'}</option>
-        <option value="static">${l10n.filterStatic ?? 'Static only'}</option>
-        <option value="dynamic">${l10n.filterDynamicOnly ?? 'Dynamic only'}</option>
+      <select id="filterDynamic" aria-label="Filter by route type">
+        <option value="all">All</option>
+        <option value="static">Static only</option>
+        <option value="dynamic">Dynamic only</option>
       </select>
     </div>
   </div>
   <div id="tableWrap">
     <table>
       <thead><tr>
-        <th data-sort="pagePath">${l10n.page} <span class="sort-icon">${SORT_SVG}</span></th>
-        <th data-sort="views">${l10n.views} <span class="sort-icon">${SORT_SVG}</span></th>
-        <th data-sort="users">${l10n.users} <span class="sort-icon">${SORT_SVG}</span></th>
-        <th data-sort="bounceRate">${l10n.bounce} <span class="sort-icon">${SORT_SVG}</span></th>
-        <th data-sort="avgSessionDuration">${l10n.avgDuration} <span class="sort-icon">${SORT_SVG}</span></th>
+        <th data-sort="pagePath">Page <span class="sort-icon">${SORT_SVG}</span></th>
+        <th data-sort="views">Views <span class="sort-icon">${SORT_SVG}</span></th>
+        <th data-sort="users">Users <span class="sort-icon">${SORT_SVG}</span></th>
+        <th data-sort="bounceRate">Bounce <span class="sort-icon">${SORT_SVG}</span></th>
+        <th data-sort="avgSessionDuration">Avg. duration <span class="sort-icon">${SORT_SVG}</span></th>
       </tr></thead>
       <tbody id="tbody"></tbody>
     </table>
   </div>
   <div id="paginationWrap" class="pagination" style="display:none;">
-    <button type="button" class="btn-page" id="prevBtn">${l10n.previous}</button>
+    <button type="button" class="btn-page" id="prevBtn">Previous</button>
     <span class="page-info" id="pageInfo"></span>
-    <button type="button" class="btn-page" id="nextBtn">${l10n.next}</button>
+    <button type="button" class="btn-page" id="nextBtn">Next</button>
   </div>
-  <div id="emptyState" class="empty-state" style="display:none;">${l10n.emptyState} <a href="#" id="openSettingsLink">${l10n.openSettings}</a></div>
-  <div class="legend" id="legend"><span class="bounce-good"><span class="bounce-dot"></span> ${l10n.legendGood}</span><span class="bounce-warning"><span class="bounce-dot"></span> ${l10n.legendWarning}</span><span class="bounce-high"><span class="bounce-dot"></span> ${l10n.legendHigh}</span><span class="bounce-critical"><span class="bounce-dot"></span> ${l10n.legendCritical}</span></div>
+  <div id="emptyState" class="empty-state" style="display:none;">No pages in cache. Refresh to load. <a href="#" id="openSettingsLink">Open Settings</a></div>
+  <script type="application/json" id="dataPayload">${dataJsonSafe}</script>
+  <div class="legend" id="legend"><span class="bounce-good"><span class="bounce-dot"></span> Good</span><span class="bounce-warning"><span class="bounce-dot"></span> Warning</span><span class="bounce-high"><span class="bounce-dot"></span> High</span><span class="bounce-critical"><span class="bounce-dot"></span> Critical</span></div>
+  <details class="debug-section"><summary>Debug: data summary</summary><textarea id="debugOutput" readonly></textarea></details>
   <script nonce="${nonce}">
+    try {
     const vscode = acquireVsCodeApi();
-    const l10n = ${l10nJson};
-    const data = ${safeDataJson};
+    function appendDebug(msg) { try { var el = document.getElementById('debugOutput'); if (el) el.value = (el.value ? el.value + '\\n' : '') + msg; } catch (_) {} }
+    appendDebug('Script started ' + new Date().toLocaleTimeString());
+    const l10n = ${scriptL10nJson};
+    let data;
+    try {
+      const payloadEl = document.getElementById('dataPayload');
+      const raw = payloadEl ? payloadEl.textContent : '';
+      data = raw ? JSON.parse(raw) : { configured: true, propertyId: '', cacheSize: 0, lastFetch: 0, lookbackDays: 30, pageSize: 20, topPages: [] };
+    } catch (e) { data = { configured: true, propertyId: '', cacheSize: 0, lastFetch: 0, lookbackDays: 30, pageSize: 20, topPages: [] }; }
+    if (!data || !Array.isArray(data.topPages)) data = Object.assign({ configured: true, propertyId: '', cacheSize: 0, lastFetch: 0, lookbackDays: 30, pageSize: 20, topPages: [] }, data || {}, { topPages: Array.isArray((data || {}).topPages) ? (data || {}).topPages : [] });
+    const emptyStateDefaultHtml = document.getElementById('emptyState').innerHTML;
+
+    function updateDebugOutput(d) {
+      try {
+        const el = document.getElementById('debugOutput');
+        if (!el) { return; }
+        const list = Array.isArray(d && d.topPages) ? d.topPages : [];
+        const filterVal = typeof filterDynamic !== 'undefined' ? filterDynamic : 'all';
+        let filtered = list;
+        if (filterVal === 'static') filtered = list.filter(function(p) { return !p.isDynamicRoute; });
+        else if (filterVal === 'dynamic') filtered = list.filter(function(p) { return !!p.isDynamicRoute; });
+        const pageSize = Math.max(1, (d && d.pageSize) || 20);
+        const curPage = typeof currentPage !== 'undefined' ? currentPage : 1;
+        const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+        const start = (curPage - 1) * pageSize;
+        const pageRows = filtered.slice(start, start + pageSize);
+        const dataSource = typeof lastDataReceiveSource !== 'undefined' ? lastDataReceiveSource : 'embedded';
+        const dataSourceTime = typeof lastDataReceiveTime !== 'undefined' && lastDataReceiveTime ? ' at ' + lastDataReceiveTime : ' (initial load)';
+        let lines = [
+          'Data received: ' + dataSource + dataSourceTime,
+          'cacheSize: ' + (d && d.cacheSize != null ? d.cacheSize : 0),
+          'topPages.length: ' + list.length,
+          'pageSize: ' + pageSize,
+          'currentPage: ' + curPage,
+          'filter: ' + filterVal + ' -> filtered count: ' + filtered.length,
+          'totalPages: ' + totalPages,
+          'rows on this page: ' + pageRows.length,
+          '',
+          'First 10 (pagePath | bounce%):'
+        ];
+        pageRows.slice(0, 10).forEach(function(p, i) {
+          const rate = (p && typeof p.bounceRate === 'number') ? (p.bounceRate * 100).toFixed(1) : '-';
+          lines.push((i + 1) + '. ' + (p && p.pagePath != null ? String(p.pagePath) : '') + ' | ' + rate + '%');
+        });
+        el.value = lines.join('\\n');
+      } catch (e) {
+        const el = document.getElementById('debugOutput');
+        if (el) el.value = 'updateDebugOutput error: ' + (e && e.message ? e.message : String(e));
+      }
+    }
 
     function bounceClass(rate) {
       if (rate < 0.25) return 'bounce-good';
@@ -283,6 +358,8 @@ export function buildDashboardHtml(
     let sortDir = -1;
     let currentPage = 1;
     let filterDynamic = 'all';
+    let lastDataReceiveSource = 'embedded';
+    let lastDataReceiveTime = '';
     function sortData(pages) {
       const key = sortKey;
       const dir = sortDir;
@@ -300,6 +377,7 @@ export function buildDashboardHtml(
     }
 
     function render(d) {
+      updateDebugOutput(d);
       const banner = document.getElementById('notConfiguredBanner');
       if (banner) banner.style.display = d.configured ? 'none' : 'block';
       document.getElementById('propertyId').textContent = d.configured ? d.propertyId : l10n.notSet;
@@ -313,6 +391,20 @@ export function buildDashboardHtml(
       if (!d.topPages || d.topPages.length === 0) {
         tableWrap.style.display = 'none';
         if (paginationWrap) paginationWrap.style.display = 'none';
+        emptyEl.innerHTML = emptyStateDefaultHtml;
+        emptyEl.style.display = 'block';
+        tbody.innerHTML = '';
+        updateSortIndicator();
+        return;
+      }
+      const pageSize = Math.max(1, d.pageSize || 20);
+      let list = Array.isArray(d.topPages) ? d.topPages : [];
+      if (filterDynamic === 'static') list = list.filter(function(p) { return !p.isDynamicRoute; });
+      else if (filterDynamic === 'dynamic') list = list.filter(function(p) { return !!p.isDynamicRoute; });
+      if (list.length === 0) {
+        tableWrap.style.display = 'none';
+        if (paginationWrap) paginationWrap.style.display = 'none';
+        emptyEl.innerHTML = (l10n.filterEmpty || 'No pages match the current filter. Try "All".');
         emptyEl.style.display = 'block';
         tbody.innerHTML = '';
         updateSortIndicator();
@@ -320,26 +412,28 @@ export function buildDashboardHtml(
       }
       tableWrap.style.display = 'block';
       emptyEl.style.display = 'none';
-      const pageSize = Math.max(1, d.pageSize || 20);
-      let list = d.topPages || [];
-      if (filterDynamic === 'static') list = list.filter(function(p) { return !p.isDynamicRoute; });
-      else if (filterDynamic === 'dynamic') list = list.filter(function(p) { return !!p.isDynamicRoute; });
       const sorted = sortData(list);
       const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+      if (currentPage < 1) currentPage = 1;
       if (currentPage > totalPages) currentPage = totalPages;
       const start = (currentPage - 1) * pageSize;
       const pageRows = sorted.slice(start, start + pageSize);
+      const safeNum = (v) => (typeof v === 'number' && !Number.isNaN(v)) ? v : 0;
       tbody.innerHTML = pageRows.map(p => {
-        const pathEsc = escapeHtml(p.pagePath);
-        const bounceCl = bounceClass(p.bounceRate);
-        const pct = (p.bounceRate * 100).toFixed(1) + '%';
-        const titlePath = (p.titleDisplayPath != null && p.titleDisplayPath !== '') ? p.titleDisplayPath : (p.resolvedFilePath != null && p.resolvedFilePath !== '') ? p.resolvedFilePath : '';
+        const pathEsc = escapeHtml(p && p.pagePath != null ? String(p.pagePath) : '');
+        const bounceRate = safeNum(p && p.bounceRate);
+        const bounceCl = bounceClass(bounceRate);
+        const pct = (bounceRate * 100).toFixed(1) + '%';
+        const titlePath = (p && p.titleDisplayPath != null && p.titleDisplayPath !== '') ? p.titleDisplayPath : (p && p.resolvedFilePath != null && p.resolvedFilePath !== '') ? p.resolvedFilePath : '';
         const titleAttr = titlePath ? ' title="' + escapeHtml(titlePath) + '"' : '';
-        const badgeHtml = (p.isDynamicRoute && l10n.dynamicRouteLabel) ? ' <span class="dynamic-route-badge">' + escapeHtml(l10n.dynamicRouteLabel) + '</span>' : '';
-        const pageCell = p.hasFile
-          ? '<a class="page-link" href="#" data-page-path="' + escapeHtml(p.pagePath) + '"' + titleAttr + '>' + pathEsc + badgeHtml + '</a>'
+        const badgeHtml = (p && p.isDynamicRoute && l10n.dynamicRouteLabel) ? ' <span class="dynamic-route-badge">' + escapeHtml(l10n.dynamicRouteLabel) + '</span>' : '';
+        const pageCell = (p && p.hasFile)
+          ? '<a class="page-link" href="#" data-page-path="' + escapeHtml(p.pagePath || '') + '"' + titleAttr + '>' + pathEsc + badgeHtml + '</a>'
           : '<span class="page-text"' + titleAttr + '>' + pathEsc + badgeHtml + '</span>';
-        return '<tr><td>' + pageCell + '</td><td>' + p.views.toLocaleString() + '</td><td>' + p.users.toLocaleString() + '</td><td class="bounce-cell ' + bounceCl + '"><span class="bounce-dot"></span>' + pct + '</td><td>' + formatDuration(p.avgSessionDuration) + '</td></tr>';
+        const views = safeNum(p && p.views);
+        const users = safeNum(p && p.users);
+        const avgDur = safeNum(p && p.avgSessionDuration);
+        return '<tr><td>' + pageCell + '</td><td>' + views.toLocaleString() + '</td><td>' + users.toLocaleString() + '</td><td class="bounce-cell ' + bounceCl + '"><span class="bounce-dot"></span>' + pct + '</td><td>' + formatDuration(avgDur) + '</td></tr>';
       }).join('');
       tbody.querySelectorAll('.page-link').forEach(el => {
         el.addEventListener('click', e => { e.preventDefault(); vscode.postMessage({ type: 'openPage', pagePath: el.getAttribute('data-page-path') }); });
@@ -353,6 +447,7 @@ export function buildDashboardHtml(
         nextBtn.disabled = currentPage >= totalPages;
       }
       updateSortIndicator();
+      updateDebugOutput(d);
     }
 
     document.querySelectorAll('th[data-sort]').forEach(th => {
@@ -375,40 +470,74 @@ export function buildDashboardHtml(
       currentData.lookbackDays = d.lookbackDays;
       currentData.pageSize = d.pageSize || 20;
       currentPage = 1;
+      filterDynamic = 'all';
+      const filterSelect = document.getElementById('filterDynamic');
+      if (filterSelect) filterSelect.value = 'all';
       render(currentData);
     }
     document.getElementById('prevBtn').onclick = () => { if (currentPage > 1) { currentPage--; render(currentData); } };
     document.getElementById('nextBtn').onclick = () => { const totalPages = Math.ceil((currentData.topPages || []).length / (currentData.pageSize || 20)); if (currentPage < totalPages) { currentPage++; render(currentData); } };
     render(currentData);
-    window.addEventListener('message', e => { if (e.data && e.data.type === 'data') updateData(e.data.data); });
-    document.getElementById('refreshBtn').onclick = () => vscode.postMessage({ type: 'refresh' });
+    window.addEventListener('message', e => {
+      if (e.data && e.data.type === 'data') {
+        lastDataReceiveSource = 'postMessage';
+        lastDataReceiveTime = new Date().toLocaleTimeString();
+        updateData(e.data.data);
+      }
+    });
+    var refreshBtn = document.getElementById('refreshBtn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', function() {
+        try {
+          appendDebug('[' + new Date().toLocaleTimeString() + '] Refresh clicked, sending postMessage');
+          vscode.postMessage({ type: 'refresh' });
+        } catch (e) {
+          appendDebug('Refresh click error: ' + (e && e.message ? e.message : String(e)));
+        }
+      });
+    } else {
+      appendDebug('ERROR: refreshBtn element not found');
+    }
     document.getElementById('openSettingsLink')?.addEventListener('click', e => { e.preventDefault(); vscode.postMessage({ type: 'openSettings' }); });
     document.getElementById('openSettingsBannerLink')?.addEventListener('click', e => { e.preventDefault(); vscode.postMessage({ type: 'openSettings' }); });
+    } catch (scriptErr) {
+      const errMsg = (scriptErr && scriptErr.message) ? scriptErr.message : String(scriptErr);
+      const emptyEl = document.getElementById('emptyState');
+      const msg = (typeof l10n !== 'undefined' && l10n && l10n.loadError) ? l10n.loadError : 'Dashboard failed to load';
+      if (emptyEl) { emptyEl.innerHTML = msg + ': ' + errMsg + '. Click Refresh to retry.'; emptyEl.style.display = 'block'; }
+      const debugEl = document.getElementById('debugOutput');
+      if (debugEl) debugEl.value = 'Script error (before render): ' + errMsg;
+      try { if (typeof vscode !== 'undefined') vscode.postMessage({ type: 'scriptError', error: errMsg }); } catch (_) {}
+    }
   </script>
 </body>
 </html>`;
+  return html;
 }
 
 /**
  * Build sidebar dashboard HTML (path + bounce only). Same data and message protocol as full dashboard.
+ * Dashboard UI is English-only (no l10n passed into webview).
  */
 export function buildSidebarDashboardHtml(
   data: DashboardData,
-  l10n: DashboardL10n,
   options: BuildDashboardHtmlOptions
 ): string {
   const nonce = options.nonce ?? Date.now().toString(36) + Math.random().toString(36).slice(2);
   const lang = options.lang ?? 'en';
-  const dataJson = JSON.stringify(data);
-  const l10nJson = JSON.stringify(l10n).replace(/</g, '\\u003c');
-  const safeDataJson = dataJson.replace(/</g, '\\u003c');
+  const escapeHtmlAttr = (s: string) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  const escapeHtml = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const payload = { ...data, topPages: Array.isArray(data.topPages) ? data.topPages : [] };
+  const dataJson = JSON.stringify(payload);
+  const dataJsonSafe = dataJson.replace(/<\/script/gi, '\\u003c/script');
+  const scriptL10nJson = JSON.stringify(DASHBOARD_SCRIPT_L10N).replace(/<\/script/gi, '\\u003c/script');
 
   return `<!DOCTYPE html>
-<html lang="${lang}">
+<html lang="${escapeHtmlAttr(lang)}">
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}'; style-src 'unsafe-inline' ${options.cspSource};">
-  <title>${l10n.title}</title>
+  <title>Dashboard</title>
   <style>
     body { font-family: var(--vscode-font-family); padding: 0.75rem; color: var(--vscode-foreground); margin: 0; }
     .dashboard-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
@@ -454,45 +583,102 @@ export function buildSidebarDashboardHtml(
     .toolbar-row .btn-refresh { margin: 0; }
     .filter-row { display: flex; align-items: center; gap: 0.5rem; margin: 0; }
     .filter-row select { font-size: inherit; padding: 0.35rem 0.5rem; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border); border-radius: 2px; box-sizing: border-box; height: 2rem; }
+    .debug-section { margin-top: 1rem; font-size: 0.75em; }
+    .debug-section summary { cursor: pointer; color: var(--vscode-descriptionForeground); }
+    #debugOutput { width: 100%; min-height: 120px; font-family: var(--vscode-editor-font-family, monospace); font-size: 0.85em; background: var(--vscode-textBlockQuote-background); border: 1px solid var(--vscode-widget-border); border-radius: 2px; padding: 0.5rem; margin-top: 0.25rem; box-sizing: border-box; white-space: pre-wrap; overflow: auto; }
   </style>
 </head>
 <body>
   <div class="dashboard-header">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="22" height="22"><path fill="currentColor" d="M4 20v-4h4v4H4zm6 0v-8h4v8h-4zm6 0V8h4v12h-4zm6 0V4h4v16h-4z"/></svg>
-    <h1>${l10n.title}</h1>
+    <h1>Dashboard</h1>
   </div>
-  <div id="notConfiguredBanner" class="message-box message-warning" style="display:none;">${l10n.notConfigured} <a href="#" id="openSettingsBannerLink">${l10n.openSettings}</a></div>
-  <div class="meta"><strong>${l10n.propertyId}</strong> <span id="propertyId">-</span></div>
+  <div id="notConfiguredBanner" class="message-box message-warning" style="display:none;">Analytics not configured. <a href="#" id="openSettingsBannerLink">Open Settings</a></div>
+  <div class="meta">
+    <span><strong>Property ID</strong> <span id="propertyId">${(data.propertyId || 'Not set').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')}</span></span>
+    <span><strong>Pages in cache</strong> <span id="cacheSize">${escapeHtmlAttr(String(data.cacheSize ?? 0))}</span></span>
+  </div>
   <div class="toolbar-row">
-    <button type="button" class="btn-refresh" id="refreshBtn">${REFRESH_SVG} ${l10n.refreshData}</button>
+    <button type="button" class="btn-refresh" id="refreshBtn">${REFRESH_SVG} Refresh data</button>
     <div class="filter-row">
-      <select id="filterDynamic" aria-label="${l10n.filterDynamicLabel || 'Filter by route type'}">
-        <option value="all">${l10n.filterAll ?? 'All'}</option>
-        <option value="static">${l10n.filterStatic ?? 'Static only'}</option>
-        <option value="dynamic">${l10n.filterDynamicOnly ?? 'Dynamic only'}</option>
+      <select id="filterDynamic" aria-label="Filter by route type">
+        <option value="all">All</option>
+        <option value="static">Static only</option>
+        <option value="dynamic">Dynamic only</option>
       </select>
     </div>
   </div>
   <div id="tableWrap">
     <table>
       <thead><tr>
-        <th data-sort="pagePath">${l10n.page} <span class="sort-icon">${SORT_SVG}</span></th>
-        <th data-sort="bounceRate">${l10n.bounce} <span class="sort-icon">${SORT_SVG}</span></th>
+        <th data-sort="pagePath">Page <span class="sort-icon">${SORT_SVG}</span></th>
+        <th data-sort="bounceRate">Bounce <span class="sort-icon">${SORT_SVG}</span></th>
       </tr></thead>
       <tbody id="tbody"></tbody>
     </table>
   </div>
   <div id="paginationWrap" class="pagination" style="display:none;">
-    <button type="button" class="btn-page" id="prevBtn">${l10n.previous}</button>
+    <button type="button" class="btn-page" id="prevBtn">Previous</button>
     <span class="page-info" id="pageInfo"></span>
-    <button type="button" class="btn-page" id="nextBtn">${l10n.next}</button>
+    <button type="button" class="btn-page" id="nextBtn">Next</button>
   </div>
-  <div id="emptyState" class="empty-state" style="display:none;">${l10n.emptyState} <a href="#" id="openSettingsLink">${l10n.openSettings}</a></div>
-  <div class="legend" id="legend"><span class="bounce-good"><span class="bounce-dot"></span> ${l10n.legendGood}</span><span class="bounce-warning"><span class="bounce-dot"></span> ${l10n.legendWarning}</span><span class="bounce-high"><span class="bounce-dot"></span> ${l10n.legendHigh}</span><span class="bounce-critical"><span class="bounce-dot"></span> ${l10n.legendCritical}</span></div>
+  <div id="emptyState" class="empty-state" style="display:none;">No pages in cache. Refresh to load. <a href="#" id="openSettingsLink">Open Settings</a></div>
+  <script type="application/json" id="dataPayload">${dataJsonSafe}</script>
+  <div class="legend" id="legend"><span class="bounce-good"><span class="bounce-dot"></span> Good</span><span class="bounce-warning"><span class="bounce-dot"></span> Warning</span><span class="bounce-high"><span class="bounce-dot"></span> High</span><span class="bounce-critical"><span class="bounce-dot"></span> Critical</span></div>
+  <details class="debug-section"><summary>Debug: data summary</summary><textarea id="debugOutput" readonly></textarea></details>
   <script nonce="${nonce}">
+    try {
     const vscode = acquireVsCodeApi();
-    const l10n = ${l10nJson};
-    const data = ${safeDataJson};
+    function appendDebug(msg) { try { var el = document.getElementById('debugOutput'); if (el) el.value = (el.value ? el.value + '\\n' : '') + msg; } catch (_) {} }
+    appendDebug('Script started ' + new Date().toLocaleTimeString());
+    const l10n = ${scriptL10nJson};
+    let data;
+    try {
+      const payloadEl = document.getElementById('dataPayload');
+      const raw = payloadEl ? payloadEl.textContent : '';
+      data = raw ? JSON.parse(raw) : { configured: true, propertyId: '', cacheSize: 0, lastFetch: 0, lookbackDays: 30, pageSize: 20, topPages: [] };
+    } catch (e) { data = { configured: true, propertyId: '', cacheSize: 0, lastFetch: 0, lookbackDays: 30, pageSize: 20, topPages: [] }; }
+    if (!data || !Array.isArray(data.topPages)) data = Object.assign({ configured: true, propertyId: '', cacheSize: 0, lastFetch: 0, lookbackDays: 30, pageSize: 20, topPages: [] }, data || {}, { topPages: Array.isArray((data || {}).topPages) ? (data || {}).topPages : [] });
+    const emptyStateDefaultHtml = document.getElementById('emptyState').innerHTML;
+
+    function updateDebugOutput(d) {
+      try {
+        const el = document.getElementById('debugOutput');
+        if (!el) { return; }
+        const list = Array.isArray(d && d.topPages) ? d.topPages : [];
+        const filterVal = typeof filterDynamic !== 'undefined' ? filterDynamic : 'all';
+        let filtered = list;
+        if (filterVal === 'static') filtered = list.filter(function(p) { return !p.isDynamicRoute; });
+        else if (filterVal === 'dynamic') filtered = list.filter(function(p) { return !!p.isDynamicRoute; });
+        const pageSize = Math.max(1, (d && d.pageSize) || 20);
+        const curPage = typeof currentPage !== 'undefined' ? currentPage : 1;
+        const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+        const start = (curPage - 1) * pageSize;
+        const pageRows = filtered.slice(start, start + pageSize);
+        const dataSource = typeof lastDataReceiveSource !== 'undefined' ? lastDataReceiveSource : 'embedded';
+        const dataSourceTime = typeof lastDataReceiveTime !== 'undefined' && lastDataReceiveTime ? ' at ' + lastDataReceiveTime : ' (initial load)';
+        let lines = [
+          'Data received: ' + dataSource + dataSourceTime,
+          'cacheSize: ' + (d && d.cacheSize != null ? d.cacheSize : 0),
+          'topPages.length: ' + list.length,
+          'pageSize: ' + pageSize,
+          'currentPage: ' + curPage,
+          'filter: ' + filterVal + ' -> filtered count: ' + filtered.length,
+          'totalPages: ' + totalPages,
+          'rows on this page: ' + pageRows.length,
+          '',
+          'First 10 (pagePath | bounce%):'
+        ];
+        pageRows.slice(0, 10).forEach(function(p, i) {
+          const rate = (p && typeof p.bounceRate === 'number') ? (p.bounceRate * 100).toFixed(1) : '-';
+          lines.push((i + 1) + '. ' + (p && p.pagePath != null ? String(p.pagePath) : '') + ' | ' + rate + '%');
+        });
+        el.value = lines.join('\\n');
+      } catch (e) {
+        const el = document.getElementById('debugOutput');
+        if (el) el.value = 'updateDebugOutput error: ' + (e && e.message ? e.message : String(e));
+      }
+    }
 
     function bounceClass(rate) {
       if (rate < 0.25) return 'bounce-good';
@@ -506,6 +692,8 @@ export function buildSidebarDashboardHtml(
     let sortDir = -1;
     let currentPage = 1;
     let filterDynamic = 'all';
+    let lastDataReceiveSource = 'embedded';
+    let lastDataReceiveTime = '';
     function sortData(pages) {
       const key = sortKey;
       const dir = sortDir;
@@ -523,9 +711,12 @@ export function buildSidebarDashboardHtml(
     }
 
     function render(d) {
+      updateDebugOutput(d);
       const banner = document.getElementById('notConfiguredBanner');
       if (banner) banner.style.display = d.configured ? 'none' : 'block';
       document.getElementById('propertyId').textContent = d.configured ? d.propertyId : l10n.notSet;
+      const cacheEl = document.getElementById('cacheSize');
+      if (cacheEl) cacheEl.textContent = String(d.cacheSize != null ? d.cacheSize : 0);
       const tbody = document.getElementById('tbody');
       const emptyEl = document.getElementById('emptyState');
       const tableWrap = document.getElementById('tableWrap');
@@ -533,6 +724,20 @@ export function buildSidebarDashboardHtml(
       if (!d.topPages || d.topPages.length === 0) {
         tableWrap.style.display = 'none';
         if (paginationWrap) paginationWrap.style.display = 'none';
+        emptyEl.innerHTML = emptyStateDefaultHtml;
+        emptyEl.style.display = 'block';
+        tbody.innerHTML = '';
+        updateSortIndicator();
+        return;
+      }
+      const pageSize = Math.max(1, d.pageSize || 20);
+      let list = Array.isArray(d.topPages) ? d.topPages : [];
+      if (filterDynamic === 'static') list = list.filter(function(p) { return !p.isDynamicRoute; });
+      else if (filterDynamic === 'dynamic') list = list.filter(function(p) { return !!p.isDynamicRoute; });
+      if (list.length === 0) {
+        tableWrap.style.display = 'none';
+        if (paginationWrap) paginationWrap.style.display = 'none';
+        emptyEl.innerHTML = (l10n.filterEmpty || 'No pages match the current filter. Try "All".');
         emptyEl.style.display = 'block';
         tbody.innerHTML = '';
         updateSortIndicator();
@@ -540,24 +745,23 @@ export function buildSidebarDashboardHtml(
       }
       tableWrap.style.display = 'block';
       emptyEl.style.display = 'none';
-      const pageSize = Math.max(1, d.pageSize || 20);
-      let list = d.topPages || [];
-      if (filterDynamic === 'static') list = list.filter(function(p) { return !p.isDynamicRoute; });
-      else if (filterDynamic === 'dynamic') list = list.filter(function(p) { return !!p.isDynamicRoute; });
       const sorted = sortData(list);
       const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+      if (currentPage < 1) currentPage = 1;
       if (currentPage > totalPages) currentPage = totalPages;
       const start = (currentPage - 1) * pageSize;
       const pageRows = sorted.slice(start, start + pageSize);
+      const safeNum = (v) => (typeof v === 'number' && !Number.isNaN(v)) ? v : 0;
       tbody.innerHTML = pageRows.map(p => {
-        const pathEsc = escapeHtml(p.pagePath);
-        const bounceCl = bounceClass(p.bounceRate);
-        const pct = (p.bounceRate * 100).toFixed(1) + '%';
-        const titlePath = (p.titleDisplayPath != null && p.titleDisplayPath !== '') ? p.titleDisplayPath : (p.resolvedFilePath != null && p.resolvedFilePath !== '') ? p.resolvedFilePath : '';
+        const pathEsc = escapeHtml(p && p.pagePath != null ? String(p.pagePath) : '');
+        const bounceRate = safeNum(p && p.bounceRate);
+        const bounceCl = bounceClass(bounceRate);
+        const pct = (bounceRate * 100).toFixed(1) + '%';
+        const titlePath = (p && p.titleDisplayPath != null && p.titleDisplayPath !== '') ? p.titleDisplayPath : (p && p.resolvedFilePath != null && p.resolvedFilePath !== '') ? p.resolvedFilePath : '';
         const titleAttr = titlePath ? ' title="' + escapeHtml(titlePath) + '"' : '';
-        const badgeHtml = (p.isDynamicRoute && l10n.dynamicRouteLabel) ? ' <span class="dynamic-route-badge">' + escapeHtml(l10n.dynamicRouteLabel) + '</span>' : '';
-        const pageCell = p.hasFile
-          ? '<a class="page-link" href="#" data-page-path="' + escapeHtml(p.pagePath) + '"' + titleAttr + '>' + pathEsc + badgeHtml + '</a>'
+        const badgeHtml = (p && p.isDynamicRoute && l10n.dynamicRouteLabel) ? ' <span class="dynamic-route-badge">' + escapeHtml(l10n.dynamicRouteLabel) + '</span>' : '';
+        const pageCell = (p && p.hasFile)
+          ? '<a class="page-link" href="#" data-page-path="' + escapeHtml(p.pagePath || '') + '"' + titleAttr + '>' + pathEsc + badgeHtml + '</a>'
           : '<span class="page-text"' + titleAttr + '>' + pathEsc + badgeHtml + '</span>';
         return '<tr><td>' + pageCell + '</td><td class="bounce-cell ' + bounceCl + '"><span class="bounce-dot"></span>' + pct + '</td></tr>';
       }).join('');
@@ -573,6 +777,7 @@ export function buildSidebarDashboardHtml(
         nextBtn.disabled = currentPage >= totalPages;
       }
       updateSortIndicator();
+      updateDebugOutput(d);
     }
 
     document.querySelectorAll('th[data-sort]').forEach(th => {
@@ -595,15 +800,45 @@ export function buildSidebarDashboardHtml(
       currentData.lookbackDays = d.lookbackDays;
       currentData.pageSize = d.pageSize || 20;
       currentPage = 1;
+      filterDynamic = 'all';
+      const filterEl = document.getElementById('filterDynamic');
+      if (filterEl) filterEl.value = 'all';
       render(currentData);
     }
     document.getElementById('prevBtn').onclick = () => { if (currentPage > 1) { currentPage--; render(currentData); } };
     document.getElementById('nextBtn').onclick = () => { const totalPages = Math.ceil((currentData.topPages || []).length / (currentData.pageSize || 20)); if (currentPage < totalPages) { currentPage++; render(currentData); } };
     render(currentData);
-    window.addEventListener('message', e => { if (e.data && e.data.type === 'data') updateData(e.data.data); });
-    document.getElementById('refreshBtn').onclick = () => vscode.postMessage({ type: 'refresh' });
+    window.addEventListener('message', e => {
+      if (e.data && e.data.type === 'data') {
+        lastDataReceiveSource = 'postMessage';
+        lastDataReceiveTime = new Date().toLocaleTimeString();
+        updateData(e.data.data);
+      }
+    });
+    var refreshBtn = document.getElementById('refreshBtn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', function() {
+        try {
+          appendDebug('[' + new Date().toLocaleTimeString() + '] Refresh clicked, sending postMessage');
+          vscode.postMessage({ type: 'refresh' });
+        } catch (e) {
+          appendDebug('Refresh click error: ' + (e && e.message ? e.message : String(e)));
+        }
+      });
+    } else {
+      appendDebug('ERROR: refreshBtn element not found');
+    }
     document.getElementById('openSettingsLink')?.addEventListener('click', e => { e.preventDefault(); vscode.postMessage({ type: 'openSettings' }); });
     document.getElementById('openSettingsBannerLink')?.addEventListener('click', e => { e.preventDefault(); vscode.postMessage({ type: 'openSettings' }); });
+    } catch (scriptErr) {
+      const errMsg = (scriptErr && scriptErr.message) ? scriptErr.message : String(scriptErr);
+      const emptyEl = document.getElementById('emptyState');
+      const msg = (typeof l10n !== 'undefined' && l10n && l10n.loadError) ? l10n.loadError : 'Dashboard failed to load';
+      if (emptyEl) { emptyEl.innerHTML = msg + ': ' + errMsg + '. Click Refresh to retry.'; emptyEl.style.display = 'block'; }
+      const debugEl = document.getElementById('debugOutput');
+      if (debugEl) debugEl.value = 'Script error (before render): ' + errMsg;
+      try { if (typeof vscode !== 'undefined') vscode.postMessage({ type: 'scriptError', error: errMsg }); } catch (_) {}
+    }
   </script>
 </body>
 </html>`;

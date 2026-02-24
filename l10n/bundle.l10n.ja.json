@@ -56,5 +56,7 @@
   "dashboard.filterStatic": "静的のみ",
   "dashboard.filterDynamicOnly": "動的のみ",
   "dashboard.filterDynamicLabel": "ルートタイプでフィルター",
+  "dashboard.filterEmpty": "フィルターに一致するページがありません。「すべて」を試してください。",
+  "dashboard.loadError": "ダッシュボードの読み込みに失敗しました",
   "dashboard.badgeCriticalTooltip": "直帰率が深刻なページ（≥65%）"
 }

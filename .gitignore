@@ -1,6 +1,7 @@
 node_modules
 dist
 out
+dashboard-output
 .vscode-test
 .agents
 .cursor

@@ -31,7 +31,7 @@
   "contributes": {
     "icons": [
       {
-        "id": "astro-analytics.analytics",
+        "id": "astro-analytics-analytics",
         "description": "%icon.analytics.description%",
         "default": {
           "light": "resources/icons/analytics.svg",
@@ -39,7 +39,7 @@
         }
       },
       {
-        "id": "astro-analytics.bounce-good",
+        "id": "astro-analytics-bounce-good",
         "description": "%icon.bounceGood.description%",
         "default": {
           "light": "resources/icons/bounce-good.svg",
@@ -47,7 +47,7 @@
         }
       },
       {
-        "id": "astro-analytics.bounce-warning",
+        "id": "astro-analytics-bounce-warning",
         "description": "%icon.bounceWarning.description%",
         "default": {
           "light": "resources/icons/bounce-warning.svg",
@@ -55,7 +55,7 @@
         }
       },
       {
-        "id": "astro-analytics.bounce-high",
+        "id": "astro-analytics-bounce-high",
         "description": "%icon.bounceHigh.description%",
         "default": {
           "light": "resources/icons/bounce-high.svg",
@@ -63,7 +63,7 @@
         }
       },
       {
-        "id": "astro-analytics.bounce-critical",
+        "id": "astro-analytics-bounce-critical",
         "description": "%icon.bounceCritical.description%",
         "default": {
           "light": "resources/icons/bounce-critical.svg",
@@ -92,7 +92,7 @@
       {
         "command": "astro-analytics.showDashboard",
         "title": "%command.showDashboard.title%",
-        "icon": "$(astro-analytics.analytics)",
+        "icon": "$(astro-analytics-analytics)",
         "category": "%command.category%"
       }
     ],
@@ -176,6 +176,8 @@
     "compile:tests": "tsc -p tsconfig.test.json",
     "watch": "tsc -watch -p ./",
     "test": "vitest run",
+    "test:output": "vitest run tests/integration/dashboard-output.test.ts",
+    "output:dashboard": "npx tsx scripts/output-dashboard.ts",
     "test:watch": "vitest",
     "test:integration": "pnpm run compile && pnpm run compile:tests && vscode-test",
     "vscode:prepublish": "pnpm run compile",

@@ -56,5 +56,7 @@
   "dashboard.filterStatic": "Solo estáticas",
   "dashboard.filterDynamicOnly": "Solo dinámicas",
   "dashboard.filterDynamicLabel": "Filtrar por tipo de ruta",
+  "dashboard.filterEmpty": "No hay páginas que coincidan con el filtro. Prueba \"Todas\".",
+  "dashboard.loadError": "Error al cargar el panel",
   "dashboard.badgeCriticalTooltip": "Páginas con tasa de rebote crítica (≥65 %)"
 }

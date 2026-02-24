@@ -56,5 +56,7 @@
   "dashboard.filterStatic": "仅静态",
   "dashboard.filterDynamicOnly": "仅动态",
   "dashboard.filterDynamicLabel": "按路由类型筛选",
+  "dashboard.filterEmpty": "没有匹配当前筛选条件的页面。请尝试「全部」。",
+  "dashboard.loadError": "仪表板加载失败",
   "dashboard.badgeCriticalTooltip": "跳出率严重（≥65%）的页面"
 }

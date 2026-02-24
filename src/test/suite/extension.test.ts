@@ -39,4 +39,16 @@ suite('Astro Analytics Extension Test Suite', () => {
       'Command astro-analytics.testConnection should be registered'
     );
   });
+
+  test('Show Dashboard command is registered', async () => {
+    const commands = await vscode.commands.getCommands();
+    assert.ok(
+      commands.includes('astro-analytics.showDashboard'),
+      'Command astro-analytics.showDashboard should be registered'
+    );
+  });
+
+  test('Show Dashboard command executes without error', async () => {
+    await vscode.commands.executeCommand('astro-analytics.showDashboard');
+  });
 });

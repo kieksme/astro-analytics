@@ -33,4 +33,29 @@ describe('getAggregatedMetricsForDynamicRoute', () => {
     const cache = new Map([['/blog/post/', { pagePath: '/blog/post/', views: 10, users: 5, bounceRate: 0.2, avgSessionDuration: 60 }]]);
     expect(getAggregatedMetricsForDynamicRoute(filePath, workspace, pagesRoot, cache)).toBeNull();
   });
+
+  it('aggregates multiple cache entries for a dynamic route', () => {
+    const filePath = path.join(workspace, pagesRoot, '[slug].astro');
+    const cache = new Map([
+      ['/blog/', { pagePath: '/blog/', views: 100, users: 50, bounceRate: 0.3, avgSessionDuration: 90 }],
+      ['/about/', { pagePath: '/about/', views: 50, users: 20, bounceRate: 0.5, avgSessionDuration: 60 }],
+    ]);
+    const result = getAggregatedMetricsForDynamicRoute(filePath, workspace, pagesRoot, cache);
+    expect(result).not.toBeNull();
+    expect(result!.views).toBe(150);
+    expect(result!.users).toBe(70);
+    expect(result!.bounceRate).toBeCloseTo(0.3667, 3);
+    expect(result!.avgSessionDuration).toBe(80);
+  });
+
+  it('returns aggregated metrics with empty pagePath for dynamic route (synthetic row)', () => {
+    const filePath = path.join(workspace, pagesRoot, '[slug].astro');
+    const cache = new Map([
+      ['/a/', { pagePath: '/a/', views: 10, users: 5, bounceRate: 0.2, avgSessionDuration: 30 }],
+    ]);
+    const result = getAggregatedMetricsForDynamicRoute(filePath, workspace, pagesRoot, cache);
+    expect(result).not.toBeNull();
+    expect(result!.pagePath).toBe('');
+    expect(result!.views).toBe(10);
+  });
 });

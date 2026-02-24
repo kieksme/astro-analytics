@@ -56,5 +56,7 @@
   "dashboard.filterStatic": "Statiques uniquement",
   "dashboard.filterDynamicOnly": "Dynamiques uniquement",
   "dashboard.filterDynamicLabel": "Filtrer par type de route",
+  "dashboard.filterEmpty": "Aucune page ne correspond au filtre. Essayez « Toutes ».",
+  "dashboard.loadError": "Échec du chargement du tableau de bord",
   "dashboard.badgeCriticalTooltip": "Pages avec taux de rebond critique (≥65 %)"
 }

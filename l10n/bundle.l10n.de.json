@@ -56,5 +56,7 @@
   "dashboard.filterStatic": "Nur statisch",
   "dashboard.filterDynamicOnly": "Nur dynamisch",
   "dashboard.filterDynamicLabel": "Nach Routentyp filtern",
+  "dashboard.filterEmpty": "Keine Seiten entsprechen dem Filter. Versuche „Alle“.",
+  "dashboard.loadError": "Dashboard konnte nicht geladen werden",
   "dashboard.badgeCriticalTooltip": "Seiten mit kritischer Absprungrate (≥65 %)"
 }

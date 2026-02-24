@@ -56,5 +56,7 @@
   "dashboard.filterStatic": "Static only",
   "dashboard.filterDynamicOnly": "Dynamic only",
   "dashboard.filterDynamicLabel": "Filter by route type",
+  "dashboard.filterEmpty": "No pages match the current filter. Try \"All\".",
+  "dashboard.loadError": "Dashboard failed to load",
   "dashboard.badgeCriticalTooltip": "Pages with critical bounce rate (≥65%)"
 }

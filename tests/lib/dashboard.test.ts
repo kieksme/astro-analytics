@@ -12,6 +12,17 @@ import {
   type PageMetrics,
 } from '../../src/lib/dashboard';
 
+/** Extract dashboard payload from HTML (script type="application/json" id="dataPayload"). */
+function getPayloadFromHtml(html: string): Record<string, unknown> {
+  const scriptMatch = html.match(/<script type="application\/json" id="dataPayload">([\s\S]*?)<\/script>/);
+  if (!scriptMatch) return {};
+  try {
+    return JSON.parse(scriptMatch[1]) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
 const defaultL10n: DashboardL10n = {
   title: 'Astro Analytics Dashboard',
   propertyId: 'Property ID:',
@@ -206,6 +217,27 @@ describe('getDashboardDataFromState', () => {
     const data = getDashboardDataFromState(config, cache, 0, () => null);
     expect(data.topPages).toHaveLength(1);
   });
+
+  it('returns topPages with numeric views and users so table can display values after refresh', () => {
+    const cache = new Map<string, PageMetrics>([
+      ['/a/', { pagePath: '/a/', views: 100, users: 40, bounceRate: 0.35, avgSessionDuration: 75 }],
+      ['/b/', { pagePath: '/b/', views: 50, users: 20, bounceRate: 0.6, avgSessionDuration: 90 }],
+    ]);
+    const config: DashboardConfig = { propertyId: '1', lookbackDays: 30, maxPages: 20, pageSize: 20 };
+    const data = getDashboardDataFromState(config, cache, 0, () => null);
+    expect(data.topPages).toHaveLength(2);
+    expect(data.cacheSize).toBe(2);
+    const a = data.topPages.find((p) => p.pagePath === '/a/');
+    const b = data.topPages.find((p) => p.pagePath === '/b/');
+    expect(a?.views).toBe(100);
+    expect(a?.users).toBe(40);
+    expect(a?.bounceRate).toBe(0.35);
+    expect(a?.avgSessionDuration).toBe(75);
+    expect(b?.views).toBe(50);
+    expect(b?.users).toBe(20);
+    expect(typeof a?.views).toBe('number');
+    expect(typeof a?.users).toBe('number');
+  });
 });
 
 describe('buildDashboardHtml', () => {
@@ -221,7 +253,7 @@ describe('buildDashboardHtml', () => {
       pageSize: 20,
       topPages: [],
     };
-    const html = buildDashboardHtml(data, defaultL10n, options);
+    const html = buildDashboardHtml(data, options);
     expect(html).toContain('id="propertyId"');
     expect(html).toContain('id="cacheSize"');
     expect(html).toContain('id="lastFetch"');
@@ -242,7 +274,7 @@ describe('buildDashboardHtml', () => {
       pageSize: 20,
       topPages: [],
     };
-    const html = buildDashboardHtml(data, defaultL10n, options);
+    const html = buildDashboardHtml(data, options);
     expect(html).toContain('data-sort="pagePath"');
     expect(html).toContain('data-sort="views"');
     expect(html).toContain('data-sort="users"');
@@ -260,10 +292,10 @@ describe('buildDashboardHtml', () => {
       pageSize: 20,
       topPages: [],
     };
-    const html = buildDashboardHtml(data, defaultL10n, options);
-    expect(html).toContain(defaultL10n.title);
-    expect(html).toContain(defaultL10n.refreshData);
-    expect(html).toContain(defaultL10n.emptyState);
+    const html = buildDashboardHtml(data, options);
+    expect(html).toContain('Dashboard');
+    expect(html).toContain('Refresh data');
+    expect(html).toContain('No pages in cache. Refresh to load.');
   });
 
   it('embeds data in script with topPages and escapes < in JSON', () => {
@@ -285,12 +317,73 @@ describe('buildDashboardHtml', () => {
         },
       ],
     };
-    const html = buildDashboardHtml(data, defaultL10n, options);
-    expect(html).toContain('const data = ');
-    expect(html).toContain('"pagePath":"/blog/"');
-    expect(html).toContain('"views":10');
-    expect(html).toContain('"cacheSize":1');
-    expect(html).not.toMatch(/const data = [^;]*<[^/]/);
+    const html = buildDashboardHtml(data, options);
+    expect(html).toContain('id="dataPayload"');
+    const decoded = getPayloadFromHtml(html);
+    expect((decoded.topPages as unknown[])).toHaveLength(1);
+    expect(decoded.topPages[0].pagePath).toBe('/blog/');
+    expect(decoded.topPages[0].views).toBe(10);
+    expect(decoded.cacheSize).toBe(1);
+    expect(decoded.topPages).toBeDefined();
+  });
+
+  it('table shows values: embedded topPages have views and users so initial render displays cells', () => {
+    const data: DashboardData = {
+      configured: true,
+      propertyId: '1',
+      cacheSize: 2,
+      lastFetch: 1000,
+      lookbackDays: 30,
+      pageSize: 20,
+      topPages: [
+        { pagePath: '/a/', views: 100, users: 50, bounceRate: 0.25, avgSessionDuration: 90, hasFile: false },
+        { pagePath: '/b/', views: 200, users: 80, bounceRate: 0.5, avgSessionDuration: 120, hasFile: false },
+      ],
+    };
+    const html = buildDashboardHtml(data, options);
+    const decoded = getPayloadFromHtml(html);
+    expect(decoded.topPages).toBeDefined();
+    expect((decoded.topPages as unknown[]).length).toBe(2);
+    expect(decoded.topPages[0].views).toBe(100);
+    expect(decoded.topPages[1].views).toBe(200);
+    expect(html).toContain('views.toLocaleString()');
+    expect(html).toContain('users.toLocaleString()');
+    expect(html).toContain('formatDuration(avgDur)');
+  });
+
+  it('table is shown when topPages has entries (not empty state)', () => {
+    const data: DashboardData = {
+      configured: true,
+      propertyId: '1',
+      cacheSize: 1,
+      lastFetch: 0,
+      lookbackDays: 30,
+      pageSize: 20,
+      topPages: [
+        { pagePath: '/blog/', views: 1, users: 1, bounceRate: 0, avgSessionDuration: 0, hasFile: false },
+      ],
+    };
+    const html = buildDashboardHtml(data, options);
+    expect(html).toContain("if (!d.topPages || d.topPages.length === 0)");
+    expect(html).toContain("tableWrap.style.display = 'block'");
+    expect(html).toContain("emptyEl.style.display = 'none'");
+    expect(html).toContain('pageRows.map(p =>');
+  });
+
+  it('updateData assigns topPages from message so table updates after refresh', () => {
+    const data: DashboardData = {
+      configured: true,
+      propertyId: '',
+      cacheSize: 0,
+      lastFetch: 0,
+      lookbackDays: 30,
+      pageSize: 20,
+      topPages: [],
+    };
+    const html = buildDashboardHtml(data, options);
+    expect(html).toContain('currentData.topPages = d.topPages');
+    expect(html).toContain("type === 'data'");
+    expect(html).toContain('updateData(e.data.data)');
   });
 
   it('uses provided nonce and lang', () => {
@@ -303,7 +396,7 @@ describe('buildDashboardHtml', () => {
       pageSize: 20,
       topPages: [],
     };
-    const html = buildDashboardHtml(data, defaultL10n, options);
+    const html = buildDashboardHtml(data, options);
     expect(html).toContain('script nonce="test-nonce"');
     expect(html).toContain('lang="en"');
   });
@@ -318,7 +411,7 @@ describe('buildDashboardHtml', () => {
       pageSize: 20,
       topPages: [],
     };
-    const html = buildDashboardHtml(data, defaultL10n, options);
+    const html = buildDashboardHtml(data, options);
     expect(html).toContain("sortKey = 'bounceRate'");
     expect(html).toContain('sortDir = -1');
   });
@@ -333,7 +426,7 @@ describe('buildDashboardHtml', () => {
       pageSize: 20,
       topPages: [],
     };
-    const html = buildDashboardHtml(data, defaultL10n, options);
+    const html = buildDashboardHtml(data, options);
     expect(html).toContain('https://vscode-csp');
   });
 
@@ -347,7 +440,7 @@ describe('buildDashboardHtml', () => {
       pageSize: 20,
       topPages: [],
     };
-    const html = buildDashboardHtml(data, defaultL10n, options);
+    const html = buildDashboardHtml(data, options);
     expect(html).toContain('th.th-sort-active');
     expect(html).toContain('th-sort-active');
     expect(html).toContain('list-activeSelectionBackground');
@@ -364,7 +457,7 @@ describe('buildDashboardHtml', () => {
       pageSize: 20,
       topPages: [],
     };
-    const html = buildDashboardHtml(data, defaultL10n, options);
+    const html = buildDashboardHtml(data, options);
     expect(html).toContain('function updateSortIndicator()');
     expect(html).toContain("th.getAttribute('data-sort') === sortKey");
     expect(html).toContain("classList.toggle('th-sort-active'");
@@ -391,8 +484,9 @@ describe('buildDashboardHtml', () => {
         },
       ],
     };
-    const html = buildDashboardHtml(data, defaultL10n, options);
-    expect(html).toContain('"resolvedFilePath":"/workspace/src/pages/blog/index.astro"');
+    const html = buildDashboardHtml(data, options);
+    const decoded = getPayloadFromHtml(html);
+    expect((decoded.topPages as { resolvedFilePath?: string }[])[0].resolvedFilePath).toBe('/workspace/src/pages/blog/index.astro');
     expect(html).toContain('titleAttr');
     expect(html).toContain('p.resolvedFilePath');
   });
@@ -418,7 +512,7 @@ describe('buildDashboardHtml', () => {
       ],
     };
     const l10nWithLabel = { ...defaultL10n, dynamicRouteLabel: 'dynamic' };
-    const html = buildDashboardHtml(data, l10nWithLabel, options);
+    const html = buildDashboardHtml(data, options);
     expect(html).toContain('dynamic-route-badge');
     expect(html).toContain('dynamic');
   });
@@ -437,7 +531,7 @@ describe('buildSidebarDashboardHtml', () => {
       pageSize: 20,
       topPages: [],
     };
-    const html = buildSidebarDashboardHtml(data, defaultL10n, options);
+    const html = buildSidebarDashboardHtml(data, options);
     expect(html).toContain('data-sort="pagePath"');
     expect(html).toContain('data-sort="bounceRate"');
     expect(html).not.toContain('data-sort="views"');
@@ -455,7 +549,7 @@ describe('buildSidebarDashboardHtml', () => {
       pageSize: 20,
       topPages: [],
     };
-    const html = buildSidebarDashboardHtml(data, defaultL10n, options);
+    const html = buildSidebarDashboardHtml(data, options);
     expect(html).toContain('id="tbody"');
     expect(html).toContain('id="refreshBtn"');
     expect(html).toContain('id="emptyState"');
@@ -482,11 +576,12 @@ describe('buildSidebarDashboardHtml', () => {
         },
       ],
     };
-    const html = buildSidebarDashboardHtml(data, defaultL10n, options);
-    expect(html).toContain('const data = ');
-    expect(html).toContain('"pagePath":"/blog/"');
-    expect(html).toContain('"bounceRate":0.35');
-    expect(html).not.toMatch(/const data = [^;]*<[^/]/);
+    const html = buildSidebarDashboardHtml(data, options);
+    expect(html).toContain('id="dataPayload"');
+    const decoded = getPayloadFromHtml(html);
+    expect((decoded.topPages as { pagePath: string }[])[0].pagePath).toBe('/blog/');
+    expect(decoded.topPages[0].bounceRate).toBe(0.35);
+    expect(decoded.topPages).toBeDefined();
     expect(html).toContain('script nonce="sidebar-nonce"');
     expect(html).toContain('lang="en"');
     expect(html).toContain('https://vscode-csp');
@@ -511,7 +606,7 @@ describe('buildSidebarDashboardHtml', () => {
         },
       ],
     };
-    const html = buildSidebarDashboardHtml(data, defaultL10n, options);
+    const html = buildSidebarDashboardHtml(data, options);
     expect(html).toContain('pageCell');
     expect(html).toContain('bounce-cell');
     expect(html).not.toMatch(/\.toLocaleString\(\)/);
@@ -538,9 +633,63 @@ describe('buildSidebarDashboardHtml', () => {
         },
       ],
     };
-    const html = buildSidebarDashboardHtml(data, defaultL10n, options);
-    expect(html).toContain('"resolvedFilePath":"/proj/src/pages/docs/[slug].astro"');
+    const html = buildSidebarDashboardHtml(data, options);
+    const decoded = getPayloadFromHtml(html);
+    expect((decoded.topPages as { resolvedFilePath?: string }[])[0].resolvedFilePath).toBe('/proj/src/pages/docs/[slug].astro');
     expect(html).toContain('titleAttr');
+  });
+
+  it('sidebar table shows values: embedded topPages and row template use bounce and path', () => {
+    const data: DashboardData = {
+      configured: true,
+      propertyId: '1',
+      cacheSize: 1,
+      lastFetch: 0,
+      lookbackDays: 30,
+      pageSize: 20,
+      topPages: [
+        { pagePath: '/sidebar/', views: 42, users: 21, bounceRate: 0.4, avgSessionDuration: 60, hasFile: false },
+      ],
+    };
+    const html = buildSidebarDashboardHtml(data, options);
+    const decoded = getPayloadFromHtml(html);
+    expect((decoded.topPages as { pagePath: string }[])[0].pagePath).toBe('/sidebar/');
+    expect(decoded.topPages[0].bounceRate).toBe(0.4);
+    expect(html).toContain('bounceClass(bounceRate)');
+    expect(html).toContain('(bounceRate * 100).toFixed(1)');
+    expect(html).toContain('pageRows.map(p =>');
+  });
+
+  it('sidebar table is shown when topPages has entries', () => {
+    const data: DashboardData = {
+      configured: true,
+      propertyId: '1',
+      cacheSize: 1,
+      lastFetch: 0,
+      lookbackDays: 30,
+      pageSize: 20,
+      topPages: [
+        { pagePath: '/x/', views: 1, users: 1, bounceRate: 0, avgSessionDuration: 0, hasFile: false },
+      ],
+    };
+    const html = buildSidebarDashboardHtml(data, options);
+    expect(html).toContain("tableWrap.style.display = 'block'");
+    expect(html).toContain("emptyEl.style.display = 'none'");
+  });
+
+  it('sidebar updateData assigns topPages so table updates after refresh', () => {
+    const data: DashboardData = {
+      configured: true,
+      propertyId: '',
+      cacheSize: 0,
+      lastFetch: 0,
+      lookbackDays: 30,
+      pageSize: 20,
+      topPages: [],
+    };
+    const html = buildSidebarDashboardHtml(data, options);
+    expect(html).toContain('currentData.topPages = d.topPages');
+    expect(html).toContain('updateData(e.data.data)');
   });
 
   it('renders dynamic route badge when isDynamicRoute is true', () => {
@@ -564,7 +713,7 @@ describe('buildSidebarDashboardHtml', () => {
       ],
     };
     const l10nWithLabel = { ...defaultL10n, dynamicRouteLabel: 'dynamic' };
-    const html = buildSidebarDashboardHtml(data, l10nWithLabel, options);
+    const html = buildSidebarDashboardHtml(data, options);
     expect(html).toContain('dynamic-route-badge');
     expect(html).toContain('dynamic');
   });

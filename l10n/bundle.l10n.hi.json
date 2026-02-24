@@ -56,5 +56,7 @@
   "dashboard.filterStatic": "केवल स्थिर",
   "dashboard.filterDynamicOnly": "केवल गतिशील",
   "dashboard.filterDynamicLabel": "रूट प्रकार से फ़िल्टर करें",
+  "dashboard.filterEmpty": "कोई पृष्ठ फ़िल्टर से मेल नहीं खाता। \"सभी\" आज़माएं।",
+  "dashboard.loadError": "डैशबोर्ड लोड नहीं कर सका",
   "dashboard.badgeCriticalTooltip": "गंभीर उछाल दर वाले पृष्ठ (≥65%)"
 }
