@@ -1,15 +1,15 @@
-/** Icon id for bounce rate (used as $(astro-analytics-bounce-good) etc.). Only letters, digits, hyphens allowed. */
-export type BounceIconId = 'astro-analytics-bounce-good' | 'astro-analytics-bounce-warning' | 'astro-analytics-bounce-high' | 'astro-analytics-bounce-critical';
+/** Icon id for bounce rate (used as $(astroanalytics-bouncegood) etc.). Must be two segments: component-iconname. */
+export type BounceIconId = 'astroanalytics-bouncegood' | 'astroanalytics-bouncewarning' | 'astroanalytics-bouncehigh' | 'astroanalytics-bouncecritical';
 
 /**
  * Bounce rate (0–1) to contributed icon id. Use in UI as $(bounceIconId).
  * Note: Use bounceStatusBarCodicon() for StatusBarItem.text so the icon resolves.
  */
 export function bounceColor(rate: number): BounceIconId {
-  if (rate < 0.25) return 'astro-analytics-bounce-good';
-  if (rate < 0.45) return 'astro-analytics-bounce-warning';
-  if (rate < 0.65) return 'astro-analytics-bounce-high';
-  return 'astro-analytics-bounce-critical';
+  if (rate < 0.25) return 'astroanalytics-bouncegood';
+  if (rate < 0.45) return 'astroanalytics-bouncewarning';
+  if (rate < 0.65) return 'astroanalytics-bouncehigh';
+  return 'astroanalytics-bouncecritical';
 }
 
 /** Codicon name for status bar (always resolves; custom icons may not in StatusBarItem). */

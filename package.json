@@ -2,7 +2,7 @@
   "name": "astro-analytics",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "publisher": "kieksme",
   "repository": {
     "type": "git",
@@ -31,7 +31,7 @@
   "contributes": {
     "icons": [
       {
-        "id": "astro-analytics-analytics",
+        "id": "astroanalytics-analytics",
         "description": "%icon.analytics.description%",
         "default": {
           "light": "resources/icons/analytics.svg",
@@ -39,7 +39,7 @@
         }
       },
       {
-        "id": "astro-analytics-bounce-good",
+        "id": "astroanalytics-bouncegood",
         "description": "%icon.bounceGood.description%",
         "default": {
           "light": "resources/icons/bounce-good.svg",
@@ -47,7 +47,7 @@
         }
       },
       {
-        "id": "astro-analytics-bounce-warning",
+        "id": "astroanalytics-bouncewarning",
         "description": "%icon.bounceWarning.description%",
         "default": {
           "light": "resources/icons/bounce-warning.svg",
@@ -55,7 +55,7 @@
         }
       },
       {
-        "id": "astro-analytics-bounce-high",
+        "id": "astroanalytics-bouncehigh",
         "description": "%icon.bounceHigh.description%",
         "default": {
           "light": "resources/icons/bounce-high.svg",
@@ -63,7 +63,7 @@
         }
       },
       {
-        "id": "astro-analytics-bounce-critical",
+        "id": "astroanalytics-bouncecritical",
         "description": "%icon.bounceCritical.description%",
         "default": {
           "light": "resources/icons/bounce-critical.svg",
@@ -92,7 +92,7 @@
       {
         "command": "astro-analytics.showDashboard",
         "title": "%command.showDashboard.title%",
-        "icon": "$(astro-analytics-analytics)",
+        "icon": "$(astroanalytics-analytics)",
         "category": "%command.category%"
       }
     ],

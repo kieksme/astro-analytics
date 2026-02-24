@@ -6,54 +6,54 @@ const RESOLVABLE_CODICONS = new Set(['pass', 'warning', 'error']);
 
 /** Extension icon ids from bounceColor (for dashboard/webview; not resolved in CodeLens/Hover). */
 const EXTENSION_BOUNCE_ICONS = new Set([
-  'astro-analytics-bounce-good',
-  'astro-analytics-bounce-warning',
-  'astro-analytics-bounce-high',
-  'astro-analytics-bounce-critical',
+  'astroanalytics-bouncegood',
+  'astroanalytics-bouncewarning',
+  'astroanalytics-bouncehigh',
+  'astroanalytics-bouncecritical',
 ]);
 
 describe('bounceColor', () => {
-  it('returns bounce-good for rate < 0.25', () => {
-    expect(bounceColor(0)).toBe('astro-analytics-bounce-good');
-    expect(bounceColor(0.24)).toBe('astro-analytics-bounce-good');
+  it('returns bouncegood for rate < 0.25', () => {
+    expect(bounceColor(0)).toBe('astroanalytics-bouncegood');
+    expect(bounceColor(0.24)).toBe('astroanalytics-bouncegood');
   });
 
-  it('returns bounce-warning for 0.25 <= rate < 0.45', () => {
-    expect(bounceColor(0.25)).toBe('astro-analytics-bounce-warning');
-    expect(bounceColor(0.35)).toBe('astro-analytics-bounce-warning');
-    expect(bounceColor(0.44)).toBe('astro-analytics-bounce-warning');
+  it('returns bouncewarning for 0.25 <= rate < 0.45', () => {
+    expect(bounceColor(0.25)).toBe('astroanalytics-bouncewarning');
+    expect(bounceColor(0.35)).toBe('astroanalytics-bouncewarning');
+    expect(bounceColor(0.44)).toBe('astroanalytics-bouncewarning');
   });
 
-  it('returns bounce-high for 0.45 <= rate < 0.65', () => {
-    expect(bounceColor(0.45)).toBe('astro-analytics-bounce-high');
-    expect(bounceColor(0.55)).toBe('astro-analytics-bounce-high');
-    expect(bounceColor(0.64)).toBe('astro-analytics-bounce-high');
+  it('returns bouncehigh for 0.45 <= rate < 0.65', () => {
+    expect(bounceColor(0.45)).toBe('astroanalytics-bouncehigh');
+    expect(bounceColor(0.55)).toBe('astroanalytics-bouncehigh');
+    expect(bounceColor(0.64)).toBe('astroanalytics-bouncehigh');
   });
 
-  it('returns bounce-critical for rate >= 0.65', () => {
-    expect(bounceColor(0.65)).toBe('astro-analytics-bounce-critical');
-    expect(bounceColor(1)).toBe('astro-analytics-bounce-critical');
+  it('returns bouncecritical for rate >= 0.65', () => {
+    expect(bounceColor(0.65)).toBe('astroanalytics-bouncecritical');
+    expect(bounceColor(1)).toBe('astroanalytics-bouncecritical');
   });
 
   it('returns only extension icon ids (for dashboard/webview)', () => {
     for (const rate of [0, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 1]) {
       const icon = bounceColor(rate);
       expect(EXTENSION_BOUNCE_ICONS.has(icon), `${rate} should yield extension icon, got ${icon}`).toBe(true);
-      expect(icon).toMatch(/^astro-analytics-bounce-(good|warning|high|critical)$/);
+      expect(icon).toMatch(/^astroanalytics-bounce(good|warning|high|critical)$/);
     }
   });
 });
 
 /** All four bounce tiers with boundary rate and expected codicon (CodeLens/Hover). */
 const BOUNCE_TIERS: { rate: number; bounceColorId: string; codicon: string }[] = [
-  { rate: 0, bounceColorId: 'astro-analytics-bounce-good', codicon: 'pass' },
-  { rate: 0.24, bounceColorId: 'astro-analytics-bounce-good', codicon: 'pass' },
-  { rate: 0.25, bounceColorId: 'astro-analytics-bounce-warning', codicon: 'warning' },
-  { rate: 0.44, bounceColorId: 'astro-analytics-bounce-warning', codicon: 'warning' },
-  { rate: 0.45, bounceColorId: 'astro-analytics-bounce-high', codicon: 'warning' },
-  { rate: 0.64, bounceColorId: 'astro-analytics-bounce-high', codicon: 'warning' },
-  { rate: 0.65, bounceColorId: 'astro-analytics-bounce-critical', codicon: 'error' },
-  { rate: 1, bounceColorId: 'astro-analytics-bounce-critical', codicon: 'error' },
+  { rate: 0, bounceColorId: 'astroanalytics-bouncegood', codicon: 'pass' },
+  { rate: 0.24, bounceColorId: 'astroanalytics-bouncegood', codicon: 'pass' },
+  { rate: 0.25, bounceColorId: 'astroanalytics-bouncewarning', codicon: 'warning' },
+  { rate: 0.44, bounceColorId: 'astroanalytics-bouncewarning', codicon: 'warning' },
+  { rate: 0.45, bounceColorId: 'astroanalytics-bouncehigh', codicon: 'warning' },
+  { rate: 0.64, bounceColorId: 'astroanalytics-bouncehigh', codicon: 'warning' },
+  { rate: 0.65, bounceColorId: 'astroanalytics-bouncecritical', codicon: 'error' },
+  { rate: 1, bounceColorId: 'astroanalytics-bouncecritical', codicon: 'error' },
 ];
 
 describe('bounceStatusBarCodicon', () => {
@@ -82,7 +82,7 @@ describe('bounceStatusBarCodicon', () => {
       const icon = bounceStatusBarCodicon(rate);
       expect(RESOLVABLE_CODICONS.has(icon), `${rate} should yield resolvable codicon, got ${icon}`).toBe(true);
       expect(icon).not.toContain('.');
-      expect(icon).not.toContain('astro-analytics');
+      expect(icon).not.toContain('astroanalytics');
     }
   });
 
