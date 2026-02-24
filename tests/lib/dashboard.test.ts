@@ -3,6 +3,7 @@ import {
   getDashboardDataFromState,
   buildDashboardHtml,
   buildSidebarDashboardHtml,
+  getSidebarViewTitleString,
   type DashboardConfig,
   type DashboardData,
   type DashboardL10n,
@@ -35,6 +36,24 @@ const defaultL10n: DashboardL10n = {
   next: 'Next',
   dynamicRouteLabel: 'dynamic',
 };
+
+describe('getSidebarViewTitleString', () => {
+  const baseTitle = 'Dashboard';
+
+  it('returns base title when cacheSize is 0 and not refreshing', () => {
+    expect(getSidebarViewTitleString(baseTitle, 0, false)).toBe('Dashboard');
+  });
+
+  it('returns base title with count when cacheSize > 0 and not refreshing', () => {
+    expect(getSidebarViewTitleString(baseTitle, 47, false)).toBe('Dashboard (47)');
+    expect(getSidebarViewTitleString(baseTitle, 1, false)).toBe('Dashboard (1)');
+  });
+
+  it('returns base title with spinner codicon when refreshing', () => {
+    expect(getSidebarViewTitleString(baseTitle, 0, true)).toBe('Dashboard $(sync~spin)');
+    expect(getSidebarViewTitleString(baseTitle, 47, true)).toBe('Dashboard $(sync~spin)');
+  });
+});
 
 describe('getDashboardDataFromState', () => {
   it('returns empty topPages and zero cacheSize when cache is empty', () => {

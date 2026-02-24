@@ -5,7 +5,7 @@ import { BetaAnalyticsDataClient } from '@google-analytics/data';
 import { filePathToSlug, slugToFilePaths, normalizePagePath, isDynamicRouteFilePath } from './lib/slug';
 import { getAggregatedMetricsForDynamicRoute } from './lib/aggregate';
 import { bounceStatusBarCodicon, fmtPct, fmtDuration } from './lib/format';
-import { getDashboardDataFromState, buildDashboardHtml, buildSidebarDashboardHtml } from './lib/dashboard';
+import { getDashboardDataFromState, buildDashboardHtml, buildSidebarDashboardHtml, getSidebarViewTitleString } from './lib/dashboard';
 import { shouldRefreshOnStartup, shouldRefreshOnConfigChange } from './lib/refresh-behavior';
 
 /** Default (en) strings when l10n returns the key or l10n is unavailable. */
@@ -414,9 +414,11 @@ function getDashboardViewTitle(
   data: ReturnType<typeof getDashboardData> | undefined,
   isRefreshing?: boolean
 ): string {
-  const base = l10nT('dashboard.title');
-  if (isRefreshing) return `${base} $(sync~spin)`;
-  return data && data.cacheSize > 0 ? `${base} (${data.cacheSize})` : base;
+  return getSidebarViewTitleString(
+    l10nT('dashboard.title'),
+    data?.cacheSize ?? 0,
+    !!isRefreshing
+  );
 }
 
 /** Update sidebar view title and badge (number or spinner during refresh). */
