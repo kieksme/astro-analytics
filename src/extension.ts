@@ -3,8 +3,9 @@ import * as vscode from 'vscode';
 import { BetaAnalyticsDataClient } from '@google-analytics/data';
 import { filePathToSlug, slugToFilePaths, normalizePagePath } from './lib/slug';
 import { getAggregatedMetricsForDynamicRoute } from './lib/aggregate';
-import { bounceColor, bounceStatusBarCodicon, fmtPct, fmtDuration } from './lib/format';
+import { bounceStatusBarCodicon, fmtPct, fmtDuration } from './lib/format';
 import { getDashboardDataFromState, buildDashboardHtml, buildSidebarDashboardHtml } from './lib/dashboard';
+import { shouldRefreshOnStartup, shouldRefreshOnConfigChange } from './lib/refresh-behavior';
 
 /** Default (en) strings when l10n returns the key or l10n is unavailable. */
 const l10nDefaults: Record<string, string> = {
@@ -195,7 +196,7 @@ class AnalyticsCodeLensProvider implements vscode.CodeLensProvider {
       ];
     }
 
-    const bounceIcon = bounceColor(metrics.bounceRate);
+    const bounceIcon = bounceStatusBarCodicon(metrics.bounceRate);
     const locale = uiLanguage();
     const lenses: vscode.CodeLens[] = [
       new vscode.CodeLens(range, {
@@ -234,7 +235,7 @@ class AnalyticsHoverProvider implements vscode.HoverProvider {
     }
     if (!metrics) return null;
 
-    const bounceIcon = bounceColor(metrics.bounceRate);
+    const bounceIcon = bounceStatusBarCodicon(metrics.bounceRate);
     const locale = uiLanguage();
     const md = new vscode.MarkdownString(undefined, true);
     md.isTrusted = false;
@@ -724,8 +725,18 @@ export function activate(context: vscode.ExtensionContext): void {
       })
     );
 
-    // Initial load if a markdown file is already open
-    if (vscode.window.activeTextEditor?.document.fileName.match(/\.(md|mdx|astro)$/)) {
+    // Refresh when astroAnalytics settings change (propertyId, credentialsPath, lookbackDays, etc.)
+    context.subscriptions.push(
+      vscode.workspace.onDidChangeConfiguration(e => {
+        if (shouldRefreshOnConfigChange('astroAnalytics', e)) {
+          refreshData(codeLensProvider);
+        }
+      })
+    );
+
+    // Auto-refresh on startup when GA4 is configured so analytics data is loaded when VS Code starts
+    const config = vscode.workspace.getConfiguration('astroAnalytics');
+    if (shouldRefreshOnStartup(config.get<string>('propertyId', ''))) {
       refreshData(codeLensProvider);
     }
 

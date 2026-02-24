@@ -20,11 +20,11 @@ Zeigt Google-Analytics-GA4-Metriken direkt in VS Code an, wenn du Astro-Markdown
 
 Die Extension zeigt die Absprungrate mit farbigen Indikatoren (grün / gelb / orange / rot) in CodeLens, Explorer, Hover, Statusleiste und Dashboard:
 
-| Stufe | Absprungrate              |
-|-------|---------------------------|
-| 🟢    | < 25 % — Sehr gut        |
-| 🟡    | 25–44 % — Gut             |
-| 🟠    | 45–64 % — Durchschnitt    |
+| Stufe | Absprungrate                |
+|-------|-----------------------------|
+| 🟢    | < 25 % — Sehr gut           |
+| 🟡    | 25–44 % — Gut               |
+| 🟠    | 45–64 % — Durchschnitt      |
 | 🔴    | ≥ 65 % — Verbesserung nötig |
 
 ## Einrichtung
@@ -51,13 +51,13 @@ Credentials saved to file: [~/.config/gcloud/application_default_credentials.jso
 
 In VS Code: `Cmd+,` → Suche nach **Astro Analytics**
 
-| Einstellung                          | Beschreibung                    | Standard       |
-|--------------------------------------|----------------------------------|----------------|
-| `astroAnalytics.propertyId`          | GA4 Property ID (numerisch)      | `364493652`    |
-| `astroAnalytics.credentialsPath`     | Pfad zur Credentials-JSON        | (ADC-Standard) |
-| `astroAnalytics.lookbackDays`        | Zeitraum in Tagen                | `30`           |
-| `astroAnalytics.contentRoot`         | Astro-Content-Ordner             | `src/content`  |
-| `astroAnalytics.pagesRoot`           | Astro-Pages-Ordner               | `src/pages`    |
+| Einstellung                      | Beschreibung                | Standard       |
+|----------------------------------|-----------------------------|----------------|
+| `astroAnalytics.propertyId`      | GA4 Property ID (numerisch) | `364493652`    |
+| `astroAnalytics.credentialsPath` | Pfad zur Credentials-JSON   | (ADC-Standard) |
+| `astroAnalytics.lookbackDays`    | Zeitraum in Tagen           | `30`           |
+| `astroAnalytics.contentRoot`     | Astro-Content-Ordner        | `src/content`  |
+| `astroAnalytics.pagesRoot`       | Astro-Pages-Ordner          | `src/pages`    |
 
 Beispiel `settings.json`:
 
@@ -115,25 +115,25 @@ Extension neu bauen und Fenster neu laden. Siehe [CONTRIBUTING.md](CONTRIBUTING.
 
 Die Extension ist für die folgenden Sprachen lokalisiert. Die UI (Befehle, Einstellungen, Dashboard, Meldungen) folgt der in VS Code eingestellten Anzeigesprache, sofern eine Übersetzung vorhanden ist:
 
-| Sprache   | Locale  |
-|-----------|---------|
-| Englisch  | `en`    |
-| Deutsch   | `de`    |
-| Französisch | `fr`  |
-| Spanisch  | `es`    |
-| Italienisch | `it`  |
-| Portugiesisch | `pt` |
-| Niederländisch | `nl` |
-| Polnisch  | `pl`    |
-| Russisch  | `ru`    |
+| Sprache                  | Locale  |
+|--------------------------|---------|
+| Englisch                 | `en`    |
+| Deutsch                  | `de`    |
+| Französisch              | `fr`    |
+| Spanisch                 | `es`    |
+| Italienisch              | `it`    |
+| Portugiesisch            | `pt`    |
+| Niederländisch           | `nl`    |
+| Polnisch                 | `pl`    |
+| Russisch                 | `ru`    |
 | Chinesisch (vereinfacht) | `zh-cn` |
-| Japanisch | `ja`    |
-| Hindi     | `hi`    |
-| Koreanisch | `ko`   |
-| Indonesisch | `id`  |
-| Vietnamesisch | `vi` |
-| Thailändisch | `th`  |
-| Bengalisch | `bn`   |
+| Japanisch                | `ja`    |
+| Hindi                    | `hi`    |
+| Koreanisch               | `ko`    |
+| Indonesisch              | `id`    |
+| Vietnamesisch            | `vi`    |
+| Thailändisch             | `th`    |
+| Bengalisch               | `bn`    |
 
 Übersetzungen liegen in `package.nls.*.json` (beigesteuerte UI) und `l10n/bundle.l10n.*.json` (Extension-Meldungen und Dashboard).
 
