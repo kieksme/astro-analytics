@@ -267,7 +267,7 @@ describe('buildDashboardHtml', () => {
     const html = buildDashboardHtml(data, options);
     expect(html).toContain('Dashboard');
     expect(html).toContain('Refresh data');
-    expect(html).toContain('No pages in cache. Refresh to load.');
+    expect(html).toContain('No cached pages. Configure GA4 and run Refresh Data.');
   });
 
   it('embeds data in script with topPages and escapes < in JSON', () => {

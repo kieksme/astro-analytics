@@ -5,7 +5,14 @@ import { BetaAnalyticsDataClient } from '@google-analytics/data';
 import { filePathToSlug, slugToFilePaths, normalizePagePath, isDynamicRouteFilePath } from './lib/slug';
 import { getAggregatedMetricsForDynamicRoute } from './lib/aggregate';
 import { bounceStatusBarCodicon, fmtPct, fmtDuration } from './lib/format';
-import { getDashboardDataFromState, buildDashboardHtml, buildSidebarDashboardHtml, getSidebarViewTitleString, countCriticalPages } from './lib/dashboard';
+import {
+  getDashboardDataFromState,
+  buildDashboardHtml,
+  buildSidebarDashboardHtml,
+  getSidebarViewTitleString,
+  countCriticalPages,
+  type DashboardL10n,
+} from './lib/dashboard';
 import { shouldRefreshOnStartup, shouldRefreshOnConfigChange } from './lib/refresh-behavior';
 
 /** Default (en) strings when l10n returns the key or l10n is unavailable. */
@@ -92,6 +99,42 @@ function l10nT(message: string, ...args: (string | number | boolean)[]): string 
 /** Current UI language (e.g. 'de', 'en'). */
 function uiLanguage(): string {
   return (vscode as { env?: { language?: string } }).env?.language ?? 'en';
+}
+
+/** Build dashboard l10n object for the webview (sidebar and full panel). */
+function getDashboardL10n(): DashboardL10n {
+  return {
+    title: l10nT('dashboard.title'),
+    propertyId: l10nT('dashboard.propertyId'),
+    pagesInCache: l10nT('dashboard.pagesInCache'),
+    lastFetch: l10nT('dashboard.lastFetch'),
+    lookback: l10nT('dashboard.lookback'),
+    days: l10nT('dashboard.days'),
+    refreshData: l10nT('dashboard.refreshData'),
+    page: l10nT('dashboard.page'),
+    views: l10nT('dashboard.views'),
+    users: l10nT('dashboard.users'),
+    bounce: l10nT('dashboard.bounce'),
+    avgDuration: l10nT('dashboard.avgDuration'),
+    emptyState: l10nT('dashboard.emptyState'),
+    notConfigured: l10nT('dashboard.notConfigured'),
+    openSettings: l10nT('msg.openSettings'),
+    notSet: l10nT('dashboard.notSet'),
+    legendGood: l10nT('dashboard.legendGood'),
+    legendWarning: l10nT('dashboard.legendWarning'),
+    legendHigh: l10nT('dashboard.legendHigh'),
+    legendCritical: l10nT('dashboard.legendCritical'),
+    pageOf: l10nT('dashboard.pageOf'),
+    previous: l10nT('dashboard.previous'),
+    next: l10nT('dashboard.next'),
+    dynamicRouteLabel: l10nT('dashboard.dynamicRoute'),
+    filterAll: l10nT('dashboard.filterAll'),
+    filterStatic: l10nT('dashboard.filterStatic'),
+    filterDynamicOnly: l10nT('dashboard.filterDynamicOnly'),
+    filterDynamicLabel: l10nT('dashboard.filterDynamicLabel'),
+    filterEmpty: l10nT('dashboard.filterEmpty'),
+    loadError: l10nT('dashboard.loadError'),
+  };
 }
 
 /** Escape text for safe use inside Markdown (e.g. GA4 page title in hover). */
@@ -523,7 +566,7 @@ function getDashboardHtml(webview: vscode.Webview, data: ReturnType<typeof getDa
   return buildDashboardHtml(data, {
     cspSource: webview.cspSource,
     lang: uiLanguage(),
-    pageTitle: l10nT('dashboard.title'),
+    l10n: getDashboardL10n(),
   });
 }
 
@@ -532,6 +575,7 @@ function getSidebarDashboardHtml(webview: vscode.Webview, data: ReturnType<typeo
   return buildSidebarDashboardHtml(data, {
     cspSource: webview.cspSource,
     lang: uiLanguage(),
+    l10n: getDashboardL10n(),
   });
 }
 

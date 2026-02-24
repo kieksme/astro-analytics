@@ -133,7 +133,7 @@ The extension is localized for the following languages. The UI (commands, settin
 | Thai                          | `th`    |
 | Bengali                       | `bn`    |
 
-Translations are provided via `package.nls.*.json` (contributed UI) and `l10n/bundle.l10n.*.json` (extension messages and dashboard).
+Translations are provided via `package.nls.*.json` (contributed UI) and `l10n/bundle.l10n.*.json` (extension messages and dashboard). The dashboard (sidebar and full panel) uses the current VS Code display language and the same `dashboard.*` keys from the l10n bundles.
 
 ## Installation
 
