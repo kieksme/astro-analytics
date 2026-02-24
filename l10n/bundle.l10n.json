@@ -55,5 +55,6 @@
   "dashboard.filterAll": "All",
   "dashboard.filterStatic": "Static only",
   "dashboard.filterDynamicOnly": "Dynamic only",
-  "dashboard.filterDynamicLabel": "Filter by route type"
+  "dashboard.filterDynamicLabel": "Filter by route type",
+  "dashboard.badgeCriticalTooltip": "Pages with critical bounce rate (≥65%)"
 }

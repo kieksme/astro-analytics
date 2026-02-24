@@ -113,25 +113,25 @@ Rebuild the extension and reload the window. See [CONTRIBUTING.md](CONTRIBUTING.
 
 The extension is localized for the following languages. The UI (commands, settings, dashboard, messages) follows the VS Code display language when a translation is available:
 
-| Language   | Locale  |
-|-----------|---------|
-| English   | `en`    |
-| German    | `de`    |
-| French    | `fr`    |
-| Spanish   | `es`    |
-| Italian   | `it`    |
-| Portuguese| `pt`    |
-| Dutch     | `nl`    |
-| Polish    | `pl`    |
-| Russian   | `ru`    |
+| Language                      | Locale  |
+|-------------------------------|---------|
+| English                       | `en`    |
+| German                        | `de`    |
+| French                        | `fr`    |
+| Spanish                       | `es`    |
+| Italian                       | `it`    |
+| Portuguese                    | `pt`    |
+| Dutch                         | `nl`    |
+| Polish                        | `pl`    |
+| Russian                       | `ru`    |
 | Mandarin (Simplified Chinese) | `zh-cn` |
-| Japanese  | `ja`    |
-| Hindi     | `hi`    |
-| Korean    | `ko`    |
-| Indonesian| `id`    |
-| Vietnamese| `vi`    |
-| Thai      | `th`    |
-| Bengali   | `bn`    |
+| Japanese                      | `ja`    |
+| Hindi                         | `hi`    |
+| Korean                        | `ko`    |
+| Indonesian                    | `id`    |
+| Vietnamese                    | `vi`    |
+| Thai                          | `th`    |
+| Bengali                       | `bn`    |
 
 Translations are provided via `package.nls.*.json` (contributed UI) and `l10n/bundle.l10n.*.json` (extension messages and dashboard).
 

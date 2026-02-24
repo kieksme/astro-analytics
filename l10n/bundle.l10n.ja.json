@@ -55,5 +55,6 @@
   "dashboard.filterAll": "すべて",
   "dashboard.filterStatic": "静的のみ",
   "dashboard.filterDynamicOnly": "動的のみ",
-  "dashboard.filterDynamicLabel": "ルートタイプでフィルター"
+  "dashboard.filterDynamicLabel": "ルートタイプでフィルター",
+  "dashboard.badgeCriticalTooltip": "直帰率が深刻なページ（≥65%）"
 }

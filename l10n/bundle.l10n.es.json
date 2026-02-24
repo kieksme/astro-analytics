@@ -55,5 +55,6 @@
   "dashboard.filterAll": "Todos",
   "dashboard.filterStatic": "Solo estáticas",
   "dashboard.filterDynamicOnly": "Solo dinámicas",
-  "dashboard.filterDynamicLabel": "Filtrar por tipo de ruta"
+  "dashboard.filterDynamicLabel": "Filtrar por tipo de ruta",
+  "dashboard.badgeCriticalTooltip": "Páginas con tasa de rebote crítica (≥65 %)"
 }

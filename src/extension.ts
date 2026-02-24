@@ -5,7 +5,7 @@ import { BetaAnalyticsDataClient } from '@google-analytics/data';
 import { filePathToSlug, slugToFilePaths, normalizePagePath, isDynamicRouteFilePath } from './lib/slug';
 import { getAggregatedMetricsForDynamicRoute } from './lib/aggregate';
 import { bounceStatusBarCodicon, fmtPct, fmtDuration } from './lib/format';
-import { getDashboardDataFromState, buildDashboardHtml, buildSidebarDashboardHtml, getSidebarViewTitleString } from './lib/dashboard';
+import { getDashboardDataFromState, buildDashboardHtml, buildSidebarDashboardHtml, getSidebarViewTitleString, countCriticalPages } from './lib/dashboard';
 import { shouldRefreshOnStartup, shouldRefreshOnConfigChange } from './lib/refresh-behavior';
 
 /** Default (en) strings when l10n returns the key or l10n is unavailable. */
@@ -67,6 +67,7 @@ const l10nDefaults: Record<string, string> = {
   'dashboard.filterStatic': 'Static only',
   'dashboard.filterDynamicOnly': 'Dynamic only',
   'dashboard.filterDynamicLabel': 'Filter by route type',
+  'dashboard.badgeCriticalTooltip': 'Pages with critical bounce rate (≥65%)',
 };
 
 /** Localization: use vscode.l10n when available (VS Code 1.74+), else use defaults or key with {0} replaced. */
@@ -421,7 +422,7 @@ function getDashboardViewTitle(
   );
 }
 
-/** Update sidebar view title and badge (number or spinner during refresh). */
+/** Update sidebar view title and badge (critical pages count, or spinner during refresh). */
 function updateSidebarViewBadge(
   view: vscode.WebviewView | undefined,
   data: ReturnType<typeof getDashboardData>,
@@ -429,12 +430,19 @@ function updateSidebarViewBadge(
 ): void {
   if (!view) return;
   view.title = getDashboardViewTitle(data, isRefreshing);
-  const viewWithBadge = view as vscode.WebviewView & { badge?: { value: number | string; tooltip?: string } };
+  const viewWithBadge = view as vscode.WebviewView & {
+    badge?: { value: number; tooltip: string; variant?: 'default' | 'error' | 'warning' };
+  };
   if (typeof viewWithBadge.badge !== 'undefined') {
     if (isRefreshing) {
       viewWithBadge.badge = undefined;
     } else if (data.cacheSize > 0) {
-      viewWithBadge.badge = { value: data.cacheSize, tooltip: l10nT('dashboard.pagesInCache') };
+      const criticalCount = countCriticalPages(data);
+      viewWithBadge.badge = {
+        value: criticalCount,
+        tooltip: l10nT('dashboard.badgeCriticalTooltip'),
+        variant: 'error',
+      };
     } else {
       viewWithBadge.badge = undefined;
     }

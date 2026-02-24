@@ -55,5 +55,6 @@
   "dashboard.filterAll": "Alle",
   "dashboard.filterStatic": "Nur statisch",
   "dashboard.filterDynamicOnly": "Nur dynamisch",
-  "dashboard.filterDynamicLabel": "Nach Routentyp filtern"
+  "dashboard.filterDynamicLabel": "Nach Routentyp filtern",
+  "dashboard.badgeCriticalTooltip": "Seiten mit kritischer Absprungrate (≥65 %)"
 }

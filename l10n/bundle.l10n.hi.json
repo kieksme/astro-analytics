@@ -55,5 +55,6 @@
   "dashboard.filterAll": "सभी",
   "dashboard.filterStatic": "केवल स्थिर",
   "dashboard.filterDynamicOnly": "केवल गतिशील",
-  "dashboard.filterDynamicLabel": "रूट प्रकार से फ़िल्टर करें"
+  "dashboard.filterDynamicLabel": "रूट प्रकार से फ़िल्टर करें",
+  "dashboard.badgeCriticalTooltip": "गंभीर उछाल दर वाले पृष्ठ (≥65%)"
 }

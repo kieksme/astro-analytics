@@ -55,5 +55,6 @@
   "dashboard.filterAll": "全部",
   "dashboard.filterStatic": "仅静态",
   "dashboard.filterDynamicOnly": "仅动态",
-  "dashboard.filterDynamicLabel": "按路由类型筛选"
+  "dashboard.filterDynamicLabel": "按路由类型筛选",
+  "dashboard.badgeCriticalTooltip": "跳出率严重（≥65%）的页面"
 }

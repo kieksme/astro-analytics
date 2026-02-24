@@ -55,5 +55,6 @@
   "dashboard.filterAll": "Tous",
   "dashboard.filterStatic": "Statiques uniquement",
   "dashboard.filterDynamicOnly": "Dynamiques uniquement",
-  "dashboard.filterDynamicLabel": "Filtrer par type de route"
+  "dashboard.filterDynamicLabel": "Filtrer par type de route",
+  "dashboard.badgeCriticalTooltip": "Pages avec taux de rebond critique (≥65 %)"
 }

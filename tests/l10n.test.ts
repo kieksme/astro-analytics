@@ -34,7 +34,7 @@ const MSG_L10N_KEYS = [
 const DECORATION_L10N_KEYS = ['decoration.tooltip'] as const;
 
 /** Dashboard webview keys (e.g. table labels, dynamic route badge). */
-const DASHBOARD_L10N_KEYS = ['dashboard.dynamicRoute'] as const;
+const DASHBOARD_L10N_KEYS = ['dashboard.dynamicRoute', 'dashboard.badgeCriticalTooltip'] as const;
 
 /** Keys that use placeholders (e.g. {0}, {1}). Value is the expected placeholder indices. */
 const KEYS_WITH_PLACEHOLDERS: Record<string, number[]> = {

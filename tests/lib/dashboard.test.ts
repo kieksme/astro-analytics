@@ -4,6 +4,8 @@ import {
   buildDashboardHtml,
   buildSidebarDashboardHtml,
   getSidebarViewTitleString,
+  countCriticalPages,
+  BOUNCE_CRITICAL_THRESHOLD,
   type DashboardConfig,
   type DashboardData,
   type DashboardL10n,
@@ -52,6 +54,39 @@ describe('getSidebarViewTitleString', () => {
   it('returns base title with spinner codicon when refreshing', () => {
     expect(getSidebarViewTitleString(baseTitle, 0, true)).toBe('Dashboard $(sync~spin)');
     expect(getSidebarViewTitleString(baseTitle, 47, true)).toBe('Dashboard $(sync~spin)');
+  });
+});
+
+describe('countCriticalPages', () => {
+  it('returns 0 for empty topPages', () => {
+    const data: DashboardData = {
+      configured: true,
+      propertyId: '1',
+      cacheSize: 0,
+      lastFetch: 0,
+      lookbackDays: 30,
+      pageSize: 20,
+      topPages: [],
+    };
+    expect(countCriticalPages(data)).toBe(0);
+  });
+
+  it('counts pages with bounceRate >= BOUNCE_CRITICAL_THRESHOLD', () => {
+    const data: DashboardData = {
+      configured: true,
+      propertyId: '1',
+      cacheSize: 4,
+      lastFetch: 1,
+      lookbackDays: 30,
+      pageSize: 20,
+      topPages: [
+        { pagePath: '/a/', views: 1, users: 1, bounceRate: 0.5, avgSessionDuration: 0, hasFile: false },
+        { pagePath: '/b/', views: 1, users: 1, bounceRate: BOUNCE_CRITICAL_THRESHOLD, avgSessionDuration: 0, hasFile: false },
+        { pagePath: '/c/', views: 1, users: 1, bounceRate: 0.8, avgSessionDuration: 0, hasFile: false },
+        { pagePath: '/d/', views: 1, users: 1, bounceRate: 0.64, avgSessionDuration: 0, hasFile: false },
+      ],
+    };
+    expect(countCriticalPages(data)).toBe(2);
   });
 });
 
