@@ -51,5 +51,9 @@
   "dashboard.pageOf": "ページ {0} / {1}",
   "dashboard.previous": "前へ",
   "dashboard.next": "次へ",
-  "dashboard.dynamicRoute": "動的"
+  "dashboard.dynamicRoute": "動的",
+  "dashboard.filterAll": "すべて",
+  "dashboard.filterStatic": "静的のみ",
+  "dashboard.filterDynamicOnly": "動的のみ",
+  "dashboard.filterDynamicLabel": "ルートタイプでフィルター"
 }

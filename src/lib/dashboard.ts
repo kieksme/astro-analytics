@@ -24,6 +24,8 @@ export interface DashboardTopPage extends PageMetrics {
   hasFile: boolean;
   /** Resolved workspace file path for this page (for hover tooltip). */
   resolvedFilePath?: string | null;
+  /** Path to show in title tooltip (e.g. relative path from project root). Falls back to resolvedFilePath when not set. */
+  titleDisplayPath?: string | null;
   /** True when the resolved file is an Astro dynamic route (e.g. [slug].astro). */
   isDynamicRoute?: boolean;
 }
@@ -65,6 +67,14 @@ export interface DashboardL10n {
   next: string;
   /** Label for dynamic route badge (e.g. "dynamic"). */
   dynamicRouteLabel?: string;
+  /** Filter option: show all pages. */
+  filterAll?: string;
+  /** Filter option: show only static pages. */
+  filterStatic?: string;
+  /** Filter option: show only dynamic pages. */
+  filterDynamicOnly?: string;
+  /** Aria-label for the filter select. */
+  filterDynamicLabel?: string;
 }
 
 export interface BuildDashboardHtmlOptions {
@@ -85,7 +95,8 @@ export function getDashboardDataFromState(
   metricsCache: Map<string, PageMetrics>,
   lastFetch: number,
   resolveFile: (pagePath: string) => string | null,
-  isDynamicRoute?: (pagePath: string) => boolean
+  isDynamicRoute?: (pagePath: string) => boolean,
+  getTitlePath?: (pagePath: string, resolvedFilePath: string | null) => string | null
 ): DashboardData {
   const propertyId = config.propertyId ?? '';
   const lookbackDays = config.lookbackDays ?? 30;
@@ -97,6 +108,7 @@ export function getDashboardDataFromState(
     .slice(0, maxPages)
     .map(([path, m]) => {
       const resolvedFilePath = resolveFile(path);
+      const titleDisplayPath = getTitlePath ? getTitlePath(path, resolvedFilePath ?? null) : (resolvedFilePath ?? null);
       return {
         pagePath: path,
         views: m.views,
@@ -105,6 +117,7 @@ export function getDashboardDataFromState(
         avgSessionDuration: m.avgSessionDuration,
         hasFile: resolvedFilePath !== null,
         resolvedFilePath: resolvedFilePath ?? null,
+        titleDisplayPath: titleDisplayPath ?? null,
         isDynamicRoute: isDynamicRoute ? isDynamicRoute(path) : false,
       };
     });
@@ -181,6 +194,9 @@ export function buildDashboardHtml(
     .btn-page { padding: 0.25rem 0.5rem; cursor: pointer; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; border-radius: 2px; font-size: inherit; }
     .btn-page:hover:not(:disabled) { background: var(--vscode-button-secondaryHoverBackground); }
     .btn-page:disabled { opacity: 0.5; cursor: default; }
+    .toolbar-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin: 0.5rem 0; }
+    .filter-row { display: flex; align-items: center; gap: 0.5rem; margin: 0; }
+    .filter-row select { font-size: inherit; padding: 0.25rem 0.5rem; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border); border-radius: 2px; }
   </style>
 </head>
 <body>
@@ -195,7 +211,16 @@ export function buildDashboardHtml(
     <span><strong>${l10n.lastFetch}</strong> <span id="lastFetch">-</span></span>
     <span><strong>${l10n.lookback}</strong> <span id="lookbackDays">-</span> ${l10n.days}</span>
   </div>
-  <button type="button" class="btn-refresh" id="refreshBtn">${REFRESH_SVG} ${l10n.refreshData}</button>
+  <div class="toolbar-row">
+    <button type="button" class="btn-refresh" id="refreshBtn">${REFRESH_SVG} ${l10n.refreshData}</button>
+    <div class="filter-row">
+      <select id="filterDynamic" aria-label="${l10n.filterDynamicLabel || 'Filter by route type'}">
+        <option value="all">${l10n.filterAll ?? 'All'}</option>
+        <option value="static">${l10n.filterStatic ?? 'Static only'}</option>
+        <option value="dynamic">${l10n.filterDynamicOnly ?? 'Dynamic only'}</option>
+      </select>
+    </div>
+  </div>
   <div id="tableWrap">
     <table>
       <thead><tr>
@@ -235,6 +260,7 @@ export function buildDashboardHtml(
     let sortKey = 'bounceRate';
     let sortDir = -1;
     let currentPage = 1;
+    let filterDynamic = 'all';
     function sortData(pages) {
       const key = sortKey;
       const dir = sortDir;
@@ -273,7 +299,10 @@ export function buildDashboardHtml(
       tableWrap.style.display = 'block';
       emptyEl.style.display = 'none';
       const pageSize = Math.max(1, d.pageSize || 20);
-      const sorted = sortData(d.topPages);
+      let list = d.topPages || [];
+      if (filterDynamic === 'static') list = list.filter(function(p) { return !p.isDynamicRoute; });
+      else if (filterDynamic === 'dynamic') list = list.filter(function(p) { return !!p.isDynamicRoute; });
+      const sorted = sortData(list);
       const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
       if (currentPage > totalPages) currentPage = totalPages;
       const start = (currentPage - 1) * pageSize;
@@ -282,7 +311,8 @@ export function buildDashboardHtml(
         const pathEsc = escapeHtml(p.pagePath);
         const bounceCl = bounceClass(p.bounceRate);
         const pct = (p.bounceRate * 100).toFixed(1) + '%';
-        const titleAttr = (p.resolvedFilePath != null && p.resolvedFilePath !== '') ? ' title="' + escapeHtml(p.resolvedFilePath) + '"' : '';
+        const titlePath = (p.titleDisplayPath != null && p.titleDisplayPath !== '') ? p.titleDisplayPath : (p.resolvedFilePath != null && p.resolvedFilePath !== '') ? p.resolvedFilePath : '';
+        const titleAttr = titlePath ? ' title="' + escapeHtml(titlePath) + '"' : '';
         const badgeHtml = (p.isDynamicRoute && l10n.dynamicRouteLabel) ? ' <span class="dynamic-route-badge">' + escapeHtml(l10n.dynamicRouteLabel) + '</span>' : '';
         const pageCell = p.hasFile
           ? '<a class="page-link" href="#" data-page-path="' + escapeHtml(p.pagePath) + '"' + titleAttr + '>' + pathEsc + badgeHtml + '</a>'
@@ -310,6 +340,8 @@ export function buildDashboardHtml(
         render(currentData);
       });
     });
+    const filterEl = document.getElementById('filterDynamic');
+    if (filterEl) filterEl.addEventListener('change', function() { filterDynamic = this.value; currentPage = 1; render(currentData); });
 
     const currentData = { topPages: data.topPages, configured: data.configured, propertyId: data.propertyId, cacheSize: data.cacheSize, lastFetch: data.lastFetch, lookbackDays: data.lookbackDays, pageSize: data.pageSize || 20 };
     function updateData(d) {
@@ -396,6 +428,9 @@ export function buildSidebarDashboardHtml(
     .btn-page { padding: 0.2rem 0.4rem; cursor: pointer; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; border-radius: 2px; font-size: inherit; }
     .btn-page:hover:not(:disabled) { background: var(--vscode-button-secondaryHoverBackground); }
     .btn-page:disabled { opacity: 0.5; cursor: default; }
+    .toolbar-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin: 0.5rem 0; }
+    .filter-row { display: flex; align-items: center; gap: 0.5rem; margin: 0; }
+    .filter-row select { font-size: inherit; padding: 0.25rem 0.5rem; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border); border-radius: 2px; }
   </style>
 </head>
 <body>
@@ -405,7 +440,16 @@ export function buildSidebarDashboardHtml(
   </div>
   <div id="notConfiguredBanner" class="message-box message-warning" style="display:none;">${l10n.notConfigured} <a href="#" id="openSettingsBannerLink">${l10n.openSettings}</a></div>
   <div class="meta"><strong>${l10n.propertyId}</strong> <span id="propertyId">-</span></div>
-  <button type="button" class="btn-refresh" id="refreshBtn">${REFRESH_SVG} ${l10n.refreshData}</button>
+  <div class="toolbar-row">
+    <button type="button" class="btn-refresh" id="refreshBtn">${REFRESH_SVG} ${l10n.refreshData}</button>
+    <div class="filter-row">
+      <select id="filterDynamic" aria-label="${l10n.filterDynamicLabel || 'Filter by route type'}">
+        <option value="all">${l10n.filterAll ?? 'All'}</option>
+        <option value="static">${l10n.filterStatic ?? 'Static only'}</option>
+        <option value="dynamic">${l10n.filterDynamicOnly ?? 'Dynamic only'}</option>
+      </select>
+    </div>
+  </div>
   <div id="tableWrap">
     <table>
       <thead><tr>
@@ -438,6 +482,7 @@ export function buildSidebarDashboardHtml(
     let sortKey = 'bounceRate';
     let sortDir = -1;
     let currentPage = 1;
+    let filterDynamic = 'all';
     function sortData(pages) {
       const key = sortKey;
       const dir = sortDir;
@@ -473,7 +518,10 @@ export function buildSidebarDashboardHtml(
       tableWrap.style.display = 'block';
       emptyEl.style.display = 'none';
       const pageSize = Math.max(1, d.pageSize || 20);
-      const sorted = sortData(d.topPages);
+      let list = d.topPages || [];
+      if (filterDynamic === 'static') list = list.filter(function(p) { return !p.isDynamicRoute; });
+      else if (filterDynamic === 'dynamic') list = list.filter(function(p) { return !!p.isDynamicRoute; });
+      const sorted = sortData(list);
       const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
       if (currentPage > totalPages) currentPage = totalPages;
       const start = (currentPage - 1) * pageSize;
@@ -482,7 +530,8 @@ export function buildSidebarDashboardHtml(
         const pathEsc = escapeHtml(p.pagePath);
         const bounceCl = bounceClass(p.bounceRate);
         const pct = (p.bounceRate * 100).toFixed(1) + '%';
-        const titleAttr = (p.resolvedFilePath != null && p.resolvedFilePath !== '') ? ' title="' + escapeHtml(p.resolvedFilePath) + '"' : '';
+        const titlePath = (p.titleDisplayPath != null && p.titleDisplayPath !== '') ? p.titleDisplayPath : (p.resolvedFilePath != null && p.resolvedFilePath !== '') ? p.resolvedFilePath : '';
+        const titleAttr = titlePath ? ' title="' + escapeHtml(titlePath) + '"' : '';
         const badgeHtml = (p.isDynamicRoute && l10n.dynamicRouteLabel) ? ' <span class="dynamic-route-badge">' + escapeHtml(l10n.dynamicRouteLabel) + '</span>' : '';
         const pageCell = p.hasFile
           ? '<a class="page-link" href="#" data-page-path="' + escapeHtml(p.pagePath) + '"' + titleAttr + '>' + pathEsc + badgeHtml + '</a>'
@@ -510,6 +559,8 @@ export function buildSidebarDashboardHtml(
         render(currentData);
       });
     });
+    const filterEl = document.getElementById('filterDynamic');
+    if (filterEl) filterEl.addEventListener('change', function() { filterDynamic = this.value; currentPage = 1; render(currentData); });
 
     const currentData = { topPages: data.topPages, configured: data.configured, propertyId: data.propertyId, cacheSize: data.cacheSize, lastFetch: data.lastFetch, lookbackDays: data.lookbackDays, pageSize: data.pageSize || 20 };
     function updateData(d) {

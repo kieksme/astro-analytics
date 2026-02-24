@@ -51,5 +51,9 @@
   "dashboard.pageOf": "पृष्ठ {0} / {1}",
   "dashboard.previous": "पिछला",
   "dashboard.next": "अगला",
-  "dashboard.dynamicRoute": "गतिशील"
+  "dashboard.dynamicRoute": "गतिशील",
+  "dashboard.filterAll": "सभी",
+  "dashboard.filterStatic": "केवल स्थिर",
+  "dashboard.filterDynamicOnly": "केवल गतिशील",
+  "dashboard.filterDynamicLabel": "रूट प्रकार से फ़िल्टर करें"
 }

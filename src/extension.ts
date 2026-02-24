@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { BetaAnalyticsDataClient } from '@google-analytics/data';
 import { filePathToSlug, slugToFilePaths, normalizePagePath, isDynamicRouteFilePath } from './lib/slug';
@@ -62,6 +63,10 @@ const l10nDefaults: Record<string, string> = {
   'dashboard.previous': 'Previous',
   'dashboard.next': 'Next',
   'dashboard.dynamicRoute': 'dynamic',
+  'dashboard.filterAll': 'All',
+  'dashboard.filterStatic': 'Static only',
+  'dashboard.filterDynamicOnly': 'Dynamic only',
+  'dashboard.filterDynamicLabel': 'Filter by route type',
 };
 
 /** Localization: use vscode.l10n when available (VS Code 1.74+), else use defaults or key with {0} replaced. */
@@ -389,9 +394,25 @@ function getDashboardData() {
     },
     metricsCache,
     lastFetch,
-    (path) => resolvePagePathToFile(path),
-    wsFolder ? (path) => isDynamicRouteForPagePath(path) : undefined
+    (p) => resolvePagePathToFile(p),
+    wsFolder ? (p) => isDynamicRouteForPagePath(p) : undefined,
+    wsFolder
+      ? (_, resolvedFilePath) => {
+          if (resolvedFilePath == null || resolvedFilePath === '') return null;
+          try {
+            return path.relative(wsFolder.uri.fsPath, resolvedFilePath);
+          } catch {
+            return resolvedFilePath;
+          }
+        }
+      : undefined
   );
+}
+
+/** Title for sidebar view including page count badge (e.g. "Dashboard (42)"). */
+function getDashboardViewTitle(data: ReturnType<typeof getDashboardData>): string {
+  const base = l10nT('dashboard.title');
+  return data.cacheSize > 0 ? `${base} (${data.cacheSize})` : base;
 }
 
 function getDashboardHtml(webview: vscode.Webview, data: ReturnType<typeof getDashboardData>): string {
@@ -420,6 +441,10 @@ function getDashboardHtml(webview: vscode.Webview, data: ReturnType<typeof getDa
     previous: l10nT('dashboard.previous'),
     next: l10nT('dashboard.next'),
     dynamicRouteLabel: l10nT('dashboard.dynamicRoute'),
+    filterAll: l10nT('dashboard.filterAll'),
+    filterStatic: l10nT('dashboard.filterStatic'),
+    filterDynamicOnly: l10nT('dashboard.filterDynamicOnly'),
+    filterDynamicLabel: l10nT('dashboard.filterDynamicLabel'),
   };
   return buildDashboardHtml(data, l10n, {
     cspSource: webview.cspSource,
@@ -453,6 +478,10 @@ function getSidebarDashboardHtml(webview: vscode.Webview, data: ReturnType<typeo
     previous: l10nT('dashboard.previous'),
     next: l10nT('dashboard.next'),
     dynamicRouteLabel: l10nT('dashboard.dynamicRoute'),
+    filterAll: l10nT('dashboard.filterAll'),
+    filterStatic: l10nT('dashboard.filterStatic'),
+    filterDynamicOnly: l10nT('dashboard.filterDynamicOnly'),
+    filterDynamicLabel: l10nT('dashboard.filterDynamicLabel'),
   };
   return buildSidebarDashboardHtml(data, l10n, {
     cspSource: webview.cspSource,
@@ -540,12 +569,16 @@ class DashboardViewProvider implements vscode.WebviewViewProvider {
   ): void {
     this._view = webviewView;
     webviewView.webview.options = { enableScripts: true };
-    webviewView.webview.html = getSidebarDashboardHtml(webviewView.webview, getDashboardData());
+    const data = getDashboardData();
+    webviewView.title = getDashboardViewTitle(data);
+    webviewView.webview.html = getSidebarDashboardHtml(webviewView.webview, data);
     webviewView.webview.onDidReceiveMessage((msg: { type: string; pagePath?: string }) => {
       if (msg.type === 'refresh') {
         refreshData(this._codeLensProvider, () => {
           if (this._view) {
-            this._view.webview.postMessage({ type: 'data', data: getDashboardData() });
+            const newData = getDashboardData();
+            this._view.title = getDashboardViewTitle(newData);
+            this._view.webview.postMessage({ type: 'data', data: newData });
           }
         });
       } else if (msg.type === 'openPage' && msg.pagePath) {

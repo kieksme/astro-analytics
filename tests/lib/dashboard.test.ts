@@ -84,6 +84,20 @@ describe('getDashboardDataFromState', () => {
     expect(dataWithoutFile.topPages[0].resolvedFilePath).toBeNull();
   });
 
+  it('sets titleDisplayPath from getTitlePath when provided, else falls back to resolvedFilePath', () => {
+    const cache = new Map<string, PageMetrics>([
+      ['/blog/', { pagePath: '/blog/', views: 1, users: 1, bounceRate: 0, avgSessionDuration: 0 }],
+    ]);
+    const config: DashboardConfig = { propertyId: '1', lookbackDays: 30, maxPages: 20, pageSize: 20 };
+    const resolveFile = (path: string) => (path === '/blog/' ? '/abs/workspace/src/pages/blog/index.astro' : null);
+    const getTitlePath = (_path: string, abs: string | null) => (abs ? 'src/pages/blog/index.astro' : null);
+    const data = getDashboardDataFromState(config, cache, 0, resolveFile, undefined, getTitlePath);
+    expect(data.topPages[0].resolvedFilePath).toBe('/abs/workspace/src/pages/blog/index.astro');
+    expect(data.topPages[0].titleDisplayPath).toBe('src/pages/blog/index.astro');
+    const dataNoGetTitlePath = getDashboardDataFromState(config, cache, 0, resolveFile);
+    expect(dataNoGetTitlePath.topPages[0].titleDisplayPath).toBe('/abs/workspace/src/pages/blog/index.astro');
+  });
+
   it('sets isDynamicRoute from optional callback', () => {
     const cache = new Map<string, PageMetrics>([
       ['/blog/', { pagePath: '/blog/', views: 1, users: 1, bounceRate: 0, avgSessionDuration: 0 }],

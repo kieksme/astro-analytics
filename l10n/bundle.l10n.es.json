@@ -51,5 +51,9 @@
   "dashboard.pageOf": "Página {0} de {1}",
   "dashboard.previous": "Anterior",
   "dashboard.next": "Siguiente",
-  "dashboard.dynamicRoute": "dinámico"
+  "dashboard.dynamicRoute": "dinámico",
+  "dashboard.filterAll": "Todos",
+  "dashboard.filterStatic": "Solo estáticas",
+  "dashboard.filterDynamicOnly": "Solo dinámicas",
+  "dashboard.filterDynamicLabel": "Filtrar por tipo de ruta"
 }
