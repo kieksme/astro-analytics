@@ -50,5 +50,6 @@
   "dashboard.legendCritical": "≥65%",
   "dashboard.pageOf": "Page {0} of {1}",
   "dashboard.previous": "Previous",
-  "dashboard.next": "Next"
+  "dashboard.next": "Next",
+  "dashboard.dynamicRoute": "dynamic"
 }

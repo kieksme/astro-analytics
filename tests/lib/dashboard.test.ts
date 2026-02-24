@@ -33,6 +33,7 @@ const defaultL10n: DashboardL10n = {
   pageOf: 'Page {0} of {1}',
   previous: 'Previous',
   next: 'Next',
+  dynamicRouteLabel: 'dynamic',
 };
 
 describe('getDashboardDataFromState', () => {
@@ -67,7 +68,7 @@ describe('getDashboardDataFromState', () => {
     expect(data.cacheSize).toBe(3);
   });
 
-  it('sets hasFile from resolveFile callback', () => {
+  it('sets hasFile and resolvedFilePath from resolveFile callback', () => {
     const cache = new Map<string, PageMetrics>([
       ['/blog/', { pagePath: '/blog/', views: 1, users: 1, bounceRate: 0, avgSessionDuration: 0 }],
     ]);
@@ -76,9 +77,26 @@ describe('getDashboardDataFromState', () => {
       path === '/blog/' ? '/fake/blog/index.md' : null
     );
     expect(dataWithFile.topPages[0].hasFile).toBe(true);
+    expect(dataWithFile.topPages[0].resolvedFilePath).toBe('/fake/blog/index.md');
 
     const dataWithoutFile = getDashboardDataFromState(config, cache, 0, () => null);
     expect(dataWithoutFile.topPages[0].hasFile).toBe(false);
+    expect(dataWithoutFile.topPages[0].resolvedFilePath).toBeNull();
+  });
+
+  it('sets isDynamicRoute from optional callback', () => {
+    const cache = new Map<string, PageMetrics>([
+      ['/blog/', { pagePath: '/blog/', views: 1, users: 1, bounceRate: 0, avgSessionDuration: 0 }],
+      ['/about/', { pagePath: '/about/', views: 1, users: 1, bounceRate: 0, avgSessionDuration: 0 }],
+    ]);
+    const config: DashboardConfig = { propertyId: '1', lookbackDays: 30, maxPages: 20, pageSize: 20 };
+    const resolveFile = (path: string) => (path === '/blog/' ? '/src/pages/[slug].astro' : path === '/about/' ? '/src/pages/about.astro' : null);
+    const dataWithDynamic = getDashboardDataFromState(config, cache, 0, resolveFile, (path) => path === '/blog/');
+    expect(dataWithDynamic.topPages.find((p) => p.pagePath === '/blog/')?.isDynamicRoute).toBe(true);
+    expect(dataWithDynamic.topPages.find((p) => p.pagePath === '/about/')?.isDynamicRoute).toBe(false);
+
+    const dataWithoutCallback = getDashboardDataFromState(config, cache, 0, resolveFile);
+    expect(dataWithoutCallback.topPages[0].isDynamicRoute).toBe(false);
   });
 
   it('returns at most maxPages top pages', () => {
@@ -284,6 +302,58 @@ describe('buildDashboardHtml', () => {
     expect(html).toContain("classList.toggle('th-sort-active'");
     expect(html).toContain('updateSortIndicator();');
   });
+
+  it('embeds resolvedFilePath and renders title attribute for page path tooltip', () => {
+    const data: DashboardData = {
+      configured: true,
+      propertyId: '1',
+      cacheSize: 1,
+      lastFetch: 0,
+      lookbackDays: 30,
+      pageSize: 20,
+      topPages: [
+        {
+          pagePath: '/blog/',
+          views: 10,
+          users: 5,
+          bounceRate: 0.3,
+          avgSessionDuration: 60,
+          hasFile: true,
+          resolvedFilePath: '/workspace/src/pages/blog/index.astro',
+        },
+      ],
+    };
+    const html = buildDashboardHtml(data, defaultL10n, options);
+    expect(html).toContain('"resolvedFilePath":"/workspace/src/pages/blog/index.astro"');
+    expect(html).toContain('titleAttr');
+    expect(html).toContain('p.resolvedFilePath');
+  });
+
+  it('renders dynamic route badge when isDynamicRoute is true and dynamicRouteLabel is set', () => {
+    const data: DashboardData = {
+      configured: true,
+      propertyId: '1',
+      cacheSize: 1,
+      lastFetch: 0,
+      lookbackDays: 30,
+      pageSize: 20,
+      topPages: [
+        {
+          pagePath: '/blog/',
+          views: 10,
+          users: 5,
+          bounceRate: 0.3,
+          avgSessionDuration: 60,
+          hasFile: true,
+          isDynamicRoute: true,
+        },
+      ],
+    };
+    const l10nWithLabel = { ...defaultL10n, dynamicRouteLabel: 'dynamic' };
+    const html = buildDashboardHtml(data, l10nWithLabel, options);
+    expect(html).toContain('dynamic-route-badge');
+    expect(html).toContain('dynamic');
+  });
 });
 
 describe('buildSidebarDashboardHtml', () => {
@@ -378,5 +448,56 @@ describe('buildSidebarDashboardHtml', () => {
     expect(html).toContain('bounce-cell');
     expect(html).not.toMatch(/\.toLocaleString\(\)/);
     expect(html).not.toContain('formatDuration');
+  });
+
+  it('embeds resolvedFilePath and uses title attribute for page path tooltip', () => {
+    const data: DashboardData = {
+      configured: true,
+      propertyId: '1',
+      cacheSize: 1,
+      lastFetch: 0,
+      lookbackDays: 30,
+      pageSize: 20,
+      topPages: [
+        {
+          pagePath: '/docs/',
+          views: 5,
+          users: 2,
+          bounceRate: 0.2,
+          avgSessionDuration: 90,
+          hasFile: true,
+          resolvedFilePath: '/proj/src/pages/docs/[slug].astro',
+        },
+      ],
+    };
+    const html = buildSidebarDashboardHtml(data, defaultL10n, options);
+    expect(html).toContain('"resolvedFilePath":"/proj/src/pages/docs/[slug].astro"');
+    expect(html).toContain('titleAttr');
+  });
+
+  it('renders dynamic route badge when isDynamicRoute is true', () => {
+    const data: DashboardData = {
+      configured: true,
+      propertyId: '1',
+      cacheSize: 1,
+      lastFetch: 0,
+      lookbackDays: 30,
+      pageSize: 20,
+      topPages: [
+        {
+          pagePath: '/post/',
+          views: 1,
+          users: 1,
+          bounceRate: 0,
+          avgSessionDuration: 0,
+          hasFile: true,
+          isDynamicRoute: true,
+        },
+      ],
+    };
+    const l10nWithLabel = { ...defaultL10n, dynamicRouteLabel: 'dynamic' };
+    const html = buildSidebarDashboardHtml(data, l10nWithLabel, options);
+    expect(html).toContain('dynamic-route-badge');
+    expect(html).toContain('dynamic');
   });
 });

@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { BetaAnalyticsDataClient } from '@google-analytics/data';
-import { filePathToSlug, slugToFilePaths, normalizePagePath } from './lib/slug';
+import { filePathToSlug, slugToFilePaths, normalizePagePath, isDynamicRouteFilePath } from './lib/slug';
 import { getAggregatedMetricsForDynamicRoute } from './lib/aggregate';
 import { bounceStatusBarCodicon, fmtPct, fmtDuration } from './lib/format';
 import { getDashboardDataFromState, buildDashboardHtml, buildSidebarDashboardHtml } from './lib/dashboard';
@@ -61,6 +61,7 @@ const l10nDefaults: Record<string, string> = {
   'dashboard.pageOf': 'Page {0} of {1}',
   'dashboard.previous': 'Previous',
   'dashboard.next': 'Next',
+  'dashboard.dynamicRoute': 'dynamic',
 };
 
 /** Localization: use vscode.l10n when available (VS Code 1.74+), else use defaults or key with {0} replaced. */
@@ -349,6 +350,17 @@ function resolvePagePathToFile(pagePath: string): string | null {
   return found ?? null;
 }
 
+/** True when the resolved file for pagePath is an Astro dynamic route (e.g. [slug].astro). */
+function isDynamicRouteForPagePath(pagePath: string): boolean {
+  const wsFolder = vscode.workspace.workspaceFolders?.[0];
+  if (!wsFolder) return false;
+  const file = resolvePagePathToFile(pagePath);
+  if (file === null) return false;
+  const config = vscode.workspace.getConfiguration('astroAnalytics');
+  const pagesRoot = config.get<string>('pagesRoot', 'src/pages');
+  return isDynamicRouteFilePath(file, wsFolder.uri.fsPath, pagesRoot);
+}
+
 /** Resolve pagePath to a workspace file and open it. */
 function openPageInEditor(pagePath: string): void {
   const wsFolder = vscode.workspace.workspaceFolders?.[0];
@@ -367,6 +379,7 @@ function openPageInEditor(pagePath: string): void {
 /** Serializable summary for the dashboard webview. */
 function getDashboardData() {
   const config = vscode.workspace.getConfiguration('astroAnalytics');
+  const wsFolder = vscode.workspace.workspaceFolders?.[0];
   return getDashboardDataFromState(
     {
       propertyId: config.get<string>('propertyId', ''),
@@ -376,7 +389,8 @@ function getDashboardData() {
     },
     metricsCache,
     lastFetch,
-    (path) => resolvePagePathToFile(path)
+    (path) => resolvePagePathToFile(path),
+    wsFolder ? (path) => isDynamicRouteForPagePath(path) : undefined
   );
 }
 
@@ -405,6 +419,7 @@ function getDashboardHtml(webview: vscode.Webview, data: ReturnType<typeof getDa
     pageOf: l10nT('dashboard.pageOf'),
     previous: l10nT('dashboard.previous'),
     next: l10nT('dashboard.next'),
+    dynamicRouteLabel: l10nT('dashboard.dynamicRoute'),
   };
   return buildDashboardHtml(data, l10n, {
     cspSource: webview.cspSource,
@@ -437,6 +452,7 @@ function getSidebarDashboardHtml(webview: vscode.Webview, data: ReturnType<typeo
     pageOf: l10nT('dashboard.pageOf'),
     previous: l10nT('dashboard.previous'),
     next: l10nT('dashboard.next'),
+    dynamicRouteLabel: l10nT('dashboard.dynamicRoute'),
   };
   return buildSidebarDashboardHtml(data, l10n, {
     cspSource: webview.cspSource,

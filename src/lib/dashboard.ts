@@ -22,6 +22,10 @@ export interface PageMetrics {
 
 export interface DashboardTopPage extends PageMetrics {
   hasFile: boolean;
+  /** Resolved workspace file path for this page (for hover tooltip). */
+  resolvedFilePath?: string | null;
+  /** True when the resolved file is an Astro dynamic route (e.g. [slug].astro). */
+  isDynamicRoute?: boolean;
 }
 
 export interface DashboardData {
@@ -59,6 +63,8 @@ export interface DashboardL10n {
   pageOf: string;
   previous: string;
   next: string;
+  /** Label for dynamic route badge (e.g. "dynamic"). */
+  dynamicRouteLabel?: string;
 }
 
 export interface BuildDashboardHtmlOptions {
@@ -78,7 +84,8 @@ export function getDashboardDataFromState(
   config: DashboardConfig,
   metricsCache: Map<string, PageMetrics>,
   lastFetch: number,
-  resolveFile: (pagePath: string) => string | null
+  resolveFile: (pagePath: string) => string | null,
+  isDynamicRoute?: (pagePath: string) => boolean
 ): DashboardData {
   const propertyId = config.propertyId ?? '';
   const lookbackDays = config.lookbackDays ?? 30;
@@ -88,14 +95,19 @@ export function getDashboardDataFromState(
   const topPages: DashboardTopPage[] = entries
     .sort((a, b) => b[1].bounceRate - a[1].bounceRate)
     .slice(0, maxPages)
-    .map(([path, m]) => ({
-      pagePath: path,
-      views: m.views,
-      users: m.users,
-      bounceRate: m.bounceRate,
-      avgSessionDuration: m.avgSessionDuration,
-      hasFile: resolveFile(path) !== null,
-    }));
+    .map(([path, m]) => {
+      const resolvedFilePath = resolveFile(path);
+      return {
+        pagePath: path,
+        views: m.views,
+        users: m.users,
+        bounceRate: m.bounceRate,
+        avgSessionDuration: m.avgSessionDuration,
+        hasFile: resolvedFilePath !== null,
+        resolvedFilePath: resolvedFilePath ?? null,
+        isDynamicRoute: isDynamicRoute ? isDynamicRoute(path) : false,
+      };
+    });
   return {
     configured: !!propertyId,
     propertyId,
@@ -148,6 +160,7 @@ export function buildDashboardHtml(
     .page-link { color: var(--vscode-textLink-foreground); text-decoration: none; cursor: pointer; }
     .page-link:hover { text-decoration: underline; }
     .page-text { color: var(--vscode-foreground); cursor: default; }
+    .dynamic-route-badge { font-size: 0.75em; opacity: 0.85; margin-left: 0.35rem; color: var(--vscode-descriptionForeground); }
     .bounce-cell { display: flex; align-items: center; gap: 0.35rem; }
     .bounce-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .bounce-good .bounce-dot { background: var(--vscode-testing-iconPassed, #22c55e); }
@@ -269,9 +282,11 @@ export function buildDashboardHtml(
         const pathEsc = escapeHtml(p.pagePath);
         const bounceCl = bounceClass(p.bounceRate);
         const pct = (p.bounceRate * 100).toFixed(1) + '%';
+        const titleAttr = (p.resolvedFilePath != null && p.resolvedFilePath !== '') ? ' title="' + escapeHtml(p.resolvedFilePath) + '"' : '';
+        const badgeHtml = (p.isDynamicRoute && l10n.dynamicRouteLabel) ? ' <span class="dynamic-route-badge">' + escapeHtml(l10n.dynamicRouteLabel) + '</span>' : '';
         const pageCell = p.hasFile
-          ? '<a class="page-link" href="#" data-page-path="' + escapeHtml(p.pagePath) + '">' + pathEsc + '</a>'
-          : '<span class="page-text">' + pathEsc + '</span>';
+          ? '<a class="page-link" href="#" data-page-path="' + escapeHtml(p.pagePath) + '"' + titleAttr + '>' + pathEsc + badgeHtml + '</a>'
+          : '<span class="page-text"' + titleAttr + '>' + pathEsc + badgeHtml + '</span>';
         return '<tr><td>' + pageCell + '</td><td>' + p.views.toLocaleString() + '</td><td>' + p.users.toLocaleString() + '</td><td class="bounce-cell ' + bounceCl + '"><span class="bounce-dot"></span>' + pct + '</td><td>' + formatDuration(p.avgSessionDuration) + '</td></tr>';
       }).join('');
       tbody.querySelectorAll('.page-link').forEach(el => {
@@ -360,6 +375,7 @@ export function buildSidebarDashboardHtml(
     .page-link { color: var(--vscode-textLink-foreground); text-decoration: none; cursor: pointer; }
     .page-link:hover { text-decoration: underline; }
     .page-text { color: var(--vscode-foreground); cursor: default; }
+    .dynamic-route-badge { font-size: 0.75em; opacity: 0.85; margin-left: 0.35rem; color: var(--vscode-descriptionForeground); }
     .bounce-cell { display: flex; align-items: center; gap: 0.35rem; }
     .bounce-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .bounce-good .bounce-dot { background: var(--vscode-testing-iconPassed, #22c55e); }
@@ -466,9 +482,11 @@ export function buildSidebarDashboardHtml(
         const pathEsc = escapeHtml(p.pagePath);
         const bounceCl = bounceClass(p.bounceRate);
         const pct = (p.bounceRate * 100).toFixed(1) + '%';
+        const titleAttr = (p.resolvedFilePath != null && p.resolvedFilePath !== '') ? ' title="' + escapeHtml(p.resolvedFilePath) + '"' : '';
+        const badgeHtml = (p.isDynamicRoute && l10n.dynamicRouteLabel) ? ' <span class="dynamic-route-badge">' + escapeHtml(l10n.dynamicRouteLabel) + '</span>' : '';
         const pageCell = p.hasFile
-          ? '<a class="page-link" href="#" data-page-path="' + escapeHtml(p.pagePath) + '">' + pathEsc + '</a>'
-          : '<span class="page-text">' + pathEsc + '</span>';
+          ? '<a class="page-link" href="#" data-page-path="' + escapeHtml(p.pagePath) + '"' + titleAttr + '>' + pathEsc + badgeHtml + '</a>'
+          : '<span class="page-text"' + titleAttr + '>' + pathEsc + badgeHtml + '</span>';
         return '<tr><td>' + pageCell + '</td><td class="bounce-cell ' + bounceCl + '"><span class="bounce-dot"></span>' + pct + '</td></tr>';
       }).join('');
       tbody.querySelectorAll('.page-link').forEach(el => {

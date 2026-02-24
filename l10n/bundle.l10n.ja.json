@@ -50,5 +50,6 @@
   "dashboard.legendCritical": "≥65%",
   "dashboard.pageOf": "ページ {0} / {1}",
   "dashboard.previous": "前へ",
-  "dashboard.next": "次へ"
+  "dashboard.next": "次へ",
+  "dashboard.dynamicRoute": "動的"
 }

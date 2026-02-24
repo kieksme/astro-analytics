@@ -50,5 +50,6 @@
   "dashboard.legendCritical": "≥65%",
   "dashboard.pageOf": "第 {0} 页，共 {1} 页",
   "dashboard.previous": "上一页",
-  "dashboard.next": "下一页"
+  "dashboard.next": "下一页",
+  "dashboard.dynamicRoute": "动态"
 }

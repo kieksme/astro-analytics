@@ -33,6 +33,9 @@ const MSG_L10N_KEYS = [
 /** Decoration (e.g. inline tooltip) keys. */
 const DECORATION_L10N_KEYS = ['decoration.tooltip'] as const;
 
+/** Dashboard webview keys (e.g. table labels, dynamic route badge). */
+const DASHBOARD_L10N_KEYS = ['dashboard.dynamicRoute'] as const;
+
 /** Keys that use placeholders (e.g. {0}, {1}). Value is the expected placeholder indices. */
 const KEYS_WITH_PLACEHOLDERS: Record<string, number[]> = {
   'hover.footer': [0, 1],
@@ -126,16 +129,25 @@ describe('l10n bundles', () => {
     }
   });
 
-  it('msg and decoration values in default bundle are not the raw key', () => {
+  it('default bundle (en) contains all dashboard keys with non-empty values', () => {
     const bundle = loadBundle('en');
-    for (const key of [...MSG_L10N_KEYS, ...DECORATION_L10N_KEYS]) {
+    for (const key of DASHBOARD_L10N_KEYS) {
+      expect(bundle[key], `missing or empty: ${key}`).toBeDefined();
+      expect(typeof bundle[key]).toBe('string');
+      expect(bundle[key].trim().length, `${key} must be non-empty`).toBeGreaterThan(0);
+    }
+  });
+
+  it('msg, decoration, and dashboard values in default bundle are not the raw key', () => {
+    const bundle = loadBundle('en');
+    for (const key of [...MSG_L10N_KEYS, ...DECORATION_L10N_KEYS, ...DASHBOARD_L10N_KEYS]) {
       const value = bundle[key];
       expect(value, `${key} should be translated, not the key`).not.toBe(key);
     }
   });
 
-  it('all locale bundles that exist contain hover, msg, and decoration keys', () => {
-    const allUiKeys = [...HOVER_L10N_KEYS, ...MSG_L10N_KEYS, ...DECORATION_L10N_KEYS];
+  it('all locale bundles that exist contain hover, msg, decoration, and dashboard keys', () => {
+    const allUiKeys = [...HOVER_L10N_KEYS, ...MSG_L10N_KEYS, ...DECORATION_L10N_KEYS, ...DASHBOARD_L10N_KEYS];
     const l10nDir = path.resolve(__dirname, '../l10n');
     const files = fs.readdirSync(l10nDir).filter((f) => f.startsWith('bundle.l10n') && f.endsWith('.json'));
     for (const file of files) {
