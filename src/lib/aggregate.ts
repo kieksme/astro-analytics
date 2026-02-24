@@ -10,6 +10,8 @@ import {
 
 export interface PageMetrics {
   pagePath: string;
+  /** Page title from GA4 (optional; not set for aggregated dynamic routes). */
+  pageTitle?: string;
   views: number;
   users: number;
   bounceRate: number;

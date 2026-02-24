@@ -19,6 +19,8 @@ export interface DashboardConfig {
 
 export interface PageMetrics {
   pagePath: string;
+  /** Page title from GA4 (document title when the page was viewed). */
+  pageTitle?: string;
   views: number;
   users: number;
   bounceRate: number;
@@ -90,6 +92,8 @@ export interface BuildDashboardHtmlOptions {
   cspSource: string;
   nonce?: string;
   lang?: string;
+  /** Page title for <title> and <h1> (e.g. localized "Astro Analytics Dashboard"). Used by full dashboard only. */
+  pageTitle?: string;
 }
 
 const SORT_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="12" height="12"><path fill="currentColor" d="M4 6h8l-4-4-4 4zm0 4l4 4 4-4H4z"/></svg>';
@@ -456,6 +460,7 @@ export function getDashboardDataFromState(
       const titleDisplayPath = getTitlePath ? getTitlePath(path, resolvedFilePath ?? null) : (resolvedFilePath ?? null);
       return {
         pagePath: path,
+        pageTitle: m.pageTitle,
         views: m.views,
         users: m.users,
         bounceRate: m.bounceRate,
@@ -498,6 +503,8 @@ export function buildDashboardHtml(
   const lang = options.lang ?? 'en';
   const escapeHtmlAttr = (s: string) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   const escapeHtml = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const pageTitle = options.pageTitle ?? 'Astro Analytics Dashboard';
+  const pageTitleEsc = escapeHtml(pageTitle);
   const payload = { ...data, topPages: Array.isArray(data.topPages) ? data.topPages : [] };
   const dataJson = JSON.stringify(payload);
   /** Escape for embedding in <script type="application/json"> so </script> in payload does not close the tag */
@@ -513,7 +520,7 @@ export function buildDashboardHtml(
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}'; style-src 'unsafe-inline' ${options.cspSource};">
-  <title>Dashboard</title>
+  <title>${pageTitleEsc}</title>
   <style>
     body { font-family: var(--vscode-font-family); padding: 1rem; color: var(--vscode-foreground); margin: 0; }
     .dashboard-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
@@ -568,7 +575,7 @@ export function buildDashboardHtml(
 <body>
   <div class="dashboard-header">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28" width="24" height="24"><path fill="currentColor" d="M4 20v-4h4v4H4zm6 0v-8h4v8h-4zm6 0V8h4v12h-4zm6 0V4h4v16h-4z"/></svg>
-    <h1>Dashboard</h1>
+    <h1>${pageTitleEsc}</h1>
   </div>
   <div id="notConfiguredBanner" class="message-box message-warning" style="display:none;">Analytics not configured. <a href="#" id="openSettingsBannerLink">Open Settings</a></div>
   <div class="meta">

@@ -3,6 +3,7 @@
   "codelens.tooltip": "Haz clic para actualizar los datos de análisis",
   "codelens.title": "Rebote {0}   $(eye) {1} vistas   $(person) {2} usuarios   $(watch) {3}",
   "hover.analyticsTitle": "Analytics — ",
+  "hover.pageTitle": "Título de la página",
   "hover.metric": "Métrica",
   "hover.value": "Valor",
   "hover.bounceRate": "Tasa de rebote",

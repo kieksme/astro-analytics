@@ -3,6 +3,7 @@
   "codelens.tooltip": "Click to refresh analytics data",
   "codelens.title": "Bounce {0}   $(eye) {1} Views   $(person) {2} Users   $(watch) {3}",
   "hover.analyticsTitle": "Analytics — ",
+  "hover.pageTitle": "Page title",
   "hover.metric": "Metric",
   "hover.value": "Value",
   "hover.bounceRate": "Bounce Rate",

@@ -5,6 +5,7 @@ import * as path from 'path';
 /** Hover tooltip keys that must be translated so the hover shows labels, not raw keys. */
 const HOVER_L10N_KEYS = [
   'hover.analyticsTitle',
+  'hover.pageTitle',
   'hover.metric',
   'hover.value',
   'hover.bounceRate',

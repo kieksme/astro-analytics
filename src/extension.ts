@@ -14,6 +14,7 @@ const l10nDefaults: Record<string, string> = {
   'codelens.tooltip': 'Click to refresh analytics data',
   'codelens.title': 'Bounce {0}   $(eye) {1} Views   $(person) {2} Users   $(watch) {3}',
   'hover.analyticsTitle': 'Analytics — ',
+  'hover.pageTitle': 'Page title',
   'hover.metric': 'Metric',
   'hover.value': 'Value',
   'hover.bounceRate': 'Bounce Rate',
@@ -93,11 +94,24 @@ function uiLanguage(): string {
   return (vscode as { env?: { language?: string } }).env?.language ?? 'en';
 }
 
+/** Escape text for safe use inside Markdown (e.g. GA4 page title in hover). */
+function escapeMarkdown(s: string): string {
+  return String(s)
+    .replace(/\\/g, '\\\\')
+    .replace(/\*/g, '\\*')
+    .replace(/_/g, '\\_')
+    .replace(/\[/g, '\\[')
+    .replace(/\]/g, '\\]')
+    .replace(/\|/g, '\\|');
+}
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 interface PageMetrics {
   pagePath: string;
+  /** Page title from GA4 (document title when the page was viewed). */
+  pageTitle?: string;
   views: number;
   users: number;
   bounceRate: number;          // 0–1
@@ -121,23 +135,63 @@ async function fetchAnalyticsData(
     const [response] = await analyticsDataClient.runReport({
       property: `properties/${propertyId}`,
       dateRanges: [{ startDate: `${lookbackDays}daysAgo`, endDate: 'today' }],
-      dimensions: [{ name: 'pagePath' }],
+      dimensions: [{ name: 'pagePath' }, { name: 'pageTitle' }],
       metrics: [
         { name: 'screenPageViews' },
         { name: 'activeUsers' },
         { name: 'bounceRate' },
         { name: 'averageSessionDuration' },
       ],
-      limit: 1000,
+      limit: 10000,
       orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }],
     });
 
-    const rows: PageMetrics[] = (response.rows ?? []).map((row) => ({
+    const rawRows = (response.rows ?? []).map((row) => ({
       pagePath: row.dimensionValues?.[0]?.value ?? '',
+      pageTitle: row.dimensionValues?.[1]?.value?.trim() || undefined,
       views: parseInt(row.metricValues?.[0]?.value ?? '0', 10),
       users: parseInt(row.metricValues?.[1]?.value ?? '0', 10),
       bounceRate: parseFloat(row.metricValues?.[2]?.value ?? '0'),
       avgSessionDuration: parseFloat(row.metricValues?.[3]?.value ?? '0'),
+    }));
+
+    // Merge rows by normalized pagePath (same path can have multiple GA4 rows e.g. different titles over time).
+    // Keep pageTitle from the row with the highest views for that path.
+    const byPath = new Map<string, { path: string; title?: string; views: number; users: number; bounceSum: number; durationSum: number; maxViews: number }>();
+    for (const row of rawRows) {
+      const key = normalizePagePath(row.pagePath);
+      const existing = byPath.get(key);
+      const views = row.views;
+      const bounceSum = row.bounceRate * views;
+      const durationSum = row.avgSessionDuration * views;
+      if (!existing) {
+        byPath.set(key, {
+          path: row.pagePath,
+          title: row.pageTitle,
+          views: row.views,
+          users: row.users,
+          bounceSum,
+          durationSum,
+          maxViews: views,
+        });
+      } else {
+        existing.views += row.views;
+        existing.users += row.users;
+        existing.bounceSum += bounceSum;
+        existing.durationSum += durationSum;
+        if (views > existing.maxViews) {
+          existing.maxViews = views;
+          existing.title = row.pageTitle;
+        }
+      }
+    }
+    const rows: PageMetrics[] = Array.from(byPath.values()).map((v) => ({
+      pagePath: v.path,
+      pageTitle: v.title,
+      views: v.views,
+      users: v.users,
+      bounceRate: v.views > 0 ? v.bounceSum / v.views : 0,
+      avgSessionDuration: v.views > 0 ? v.durationSum / v.views : 0,
     }));
 
     return rows;
@@ -251,6 +305,9 @@ class AnalyticsHoverProvider implements vscode.HoverProvider {
     md.isTrusted = false;
     const titleSlug = slug ?? l10nT('hover.dynamicRouteAggregated');
     md.appendMarkdown(`### $(graph) ${l10nT('hover.analyticsTitle')}\`${titleSlug}\`\n\n`);
+    if (metrics.pageTitle) {
+      md.appendMarkdown(`${l10nT('hover.pageTitle')}: *${escapeMarkdown(metrics.pageTitle)}*\n\n`);
+    }
     md.appendMarkdown(`| ${l10nT('hover.metric')} | ${l10nT('hover.value')} |\n|---|---|\n`);
     md.appendMarkdown(`| $(${bounceIcon}) ${l10nT('hover.bounceRate')} | **${fmtPct(metrics.bounceRate)}** |\n`);
     md.appendMarkdown(`| $(eye) ${l10nT('hover.pageViews')} | **${metrics.views.toLocaleString(locale)}** |\n`);
@@ -466,6 +523,7 @@ function getDashboardHtml(webview: vscode.Webview, data: ReturnType<typeof getDa
   return buildDashboardHtml(data, {
     cspSource: webview.cspSource,
     lang: uiLanguage(),
+    pageTitle: l10nT('dashboard.title'),
   });
 }
 

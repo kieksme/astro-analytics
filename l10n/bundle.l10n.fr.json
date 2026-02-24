@@ -3,6 +3,7 @@
   "codelens.tooltip": "Cliquer pour actualiser les données d'analyse",
   "codelens.title": "Rebond {0}   $(eye) {1} vues   $(person) {2} utilisateurs   $(watch) {3}",
   "hover.analyticsTitle": "Analytics — ",
+  "hover.pageTitle": "Titre de la page",
   "hover.metric": "Métrique",
   "hover.value": "Valeur",
   "hover.bounceRate": "Taux de rebond",

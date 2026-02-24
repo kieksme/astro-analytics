@@ -3,6 +3,7 @@
   "codelens.tooltip": "点击刷新分析数据",
   "codelens.title": "跳出率 {0}   $(eye) {1} 次浏览   $(person) {2} 用户   $(watch) {3}",
   "hover.analyticsTitle": "Analytics — ",
+  "hover.pageTitle": "页面标题",
   "hover.metric": "指标",
   "hover.value": "数值",
   "hover.bounceRate": "跳出率",

@@ -3,6 +3,7 @@
   "codelens.tooltip": "クリックして分析データを更新",
   "codelens.title": "直帰率 {0}   $(eye) {1} 閲覧   $(person) {2} ユーザー   $(watch) {3}",
   "hover.analyticsTitle": "Analytics — ",
+  "hover.pageTitle": "ページタイトル",
   "hover.metric": "指標",
   "hover.value": "値",
   "hover.bounceRate": "直帰率",

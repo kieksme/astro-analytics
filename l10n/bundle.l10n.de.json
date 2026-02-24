@@ -3,6 +3,7 @@
   "codelens.tooltip": "Klicken, um Analysedaten zu aktualisieren",
   "codelens.title": "Bounce {0}   $(eye) {1} Aufrufe   $(person) {2} Nutzer   $(watch) {3}",
   "hover.analyticsTitle": "Analytics — ",
+  "hover.pageTitle": "Seitentitel",
   "hover.metric": "Metrik",
   "hover.value": "Wert",
   "hover.bounceRate": "Absprungrate",

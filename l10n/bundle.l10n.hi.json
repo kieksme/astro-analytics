@@ -3,6 +3,7 @@
   "codelens.tooltip": "एनालिटिक्स डेटा रिफ़्रेश करने के लिए क्लिक करें",
   "codelens.title": "बाउंस {0}   $(eye) {1} व्यूज़   $(person) {2} यूज़र्स   $(watch) {3}",
   "hover.analyticsTitle": "Analytics — ",
+  "hover.pageTitle": "पृष्ठ शीर्षक",
   "hover.metric": "मेट्रिक",
   "hover.value": "मान",
   "hover.bounceRate": "बाउंस रेट",
