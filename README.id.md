@@ -20,12 +20,12 @@ Menampilkan metrik Google Analytics GA4 langsung di VS Code saat Anda membuka fi
 
 Ekstensi menampilkan bounce rate dengan indikator warna (hijau / kuning / oranye / merah) di CodeLens, explorer, hover, status bar, dan dashboard:
 
-| Level | Bounce Rate |
-|-------|-------------|
-| 🟢 | < 25% — Sangat baik |
-| 🟡 | 25–44% — Baik |
-| 🟠 | 45–64% — Rata-rata |
-| 🔴 | ≥ 65% — Perlu perbaikan |
+| Level | Bounce Rate             |
+|-------|-------------------------|
+| 🟢    | < 25% — Sangat baik     |
+| 🟡    | 25–44% — Baik           |
+| 🟠    | 45–64% — Rata-rata      |
+| 🔴    | ≥ 65% — Perlu perbaikan |
 
 ## Pengaturan
 
@@ -51,13 +51,13 @@ Credentials saved to file: [~/.config/gcloud/application_default_credentials.jso
 
 Di VS Code: `Cmd+,` → cari **Astro Analytics**
 
-| Pengaturan | Deskripsi | Default |
-|------------|-----------|---------|
-| `astroAnalytics.propertyId` | GA4 Property ID (numerik) | `364493652` |
-| `astroAnalytics.credentialsPath` | Path ke JSON kredensial | (default ADC) |
-| `astroAnalytics.lookbackDays` | Rentang hari | `30` |
-| `astroAnalytics.contentRoot` | Folder konten Astro | `src/content` |
-| `astroAnalytics.pagesRoot` | Folder halaman Astro | `src/pages` |
+| Pengaturan                       | Deskripsi                 | Default       |
+|----------------------------------|---------------------------|---------------|
+| `astroAnalytics.propertyId`      | GA4 Property ID (numerik) | `364493652`   |
+| `astroAnalytics.credentialsPath` | Path ke JSON kredensial   | (default ADC) |
+| `astroAnalytics.lookbackDays`    | Rentang hari              | `30`          |
+| `astroAnalytics.contentRoot`     | Folder konten Astro       | `src/content` |
+| `astroAnalytics.pagesRoot`       | Folder halaman Astro      | `src/pages`   |
 
 Contoh `settings.json`:
 
@@ -102,25 +102,25 @@ Jika metrik tidak muncul (CodeLens menampilkan "no data" atau status bar kosong)
 
 Ekstensi dilokalisasi untuk bahasa berikut. UI mengikuti bahasa tampilan VS Code ketika terjemahan tersedia:
 
-| Bahasa | Locale |
-|--------|--------|
-| English | `en` |
-| Deutsch | `de` |
-| Français | `fr` |
-| Español | `es` |
-| Italiano | `it` |
-| Português | `pt` |
-| Nederlands | `nl` |
-| Polski | `pl` |
-| Русский | `ru` |
-| 简体中文 | `zh-cn` |
-| 日本語 | `ja` |
-| हिन्दी | `hi` |
-| 한국어 | `ko` |
-| Indonesia | `id` |
-| Tiếng Việt | `vi` |
-| ไทย | `th` |
-| বাংলা | `bn` |
+| Bahasa     | Locale  |
+|------------|---------|
+| English    | `en`    |
+| Deutsch    | `de`    |
+| Français   | `fr`    |
+| Español    | `es`    |
+| Italiano   | `it`    |
+| Português  | `pt`    |
+| Nederlands | `nl`    |
+| Polski     | `pl`    |
+| Русский    | `ru`    |
+| 简体中文   | `zh-cn` |
+| 日本語     | `ja`    |
+| हिन्दी     | `hi`    |
+| 한국어        | `ko`    |
+| Indonesia  | `id`    |
+| Tiếng Việt | `vi`    |
+| ไทย        | `th`    |
+| বাংলা      | `bn`    |
 
 Terjemahan disediakan via `package.nls.*.json` (UI) dan `l10n/bundle.l10n.*.json` (pesan dan dashboard).
 
