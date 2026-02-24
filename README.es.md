@@ -20,12 +20,12 @@ Muestra métricas de Google Analytics GA4 directamente en VS Code al abrir archi
 
 La extensión muestra la tasa de rebote con indicadores de color (verde / amarillo / naranja / rojo) en CodeLens, explorador, tooltip, barra de estado y panel:
 
-| Nivel | Tasa de rebote |
-|-------|----------------|
-| 🟢 | < 25 % — Muy buena |
-| 🟡 | 25–44 % — Buena |
-| 🟠 | 45–64 % — Media |
-| 🔴 | ≥ 65 % — Mejorable |
+| Nivel | Tasa de rebote     |
+|-------|--------------------|
+| 🟢    | < 25 % — Muy buena |
+| 🟡    | 25–44 % — Buena    |
+| 🟠    | 45–64 % — Media    |
+| 🔴    | ≥ 65 % — Mejorable |
 
 ## Configuración
 
@@ -51,13 +51,13 @@ Credentials saved to file: [~/.config/gcloud/application_default_credentials.jso
 
 En VS Code: `Cmd+,` → buscar **Astro Analytics**
 
-| Configuración | Descripción | Por defecto |
-|---------------|-------------|-------------|
-| `astroAnalytics.propertyId` | ID de propiedad GA4 (numérico) | `364493652` |
-| `astroAnalytics.credentialsPath` | Ruta al JSON de credenciales | (por defecto ADC) |
-| `astroAnalytics.lookbackDays` | Rango de días | `30` |
-| `astroAnalytics.contentRoot` | Carpeta de contenido Astro | `src/content` |
-| `astroAnalytics.pagesRoot` | Carpeta de páginas Astro | `src/pages` |
+| Configuración                    | Descripción                    | Por defecto       |
+|----------------------------------|--------------------------------|-------------------|
+| `astroAnalytics.propertyId`      | ID de propiedad GA4 (numérico) | `364493652`       |
+| `astroAnalytics.credentialsPath` | Ruta al JSON de credenciales   | (por defecto ADC) |
+| `astroAnalytics.lookbackDays`    | Rango de días                  | `30`              |
+| `astroAnalytics.contentRoot`     | Carpeta de contenido Astro     | `src/content`     |
+| `astroAnalytics.pagesRoot`       | Carpeta de páginas Astro       | `src/pages`       |
 
 Ejemplo `settings.json`:
 
@@ -102,25 +102,25 @@ Si no ves métricas (CodeLens muestra "no data" o la barra de estado está vací
 
 La extensión está localizada para los siguientes idiomas. La interfaz sigue el idioma de visualización de VS Code cuando hay traducción disponible:
 
-| Idioma | Locale |
-|--------|--------|
-| English | `en` |
-| Deutsch | `de` |
-| Français | `fr` |
-| Español | `es` |
-| Italiano | `it` |
-| Português | `pt` |
-| Nederlands | `nl` |
-| Polski | `pl` |
-| Русский | `ru` |
-| 简体中文 | `zh-cn` |
-| 日本語 | `ja` |
-| हिन्दी | `hi` |
-| 한국어 | `ko` |
-| Indonesia | `id` |
-| Tiếng Việt | `vi` |
-| ไทย | `th` |
-| বাংলা | `bn` |
+| Idioma     | Locale  |
+|------------|---------|
+| English    | `en`    |
+| Deutsch    | `de`    |
+| Français   | `fr`    |
+| Español    | `es`    |
+| Italiano   | `it`    |
+| Português  | `pt`    |
+| Nederlands | `nl`    |
+| Polski     | `pl`    |
+| Русский    | `ru`    |
+| 简体中文   | `zh-cn` |
+| 日本語     | `ja`    |
+| हिन्दी     | `hi`    |
+| 한국어        | `ko`    |
+| Indonesia  | `id`    |
+| Tiếng Việt | `vi`    |
+| ไทย        | `th`    |
+| বাংলা      | `bn`    |
 
 Las traducciones están en `package.nls.*.json` (UI contribuida) y `l10n/bundle.l10n.*.json` (mensajes y panel).
 
