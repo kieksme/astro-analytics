@@ -186,7 +186,8 @@
     "publish": "pnpm run compile && pnpx vsce publish"
   },
   "dependencies": {
-    "@google-analytics/data": "^5.2.0"
+    "@google-analytics/data": "^5.2.0",
+    "eta": "^3.5.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

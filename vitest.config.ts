@@ -4,6 +4,9 @@ import * as path from 'path';
 export default defineConfig({
   test: {
     include: ['tests/**/*.test.ts'],
+    deps: {
+      inline: ['eta'],
+    },
   },
   resolve: {
     alias: {

@@ -11,7 +11,7 @@ import {
   countCriticalPages,
   BOUNCE_CRITICAL_THRESHOLD,
 } from '../../src/lib/dashboard';
-import type { DashboardData, DashboardL10n } from '../../src/lib/dashboard';
+import type { DashboardData } from '../../src/lib/dashboard';
 
 /** Extract dashboard payload from HTML (script type="application/json" id="dataPayload"). */
 function getPayloadFromHtml(html: string): Record<string, unknown> {
@@ -23,38 +23,6 @@ function getPayloadFromHtml(html: string): Record<string, unknown> {
     return {};
   }
 }
-
-const defaultL10n: DashboardL10n = {
-  title: 'Astro Analytics Dashboard',
-  propertyId: 'Property ID:',
-  pagesInCache: 'Pages in cache:',
-  lastFetch: 'Last fetch:',
-  lookback: 'Lookback:',
-  days: 'days',
-  refreshData: 'Refresh data',
-  page: 'Page',
-  views: 'Views',
-  users: 'Users',
-  bounce: 'Bounce',
-  avgDuration: 'Avg duration',
-  emptyState: 'No cached pages.',
-  notConfigured: 'Not configured.',
-  openSettings: 'Open Settings',
-  notSet: '(not set)',
-  legendGood: '<25%',
-  legendWarning: '25–45%',
-  legendHigh: '45–65%',
-  legendCritical: '≥65%',
-  pageOf: 'Page {0} of {1}',
-  previous: 'Previous',
-  next: 'Next',
-  dynamicRouteLabel: 'dynamic',
-  filterAll: 'All',
-  filterStatic: 'Static only',
-  filterDynamicOnly: 'Dynamic only',
-  filterDynamicLabel: 'Filter',
-  filterEmpty: 'No match',
-};
 
 const options = { cspSource: 'https://vscode-csp', nonce: 'test-nonce', lang: 'en' };
 
