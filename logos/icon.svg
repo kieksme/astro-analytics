@@ -1,17 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="logo-title">
-  <title id="logo-title">Astro Analytics Logo</title>
-  <defs>
-    <linearGradient id="grad1" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#7C3AED"/>
-      <stop offset="100%" style="stop-color:#4F46E5"/>
-    </linearGradient>
-  </defs>
-  <!-- Classic app icon: rounded square background -->
-  <rect width="128" height="128" rx="28" fill="url(#grad1)"/>
-  <!-- Rising chart line (analytics) -->
-  <path d="M24 96 L44 72 L64 80 L84 48 L104 56 L104 96 Z" fill="rgba(255,255,255,0.15)"/>
-  <path d="M24 96 L44 72 L64 80 L84 48 L104 56" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="104" cy="56" r="5" fill="none" stroke="#fff" stroke-width="2"/>
-  <!-- Star (Astro) -->
-  <path d="M64 28 L67 38 L78 38 L69 44 L72 54 L64 49 L56 54 L59 44 L50 38 L61 38 Z" fill="#FBBF24"/>
+<svg width="500" height="500" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_617_154)">
+<path d="M390.625 0H109.375C48.9689 0 0 48.9689 0 109.375V390.625C0 451.031 48.9689 500 109.375 500H390.625C451.031 500 500 451.031 500 390.625V109.375C500 48.9689 451.031 0 390.625 0Z" fill="url(#paint0_linear_617_154)"/>
+<path d="M93.75 375L171.875 281.25L250 312.5L328.125 187.5L406.25 218.75V375H93.75Z" fill="white" fill-opacity="0.15"/>
+<path d="M93.75 375L171.875 281.25L250 312.5L328.125 187.5L406.25 218.75" stroke="white" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M406.25 238.281C417.037 238.281 425.781 229.537 425.781 218.75C425.781 207.963 417.037 199.219 406.25 199.219C395.463 199.219 386.719 207.963 386.719 218.75C386.719 229.537 395.463 238.281 406.25 238.281Z" stroke="white" stroke-width="9"/>
+<path d="M315.5 80L327.219 119.062H370.188L335.031 142.5L346.75 181.562L315.5 162.031L284.25 181.562L295.969 142.5L267 106.125L303.781 119.062L315.5 80Z" fill="#FBBF24"/>
+<path d="M128.921 152.265C113.526 156.672 104.619 172.762 109.026 188.204L127.645 253.441C132.052 268.882 148.104 277.828 163.498 273.421L226.215 255.467C234.554 253.079 239.379 244.364 236.992 236C234.604 227.636 225.91 222.791 217.571 225.178C225.91 222.791 230.734 214.075 228.347 205.711C225.96 197.347 217.265 192.502 208.926 194.889C217.265 192.502 222.09 183.786 219.703 175.422C217.316 167.058 208.621 162.213 200.282 164.6L268.612 145.039C276.951 142.652 281.776 133.936 279.389 125.572C277.002 117.208 268.307 112.363 259.968 114.75L166.473 141.515C165.919 141.674 165.381 141.86 164.859 142.073C164.106 142.225 163.353 142.408 162.602 142.623L128.921 152.265Z" fill="white"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_617_154" x1="250" y1="0" x2="250" y2="500" gradientUnits="userSpaceOnUse">
+<stop stop-color="#7C3AED"/>
+<stop offset="1" stop-color="#4F46E5"/>
+</linearGradient>
+<clipPath id="clip0_617_154">
+<rect width="500" height="500" fill="white"/>
+</clipPath>
+</defs>
 </svg>
